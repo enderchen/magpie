@@ -94,7 +94,7 @@ async function sendVerificationEmail(userId, email, type, newEmail) {
   const appUrl = getAppUrl();
   const link = `${appUrl}/api/auth/verify-email?token=${token}`;
   // 后台异步发信：验证记录已入库，接口立即响应，不阻塞请求
-  sendMailBackground(targetEmail, '验证你的邮箱 — 即页',
+  sendMailBackground(targetEmail, '验证你的邮箱 — 页舟',
     `<div style="max-width:480px;margin:0 auto;font-family:system-ui,sans-serif;padding:24px">
       <h2 style="color:#1a1a1a">验证你的邮箱</h2>
       <p style="color:#555;font-size:15px">请点击以下按钮验证你的邮箱地址：</p>
@@ -140,7 +140,7 @@ async function sendRegisterCode(email) {
   );
 
   // 后台异步发信：验证码已入库，接口立即响应，不阻塞请求
-  sendMailBackground(email, '注册验证码 — 即页',
+  sendMailBackground(email, '注册验证码 — 页舟',
     `<div style="max-width:480px;margin:0 auto;padding:32px 24px;font-family:system-ui,-apple-system,sans-serif;color:#333">
       <h2 style="margin:0 0 24px;font-size:20px;color:#111">注册验证码</h2>
       <p style="margin:0 0 16px;font-size:15px">你的注册验证码是：</p>

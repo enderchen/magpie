@@ -47,12 +47,13 @@ function buildServerConfig(url, token) {
 function buildCliGuide(baseUrl) {
   return `# jpage CLI
 
-\`jpage\` 是即页的命令行工具，与 MCP 并列、基于同一套 REST API。适合 Bash/脚本/CI/Agent 场景，multipart 上传大文件更省流。
+\`jpage\` 是页舟兼容的上游 JPage 命令行工具，与 MCP 并列、基于同一套 REST API。适合 Bash/脚本/CI/Agent 场景，multipart 上传大文件更省流。
 
 ## 安装
 
 \`\`\`bash
 npm install -g @code2rich/jpage
+export JPAGE_BASE=${baseUrl}
 \`\`\`
 
 ## 认证
@@ -66,7 +67,7 @@ jpage <命令> --token <YOUR_TOKEN> # 单条命令
 
 token 优先级：\`--token\` > \`JPAGE_TOKEN\` > \`MCP_TOKEN\`。  
 服务地址优先级：\`--base\` > \`JPAGE_BASE\` > 默认 \`https://jpage.cn\`。  
-以下示例默认使用 \`${baseUrl}\`。
+请保留上方 JPAGE_BASE 设置，避免连接到上游服务。以下示例使用 \`${baseUrl}\`。
 
 ## 命令速查
 

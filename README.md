@@ -1,12 +1,16 @@
-# 即页
+# 页舟 · PageSail
 
-> 拖入文件，即刻成页。
+> 一页，载万千。
 
-[![CI](https://github.com/code2rich/jpage/actions/workflows/ci.yml/badge.svg)](https://github.com/code2rich/jpage/actions/workflows/ci.yml)
+PageSail 是基于 [JPage](https://github.com/code2rich/jpage) 的独立衍生项目，沿用 MIT 许可证，保留原版权声明。当前聚焦 HTML、Markdown 与 ZIP 的上传、预览和分享。
+
+本项目尚未发布独立 npm 包。下文 `@code2rich/jpage`、uTools 与 Skills 属于上游兼容工具；使用上游客户端时，务必通过 `--base` 或 `JPAGE_BASE` 指向自己的 PageSail 服务。源码内置 CLI 默认连接 `http://localhost:8858`，并禁用上游 npm 自更新。`JPAGE_*`、Cookie 名、MCP 资源名等保留兼容标识。
+
+[![CI](https://github.com/enderchen/pagesail/actions/workflows/ci.yml/badge.svg)](https://github.com/enderchen/pagesail/actions/workflows/ci.yml)
 
 [English](README_EN.md) | 中文
 
-**即页**是一个零配置的 HTML / Markdown 即时预览与分享工具。把写好的文档拖进来，立刻获得一个干净的在线页面——无需部署流程，无需服务器知识。特别适合 AI 生成内容的一键分享。
+**页舟 PageSail**是一个零配置的 HTML / Markdown 即时预览与分享工具。把写好的文档拖进来，立刻获得一个干净的在线页面——无需部署流程，无需服务器知识。特别适合 AI 生成内容的一键分享。
 
 ---
 
@@ -66,8 +70,8 @@
 ### Docker 部署（推荐）
 
 ```bash
-git clone https://github.com/code2rich/jpage.git
-cd jpage
+git clone https://github.com/enderchen/pagesail.git
+cd pagesail
 cp .env.example .env       # 编辑 .env 填入 ADMIN_PASSWORD 和 SESSION_SECRET
 docker-compose up -d
 ```
@@ -103,12 +107,13 @@ node test/mcp-harness.js 8858    # MCP 端点
 node test/perf-bench.js 8858     # 渲染/列表/缓存延迟基准
 ```
 
-### CLI 工具（npm 包已发布）
+### 上游兼容 CLI（PageSail 尚未发布独立 npm 包）
 
-即页随包提供 `jpage` 命令行工具，可通过 REST API 上传 / 列出 / 管理文件，对大文件和 ZIP 走 multipart 二进制流式上传（比 MCP 的 base64 进 token 流更快更省）：
+页舟随包提供 `jpage` 命令行工具，可通过 REST API 上传 / 列出 / 管理文件，对大文件和 ZIP 走 multipart 二进制流式上传（比 MCP 的 base64 进 token 流更快更省）：
 
 ```bash
 npm install -g @code2rich/jpage
+export JPAGE_BASE=http://localhost:8858  # 改为你自己的 PageSail 服务地址
 jpage upload ./report.html --public --token <你的 token>
 jpage ls --kw 季度
 jpage cat 8
@@ -131,7 +136,7 @@ jpage update --registry https://registry.npmmirror.com   # 国内源
 
 ## 鉴权与安全
 
-即页支持多用户体系。admin 可管理全部用户和文件，普通用户只能操作自己的文件和公开文件。
+页舟支持多用户体系。admin 可管理全部用户和文件，普通用户只能操作自己的文件和公开文件。
 
 **内容安全（CSP）**：通过 helmet + 分级策略加固——管理界面下发严格 CSP（仅放行同源 script），用户内容渲染页用 iframe sandbox（无 `allow-same-origin`，阻断对父窗口的访问）隔离，其中 Markdown 页套严格 CSP（内联 mermaid 脚本靠 nonce 放行），HTML 页用宽松 CSP + sandbox 兜底（用户 HTML 常含合法 script）。分享链接（`/api/files/:id/render`、`/s/:key`、下载、源码）在文件标记为公开时可匿名访问；上传时取消勾选「公开访问」可让该文件仅所有者和 admin 可见。
 
@@ -159,7 +164,7 @@ API 和 MCP 端点支持三种认证方式：
 | `SMTP_SECURE` | 否 | 是否使用 SSL（`true`/`false`） |
 | `SMTP_USER` | 否 | SMTP 登录用户名 |
 | `SMTP_PASS` | 否 | SMTP 登录密码或授权码 |
-| `SMTP_FROM` | 否 | 发件人地址（如 `"即页 <user@example.com>"`） |
+| `SMTP_FROM` | 否 | 发件人地址（如 `"页舟 <user@example.com>"`） |
 | `APP_URL` | 否 | 应用外部访问地址，用于拼接验证链接（如 `https://jpage.cn`） |
 | `FEEDBACK_EMAIL` | 否 | 问题反馈邮件接收地址；留空时回退到首个管理员邮箱 → `SMTP_FROM` |
 | `GOOGLE_CLIENT_ID` | 否 | Google Web 应用 OAuth Client ID；与 `GOOGLE_CLIENT_SECRET` 同时配置后启用 Google 登录 |
@@ -175,15 +180,7 @@ API 和 MCP 端点支持三种认证方式：
 | `BACKUP_CRON` | 否 | 自动备份 cron 表达式（如 `0 3 * * *`） |
 | `BACKUP_DIR` | 否 | 自动备份目录，默认 `<JPAGE_DATA_DIR>/backups` |
 
-如果 `ADMIN_USER` 和 `ADMIN_PASSWORD` 都留空启动，启动日志会输出：
-
-```
-[即页] 已创建初始管理员: admin
-[即页] 初始密码（请妥善保存）: 7Hk2mN9pq4rTv8wX
-[即页] ⚠️  首次登录后请立即修改密码
-```
-
-复制日志里的密码登录即可。
+如果 `ADMIN_USER` 和 `ADMIN_PASSWORD` 都留空启动，首次初始化日志会提示已创建管理员，并输出生成的初始密码。复制日志里的密码登录，并妥善保存。
 
 `SESSION_SECRET` 推荐生成方式：
 ```bash
@@ -383,7 +380,7 @@ jpage/
 
 ## MCP / AI 集成
 
-即页内置 [MCP Streamable HTTP](https://modelcontextprotocol.io) 端点，让 Claude Code、Claude Desktop 等 AI 工具能够直接上传、管理文件。
+页舟内置 [MCP Streamable HTTP](https://modelcontextprotocol.io) 端点，让 Claude Code、Claude Desktop 等 AI 工具能够直接上传、管理文件。
 
 ### 启用
 
@@ -446,7 +443,7 @@ MCP_TOKEN=your-secret-token
 
 ### 配套 Skill
 
-仓库内 `skills/jpage/SKILL.md` 是 Claude Code / Desktop 的开箱即用技能。安装后，AI 生成 HTML、Markdown、报告、可视化、幻灯片、使用模板市场风格等内容时会自动上传到即页并返回预览链接。
+仓库内 `skills/jpage/SKILL.md` 是 Claude Code / Desktop 的开箱即用技能。安装后，AI 生成 HTML、Markdown、报告、可视化、幻灯片、使用模板市场风格等内容时会自动上传到页舟并返回预览链接。
 
 ```bash
 ln -s "$(pwd)/skills/jpage" ~/.claude/skills/jpage
@@ -474,7 +471,7 @@ npx -y @modelcontextprotocol/inspector http://localhost:8858/mcp
 
 现有的方案要么太重（需要配置服务器、域名、CI），要么太封闭（绑定特定平台）。
 
-即页只想做一件事：让静态内容的分享回归简单。拖入文件，得到一个链接。支持可选的多用户体系，但默认开箱即用——拖入文件即得链接，匿名也能分享公开文件，无需注册。
+页舟只想做一件事：让静态内容的分享回归简单。拖入文件，得到一个链接。支持可选的多用户体系，但默认开箱即用——拖入文件即得链接，匿名也能分享公开文件，无需注册。
 
 ## 协议
 

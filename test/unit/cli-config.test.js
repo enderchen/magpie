@@ -65,6 +65,7 @@ test('resolveConfig: base 去尾部斜杠', () => {
 });
 
 test('resolveConfig: 默认 base', () => {
+  assert.strictEqual(DEFAULT_BASE, 'http://localhost:8858', 'PageSail must default to its local service');
   assert.strictEqual(resolveConfig({}, {}).base, DEFAULT_BASE);
 });
 

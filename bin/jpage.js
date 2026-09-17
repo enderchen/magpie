@@ -40,7 +40,7 @@ const COMMANDS = {
 // 这些命令纯本地执行（不调后端 API），不强制要求 token。
 const NO_TOKEN = new Set(['update', 'skill', 'version']);
 
-const HELP = `jpage —— 即页命令行
+const HELP = `jpage —— 页舟 PageSail 命令行（兼容 jpage）
 
 用法：
   jpage <命令> [参数] [选项]
@@ -68,15 +68,15 @@ const HELP = `jpage —— 即页命令行
   template use <id> [--name <文件名>] [--public]
                                               使用模板创建文件
   whoami                                      校验 token 是否有效
-  update [--registry <url>] [--check]         自更新到最新版（不需 token）
+  update [--registry <url>] [--check]         显示 PageSail 源码更新说明（不需 token）
 
 通用选项：
   --token <TOKEN>        鉴权 token（jp_ 用户 token 或 MCP_TOKEN）
-  --base <URL>           服务地址（默认 https://jpage.cn）
+  --base <URL>           服务地址（默认 http://localhost:8858）
   --help, -h             显示本帮助
 
 token 优先级：--token > JPAGE_TOKEN 环境变量 > MCP_TOKEN 环境变量 > .env 里的同名变量
-base  优先级：--base  > JPAGE_BASE  环境变量 > 默认 https://jpage.cn
+base  优先级：--base  > JPAGE_BASE  环境变量 > 默认 http://localhost:8858
 
 支持的环境变量：JPAGE_TOKEN、JPAGE_BASE、MCP_TOKEN（JPAGE_BASE 可替代 --base）
 
@@ -90,7 +90,7 @@ base  优先级：--base  > JPAGE_BASE  环境变量 > 默认 https://jpage.cn
   jpage skills download jpage
   jpage template use 12 --name 季度汇报.html --public
 
-详细文档：https://github.com/code2rich/jpage`;
+详细文档：https://github.com/enderchen/pagesail`;
 
 /**
  * 运行 CLI。供入口和测试共用。

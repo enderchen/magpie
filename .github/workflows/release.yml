@@ -28,6 +28,8 @@ concurrency:
 
 jobs:
   release:
+    # PageSail is source-only until its own package release is configured.
+    if: github.repository == 'code2rich/jpage'
     name: Publish to npm
     runs-on: ubuntu-latest
     # 同时跑测试矩阵确认绿（轻量：只 Node 20，CI workflow 已覆盖 20+22）

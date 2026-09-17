@@ -1,16 +1,14 @@
 {
-  "name": "@code2rich/jpage",
+  "name": "pagesail",
   "version": "1.6.7",
-  "description": "即页 — 零配置 HTML/Markdown 即时预览与分享工具",
+  "description": "页舟 PageSail — 一页，载万千。HTML / Markdown 预览与分享",
   "main": "server.js",
   "bin": {
-    "jpage": "bin/jpage.js"
+    "jpage": "bin/jpage.js",
+    "pagesail": "bin/jpage.js"
   },
   "engines": {
     "node": ">=20"
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "scripts": {
     "start": "node server.js",
@@ -60,5 +58,12 @@
     "make-fetch-happen": "^14.0.1",
     "http-proxy-agent": "^7.0.2",
     "@tootallnate/once": "^2.0.1"
-  }
+  },
+  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/enderchen/pagesail.git"
+  },
+  "homepage": "https://github.com/enderchen/pagesail"
 }

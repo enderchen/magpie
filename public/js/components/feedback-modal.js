@@ -112,19 +112,6 @@ function openFeedbackModal() {
   bindOnce(modal);
   resetForm(modal);
 
-  // 二维码：图片存在才显示，避免破图
-  const qr = modal.querySelector('#feedback-wechat-qr');
-  if (qr && qr.dataset.checked !== '1') {
-    qr.dataset.checked = '1';
-    qr.addEventListener('error', () => { qr.hidden = true; });
-    // 测试图片可达性：先隐藏，加载成功后显示
-    qr.hidden = true;
-    const test = new Image();
-    test.onload = () => { qr.hidden = false; };
-    test.onerror = () => { qr.hidden = true; };
-    test.src = qr.src;
-  }
-
   openModal(modal);
   // 自动聚焦内容框
   setTimeout(() => modal.querySelector('#feedback-content')?.focus(), 0);

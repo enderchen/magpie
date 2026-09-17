@@ -1,12 +1,16 @@
-# jpage
+# PageSail · 页舟
 
-> Drop a file, get a page — instantly.
+> A page carries a world.
 
-[![CI](https://github.com/code2rich/jpage/actions/workflows/ci.yml/badge.svg)](https://github.com/code2rich/jpage/actions/workflows/ci.yml)
+PageSail is an independent fork of [JPage](https://github.com/code2rich/jpage), distributed under the original MIT license. Original copyright notices are retained.
+
+No standalone PageSail npm package has been published. The JPage CLI, uTools plugin and Skills described below are upstream compatibility tools; always set `--base` or `JPAGE_BASE` to your PageSail server. The bundled CLI defaults to localhost:8858 and disables upstream npm self-update. Protocol and storage identifiers remain compatible.
+
+[![CI](https://github.com/enderchen/pagesail/actions/workflows/ci.yml/badge.svg)](https://github.com/enderchen/pagesail/actions/workflows/ci.yml)
 
 [中文](README.md) | English
 
-**jpage** is a zero-config HTML / Markdown instant preview and sharing tool. Drop in a document and instantly get a clean online page — no deployment pipeline, no server knowledge required. Especially great for one-click sharing of AI-generated content.
+**PageSail** is a zero-config HTML / Markdown instant preview and sharing tool. Drop in a document and instantly get a clean online page — no deployment pipeline, no server knowledge required. Especially great for one-click sharing of AI-generated content.
 
 ---
 
@@ -87,8 +91,8 @@
 ### Docker Deploy (Recommended)
 
 ```bash
-git clone https://github.com/code2rich/jpage.git
-cd jpage
+git clone https://github.com/enderchen/pagesail.git
+cd pagesail
 cp .env.example .env       # Edit .env with ADMIN_PASSWORD and SESSION_SECRET
 docker-compose up -d
 ```
@@ -130,6 +134,7 @@ jpage ships with a `jpage` CLI for uploading, listing, and managing files via th
 
 ```bash
 npm install -g @code2rich/jpage
+export JPAGE_BASE=http://localhost:8858  # Your own PageSail server
 jpage upload ./report.html --public --token <your-token>
 jpage ls --kw quarterly
 jpage cat 8

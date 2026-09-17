@@ -31,6 +31,13 @@ async function run(_client, args, ctx) {
     e.name = 'UsageError';
     throw e;
   }
+  // Forks must never replace their CLI with the upstream npm package.
+  if (require('../../package.json').private) {
+    out('PageSail 从自己的 Git 仓库更新，不执行上游 npm 自更新。\n');
+    out('请审阅并合并 https://github.com/enderchen/pagesail 中的更新。\n');
+    return;
+  }
+
   const registryArgs = o.registry ? ['--registry', o.registry] : [];
 
   const current = require('../../package.json').version;

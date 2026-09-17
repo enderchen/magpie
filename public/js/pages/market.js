@@ -148,8 +148,8 @@ function renderMarketShell(container, { active, navigate }) {
     <div class="market-page mw-market-page">
       <aside class="mw-sidebar">
         <a href="#/" class="mw-brand" aria-label="返回首页">
-          <img class="mw-brand-mark" src="/jpage_logo/jpage-app-icon.svg" alt="即页">
-          <span class="mw-brand-text">JPage<br><strong>Market</strong></span>
+          <img class="mw-brand-mark" src="/pagesail-mark.svg" alt="页舟">
+          <span class="mw-brand-text">PageSail<br><strong>Market</strong></span>
         </a>
         <nav class="mw-side-nav">
           <a href="#/market" class="${active === 'home' ? 'active' : ''}">首页</a>
@@ -252,7 +252,7 @@ function renderHome(container, navigate) {
   body.innerHTML = `
     <header class="mw-page-intro">
       <div>
-        <span class="mw-page-kicker">JPage Market</span>
+        <span class="mw-page-kicker">PageSail Market</span>
         <h1>创作市场</h1>
         <p>精选高质量模板，激发灵感，助你高效创作。</p>
       </div>
@@ -571,7 +571,7 @@ function createCurationCard(t, index) {
       <span class="mw-curation-format">${typeLabel}</span>
       <h3>${escapeHtml(t.title)}</h3>
       <p>${escapeHtml(description)}</p>
-      <span class="mw-curation-author">by ${escapeHtml(t.uploader_name || 'JPage 创作者')}</span>
+      <span class="mw-curation-author">by ${escapeHtml(t.uploader_name || 'PageSail 创作者')}</span>
     </div>
   </article>`;
 }
@@ -654,7 +654,7 @@ async function showTemplateUseGuide({ shareKey, title }) {
             <div class="use-template-option">
               <div class="option-icon" aria-hidden="true">📥</div>
               <div class="option-title">方式一：下载源文件</div>
-              <div class="option-desc">适合大部分用户。下载后在本地用任意编辑器修改，再上传到即页即可预览分享。</div>
+              <div class="option-desc">适合大部分用户。下载后在本地用任意编辑器修改，再上传到页舟即可预览分享。</div>
               ${downloadLink}
             </div>
             <div class="use-template-option">

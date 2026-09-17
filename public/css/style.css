@@ -4305,6 +4305,9 @@ html:not(.light) {
 }
 @media (max-width: 640px) {
   .landing-nav-inner { padding: 0 16px; height: 60px; }
+  .landing-nav-brand { gap: 8px; }
+  .landing-nav-title { font-size: 16px; white-space: nowrap; }
+  .landing-nav-actions .btn { padding: 8px; white-space: nowrap; }
   .landing-hero { padding: 100px 16px 48px; }
   .landing-hero-actions { flex-direction: column; align-items: stretch; }
   .landing-hero-actions .btn { width: 100%; justify-content: center; }

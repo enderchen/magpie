@@ -7,7 +7,7 @@ const { out } = require('./_shared');
 async function run(client, args) {
   const id = args.sub;
   if (!id) {
-    const e = new Error('用法：jpage cat <id>');
+    const e = new Error('用法：pagesail cat <id>');
     e.name = 'UsageError';
     throw e;
   }

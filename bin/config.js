@@ -3,10 +3,10 @@
 // 不引入 dotenv。.env 文件按 KEY=VALUE 简单行解析（兼容带引号、注释、空行）。
 //
 // 优先级（高 → 低）：
-//   --token  >  JPAGE_TOKEN env  >  MCP_TOKEN env（环境 + .env 文件）
-//   --base   >  JPAGE_BASE  env  >  默认 http://localhost:8858
+//   --token  >  PAGESAIL_TOKEN env  >  MCP_TOKEN env（环境 + .env 文件）
+//   --base   >  PAGESAIL_BASE  env  >  默认 http://localhost:8858
 //
-// 设计：让 jpage 默认连接线上实例 http://localhost:8858，同时支持本地开发/远程/CI 场景显式指定。
+// 设计：让 pagesail 默认连接本地实例 http://localhost:8858，同时支持本地开发/远程/CI 场景显式指定。
 
 const fs = require('fs');
 const path = require('path');
@@ -70,13 +70,13 @@ function resolveConfig(opts, env = process.env, cwd = process.cwd()) {
 
   const token =
     opts.token ||
-    env.JPAGE_TOKEN ||
-    dotEnv.JPAGE_TOKEN ||
+    env.PAGESAIL_TOKEN ||
+    dotEnv.PAGESAIL_TOKEN ||
     env.MCP_TOKEN ||
     dotEnv.MCP_TOKEN ||
     null;
 
-  const base = (opts.base || env.JPAGE_BASE || dotEnv.JPAGE_BASE || DEFAULT_BASE)
+  const base = (opts.base || env.PAGESAIL_BASE || dotEnv.PAGESAIL_BASE || DEFAULT_BASE)
     .replace(/\/+$/, ''); // 去尾部斜杠，避免拼接出 //
 
   return { token, base };

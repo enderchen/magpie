@@ -1,6 +1,6 @@
-// 即页 uTools 插件 · 前端工具函数（全局挂在 window.JP）
+// 页舟PageSail uTools 插件 · 前端工具函数（全局挂在 window.PS）
 
-window.JP = {
+window.PS = {
   // ---- 文本/格式化 ----
   escapeHtml(s) {
     if (s == null) return '';
@@ -126,6 +126,6 @@ window.JP = {
   showError(err) {
     const msg = (err && err.message) || String(err);
     this.toast('❌ ' + msg, 3500);
-    console.error('[即页]', err);
+    console.error('[页舟PageSail]', err);
   },
 };

@@ -195,7 +195,7 @@ export default [
         ...nodeGlobals,
         ...browserGlobals,
         utools: 'readonly',
-        JP: 'writable',
+        PS: 'writable',
         Login: 'readonly',
         Upload: 'readonly',
         Detail: 'readonly',

@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'jpage-theme';
+const STORAGE_KEY = 'pagesail-theme';
 
 function getSystemPreference() {
   return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';

@@ -1,11 +1,10 @@
 {
   "name": "pagesail",
   "version": "1.6.7",
-  "description": "页舟 PageSail — 一页，载万千。HTML / Markdown 预览与分享",
+  "description": "页舟PageSail — 一页，载万千。HTML / Markdown 预览与分享",
   "main": "server.js",
   "bin": {
-    "jpage": "bin/jpage.js",
-    "pagesail": "bin/jpage.js"
+    "pagesail": "bin/pagesail.js"
   },
   "engines": {
     "node": ">=20"
@@ -19,7 +18,8 @@
     "lint:fix": "eslint . --fix",
     "test": "node --test test/unit/*.test.js test/integration/*.test.js",
     "test:unit": "node --test test/unit/*.test.js",
-    "test:integration": "node --test test/integration/*.test.js"
+    "test:integration": "node --test test/integration/*.test.js",
+    "prepack": "npm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
@@ -65,5 +65,20 @@
     "type": "git",
     "url": "https://github.com/enderchen/pagesail.git"
   },
-  "homepage": "https://github.com/enderchen/pagesail"
+  "homepage": "https://github.com/enderchen/pagesail",
+  "files": [
+    "*.js",
+    "bin/",
+    "lib/",
+    "routes/",
+    "mcp/",
+    "migrations/",
+    "public/",
+    "templates/",
+    "skills/",
+    ".env.example",
+    "LICENSE",
+    "README.md",
+    "README_EN.md"
+  ]
 }

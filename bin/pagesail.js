@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// jpage CLI 入口：解析 argv → 解析配置 → 创建 client → dispatch 到命令。
+// pagesail CLI 入口：解析 argv → 解析配置 → 创建 client → dispatch 到命令。
 //
 // 分层：
 //   args.js     argv → {cmd, sub, opts, positional}
@@ -40,10 +40,10 @@ const COMMANDS = {
 // 这些命令纯本地执行（不调后端 API），不强制要求 token。
 const NO_TOKEN = new Set(['update', 'skill', 'version']);
 
-const HELP = `jpage —— 页舟 PageSail 命令行（兼容 jpage）
+const HELP = `pagesail —— 页舟PageSail 命令行
 
 用法：
-  jpage <命令> [参数] [选项]
+  pagesail <命令> [参数] [选项]
 
 命令：
   upload <路径> [--public] [--overwrite ID]   上传文件（multipart，ZIP 自动判 bundle/batch）
@@ -57,9 +57,9 @@ const HELP = `jpage —— 页舟 PageSail 命令行（兼容 jpage）
   tags <id> [add|set|clear] [名,名,...]        查看 / 追加 / 替换 / 清空标签
   skills ls | get <名> | download <名> [--out 文件]
                                               列出 / 查看 / 下载 Skill（服务器端 skills）
-  skill install [--dir <路径>]                安装本包内置的 jpage Skill 到 Claude
-  skill update                                更新本地 jpage Skill（install 别名）
-  skill uninstall [--dir <路径>]              卸载本地 jpage Skill
+  skill install [--dir <路径>]                安装本包内置的 pagesail Skill 到 Claude
+  skill update                                更新本地 pagesail Skill（install 别名）
+  skill uninstall [--dir <路径>]              卸载本地 pagesail Skill
   version bump [--type patch|minor|major] [--target x.y.z] [--yes] [--dry-run]
                                               交互式升级项目版本号并同步所有文件
   template ls [--category <slug> --file-type html|markdown --kw <词> --limit N]
@@ -71,24 +71,24 @@ const HELP = `jpage —— 页舟 PageSail 命令行（兼容 jpage）
   update [--registry <url>] [--check]         显示 PageSail 源码更新说明（不需 token）
 
 通用选项：
-  --token <TOKEN>        鉴权 token（jp_ 用户 token 或 MCP_TOKEN）
+  --token <TOKEN>        鉴权 token（ps_ 用户 token 或 MCP_TOKEN）
   --base <URL>           服务地址（默认 http://localhost:8858）
   --help, -h             显示本帮助
 
-token 优先级：--token > JPAGE_TOKEN 环境变量 > MCP_TOKEN 环境变量 > .env 里的同名变量
-base  优先级：--base  > JPAGE_BASE  环境变量 > 默认 http://localhost:8858
+token 优先级：--token > PAGESAIL_TOKEN 环境变量 > MCP_TOKEN 环境变量 > .env 里的同名变量
+base  优先级：--base  > PAGESAIL_BASE  环境变量 > 默认 http://localhost:8858
 
-支持的环境变量：JPAGE_TOKEN、JPAGE_BASE、MCP_TOKEN（JPAGE_BASE 可替代 --base）
+支持的环境变量：PAGESAIL_TOKEN、PAGESAIL_BASE、MCP_TOKEN（PAGESAIL_BASE 可替代 --base）
 
 示例：
-  jpage upload ./report.html --public
-  jpage upload ./site.zip --public
-  jpage upload ./x.html --overwrite 12
-  jpage ls --kw 季度 --limit 5
-  jpage cat 8
-  jpage tags 8 add 季度,财报
-  jpage skills download jpage
-  jpage template use 12 --name 季度汇报.html --public
+  pagesail upload ./report.html --public
+  pagesail upload ./site.zip --public
+  pagesail upload ./x.html --overwrite 12
+  pagesail ls --kw 季度 --limit 5
+  pagesail cat 8
+  pagesail tags 8 add 季度,财报
+  pagesail skills download pagesail
+  pagesail template use 12 --name 季度汇报.html --public
 
 详细文档：https://github.com/enderchen/pagesail`;
 
@@ -131,7 +131,7 @@ async function run(argv, inject = {}) {
   const { token, base } = resolveConfig(opts, inject.env, inject.cwd);
   if (!token && !NO_TOKEN.has(cmd)) {
     stderr.write(
-      '未提供 token。用 --token <TOKEN>、JPAGE_TOKEN 环境变量、或 .env 的 MCP_TOKEN 设置。\n'
+      '未提供 token。用 --token <TOKEN>、PAGESAIL_TOKEN 环境变量、或 .env 的 MCP_TOKEN 设置。\n'
     );
     exit(2);
     return;
@@ -157,7 +157,7 @@ function handleError(e, { stderr, exit }) {
   if (e instanceof HttpError) {
     stderr.write(`✗ ${e.message}\n`);
     if (e.status === 401) {
-      stderr.write('  token 无效或已失效。检查 --token / JPAGE_TOKEN / .env 的 MCP_TOKEN。\n');
+      stderr.write('  token 无效或已失效。检查 --token / PAGESAIL_TOKEN / .env 的 MCP_TOKEN。\n');
     }
     if (e.status === 429) {
       stderr.write('  请求过于频繁（如上传 50 次/15 分钟）。稍后再试。\n');
@@ -175,7 +175,7 @@ function handleError(e, { stderr, exit }) {
   exit(1);
 }
 
-// 直接执行（node bin/jpage.js ...）
+// 直接执行（node bin/pagesail.js ...）
 if (require.main === module) {
   const argv = process.argv.slice(2);
   run(argv).catch((e) => {

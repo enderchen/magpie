@@ -1,6 +1,6 @@
 // MCP 端到端验证：通过 /mcp 端点验证 tool 调用（走进程内 dispatcher，非 fetch 自调用）
 // 覆盖 list_files / upload_file / get_file_content / rename_file / get_file_url / delete_file
-// 以及资源 jpage://files
+// 以及资源 pagesail://files
 const http = require('http');
 
 const PORT = parseInt(process.argv[2] || process.env.PORT || '8890', 10);
@@ -67,6 +67,7 @@ async function run() {
   check('initialize → 200', r.status === 200, `status=${r.status}`);
   const initObj = parseSseResult(r.text, 1);
   check('initialize 返回 serverInfo', !!(initObj && initObj.result && initObj.result.serverInfo), r.text.slice(0, 200));
+  check('serverInfo.name 为 pagesail', initObj?.result?.serverInfo?.name === 'pagesail');
   const sessionId = r.headers['mcp-session-id'];
   check('返回 mcp-session-id', !!sessionId, JSON.stringify(r.headers).slice(0, 200));
   if (!sessionId) { console.log('无法继续：无 session'); process.exit(1); }
@@ -136,13 +137,13 @@ async function run() {
   r = await callTool(headers, sessionId, 'get_file_content', { id: fileId });
   check('删除后 get_file_content 失败（isError 或无内容）', !!(r.obj && (r.obj.result.isError || (r.obj.error))), r.text.slice(0, 200));
 
-  // 10. 资源 jpage://files
+  // 10. 资源 pagesail://files
   r = await rawReq('POST', '/mcp', {
     headers: { ...headers, 'mcp-session-id': sessionId, Accept: 'application/json, text/event-stream' },
-    body: { jsonrpc: '2.0', id: 99, method: 'resources/read', params: { uri: 'jpage://files' } },
+    body: { jsonrpc: '2.0', id: 99, method: 'resources/read', params: { uri: 'pagesail://files' } },
   });
   const resObj = parseSseResult(r.text, 99);
-  check('resources/read jpage://files 成功', !!(resObj && resObj.result && resObj.result.contents), r.text.slice(0, 200));
+  check('resources/read pagesail://files 成功', !!(resObj && resObj.result && resObj.result.contents), r.text.slice(0, 200));
 
   console.log(`\n=== MCP 结果: ${pass} 通过, ${fail} 失败 ===`);
   if (fail > 0) { console.log('失败项:'); failures.forEach(f => console.log('  - ' + f)); process.exit(1); }

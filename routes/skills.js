@@ -33,7 +33,7 @@ router.get('/skills/:name', requireAuth, async (req, res) => {
 function buildServerConfig(url, token) {
   return {
     mcpServers: {
-      jpage: {
+      pagesail: {
         type: 'http',
         url,
         headers: { Authorization: `Bearer ${token || '<YOUR_TOKEN>'}` }
@@ -45,15 +45,18 @@ function buildServerConfig(url, token) {
 // 生成 CLI 用法文档 Markdown。
 // baseUrl 预填进示例，方便用户复制即用；真实 token 用 <YOUR_TOKEN> 占位，不在弹窗中泄露。
 function buildCliGuide(baseUrl) {
-  return `# jpage CLI
+  return `# pagesail CLI
 
-\`jpage\` 是页舟兼容的上游 JPage 命令行工具，与 MCP 并列、基于同一套 REST API。适合 Bash/脚本/CI/Agent 场景，multipart 上传大文件更省流。
+\`pagesail\` 是页舟PageSail 的命令行工具，与 MCP 并列、基于同一套 REST API。适合 Bash/脚本/CI/Agent 场景，multipart 上传大文件更省流。
 
-## 安装
+## 安装（尚未发布 npm 包，从源码安装）
 
 \`\`\`bash
-npm install -g @code2rich/jpage
-export JPAGE_BASE=${baseUrl}
+git clone https://github.com/enderchen/pagesail.git
+cd pagesail
+npm install
+npm link
+export PAGESAIL_BASE=${baseUrl}
 \`\`\`
 
 ## 认证
@@ -61,13 +64,13 @@ export JPAGE_BASE=${baseUrl}
 在「API 令牌」页创建 token 后，任选一种方式注入：
 
 \`\`\`bash
-export JPAGE_TOKEN=<YOUR_TOKEN>   # 推荐
-jpage <命令> --token <YOUR_TOKEN> # 单条命令
+export PAGESAIL_TOKEN=<YOUR_TOKEN>   # 推荐
+pagesail <命令> --token <YOUR_TOKEN> # 单条命令
 \`\`\`
 
-token 优先级：\`--token\` > \`JPAGE_TOKEN\` > \`MCP_TOKEN\`。  
-服务地址优先级：\`--base\` > \`JPAGE_BASE\` > 默认 \`https://jpage.cn\`。  
-请保留上方 JPAGE_BASE 设置，避免连接到上游服务。以下示例使用 \`${baseUrl}\`。
+token 优先级：\`--token\` > \`PAGESAIL_TOKEN\` > \`MCP_TOKEN\`。
+服务地址优先级：\`--base\` > \`PAGESAIL_BASE\` > 默认 \`http://localhost:8858\`。
+PAGESAIL_BASE 应指向你自己的服务。以下示例使用 \`${baseUrl}\`。
 
 ## 命令速查
 
@@ -83,20 +86,20 @@ token 优先级：\`--token\` > \`JPAGE_TOKEN\` > \`MCP_TOKEN\`。
 | \`tags <id> [add|set|clear] [名,名,...]\` | 标签管理 |
 | \`skills ls | get <名> | download <名>\` | Skill 包 |
 | \`whoami\` | 校验 token |
-| \`update [--check] [--registry <url>]\` | 自更新（**不需 token**） |
+| \`update [--check] [--registry <url>]\` | 源码更新说明（**不需 token**；npm 尚未发布） |
 
 ## 常用示例
 
 \`\`\`bash
-jpage upload ./report.html --public --base ${baseUrl}
-jpage ls --kw 季度
-jpage cat 8
-jpage tags 8 add Q3,财报
-jpage url 8
-jpage update
+pagesail upload ./report.html --public --base ${baseUrl}
+pagesail ls --kw 季度
+pagesail cat 8
+pagesail tags 8 add Q3,财报
+pagesail url 8
+pagesail update
 \`\`\`
 
-完整说明请运行 \`jpage --help\`。
+完整说明请运行 \`pagesail --help\`。
 `;
 }
 

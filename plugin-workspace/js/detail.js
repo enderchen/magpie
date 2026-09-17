@@ -1,4 +1,4 @@
-// 即页 uTools 插件 · 文件详情弹窗（详情 / 版本 / 标签 / 分类）
+// 页舟PageSail uTools 插件 · 文件详情弹窗（详情 / 版本 / 标签 / 分类）
 
 window.Detail = (function () {
   async function open(file, allTags, allCategories) {
@@ -6,17 +6,17 @@ window.Detail = (function () {
     let templates = [];
     if (detail.file_type === 'markdown' && !detail.is_bundle) {
       try {
-        const res = await window.jpage.listTemplates();
+        const res = await window.pagesail.listTemplates();
         templates = (res.templates || []);
       } catch (err) {
         console.warn('加载渲染模板失败', err);
       }
     }
-    const shareUrl = window.jpage.getShareUrl(detail.share_key);
+    const shareUrl = window.pagesail.getShareUrl(detail.share_key);
 
     const render = () => {
       const templateOptions = templates.map(
-        (t) => `<option value="${t.id}" ${t.id === detail.template_id ? 'selected' : ''}>${JP.escapeHtml(t.name)}${t.is_builtin ? '（内置）' : ''}</option>`
+        (t) => `<option value="${t.id}" ${t.id === detail.template_id ? 'selected' : ''}>${PS.escapeHtml(t.name)}${t.is_builtin ? '（内置）' : ''}</option>`
       ).join('');
       const templateRow = detail.file_type === 'markdown' && !detail.is_bundle
         ? `<div class="label">渲染模板</div>
@@ -29,7 +29,7 @@ window.Detail = (function () {
         : '';
 
       // 对比当前登录用户与文件上传者，帮助定位「无权操作」问题
-      const currentUser = window.jpage.getConfig().user;
+      const currentUser = window.pagesail.getConfig().user;
       const isOwner = currentUser && Number(detail.uploaded_by) === Number(currentUser.id);
       const isAdmin = currentUser && currentUser.role === 'admin';
       const ownerMatch = isOwner
@@ -39,18 +39,18 @@ window.Detail = (function () {
         : ' <span style="color:var(--danger)">⚠ 不是你（登录ID: ' + (currentUser ? currentUser.id : '?') + '）→ 无权修改</span>';
       const body = `
         <div class="detail-url-box">
-          <input class="input" id="d-shareurl" value="${JP.escapeHtml(shareUrl)}" readonly />
+          <input class="input" id="d-shareurl" value="${PS.escapeHtml(shareUrl)}" readonly />
           <button class="btn btn-sm jp-copy-url">复制链接</button>
           <button class="btn btn-sm btn-primary jp-open">打开</button>
         </div>
 
         <div class="detail-grid">
           <div class="label">文件名</div>
-          <div class="value" id="d-name">${JP.escapeHtml(detail.original_name)}</div>
+          <div class="value" id="d-name">${PS.escapeHtml(detail.original_name)}</div>
           <div class="label">类型</div>
-          <div class="value">${detail.is_bundle ? '网站包 (bundle)' : JP.fileTypeLabel(detail.file_type)}</div>
+          <div class="value">${detail.is_bundle ? '网站包 (bundle)' : PS.fileTypeLabel(detail.file_type)}</div>
           <div class="label">大小</div>
-          <div class="value">${JP.formatSize(detail.size)}</div>
+          <div class="value">${PS.formatSize(detail.size)}</div>
           <div class="label">可见性</div>
           <div class="value">
             <span id="d-visibility">${
@@ -63,7 +63,7 @@ window.Detail = (function () {
             </button>
           </div>
           <div class="label">更新时间</div>
-          <div class="value">${JP.formatDate(detail.updated_at)}</div>
+          <div class="value">${PS.formatDate(detail.updated_at)}</div>
           <div class="label">上传者</div>
           <div class="value">ID: ${detail.uploaded_by}${ownerMatch}</div>
           <div class="label">浏览次数</div>
@@ -98,7 +98,7 @@ window.Detail = (function () {
       return body;
     };
 
-    const modal = JP.modal({
+    const modal = PS.modal({
       title: detail.original_name,
       wide: true,
       bodyHtml: render(),
@@ -106,11 +106,11 @@ window.Detail = (function () {
       onMount: (mask, close) => {
         // 复制/打开
         mask.querySelector('.jp-copy-url').onclick = () => {
-          window.jpage.copyText(shareUrl);
-          JP.toast('✓ 已复制分享链接');
+          window.pagesail.copyText(shareUrl);
+          PS.toast('✓ 已复制分享链接');
         };
         mask.querySelector('.jp-open').onclick = () =>
-          window.jpage.openExternal(shareUrl);
+          window.pagesail.openExternal(shareUrl);
 
         // 标签编辑器
         renderTagEditor(mask, detail, allTags);
@@ -124,12 +124,12 @@ window.Detail = (function () {
           templateSel.onchange = async () => {
             try {
               const templateId = templateSel.value ? Number(templateSel.value) : null;
-              await window.jpage.updateFile(detail.id, { templateId });
+              await window.pagesail.updateFile(detail.id, { templateId });
               detail.template_id = templateId;
-              JP.toast('✓ 渲染模板已更新');
-              document.dispatchEvent(new CustomEvent('jpage:refresh'));
+              PS.toast('✓ 渲染模板已更新');
+              document.dispatchEvent(new CustomEvent('pagesail:refresh'));
             } catch (err) {
-              JP.showError(err);
+              PS.showError(err);
             }
           };
         }
@@ -137,7 +137,7 @@ window.Detail = (function () {
         // 切换公开/私有
         mask.querySelector('.jp-toggle-public').onclick = async () => {
           try {
-            await window.jpage.updateFile(detail.id, { isPublic: !detail.is_public });
+            await window.pagesail.updateFile(detail.id, { isPublic: !detail.is_public });
             detail.is_public = detail.is_public ? 0 : 1;
             const vis = mask.querySelector('#d-visibility');
             vis.innerHTML = detail.is_public
@@ -145,10 +145,10 @@ window.Detail = (function () {
               : '<span class="badge-private">🔒 私有</span>';
             mask.querySelector('.jp-toggle-public').textContent =
               '切换为' + (detail.is_public ? '私有' : '公开');
-            JP.toast(detail.is_public ? '已设为公开' : '已设为私有');
-            document.dispatchEvent(new CustomEvent('jpage:refresh'));
+            PS.toast(detail.is_public ? '已设为公开' : '已设为私有');
+            document.dispatchEvent(new CustomEvent('pagesail:refresh'));
           } catch (err) {
-            JP.showError(err);
+            PS.showError(err);
           }
         };
 
@@ -157,15 +157,15 @@ window.Detail = (function () {
 
         // 下载：走 /api/files/:id/download（用文件 ID，不是 share_key）
         mask.querySelector('.jp-download').onclick = () => {
-          const base = window.jpage.getConfig().base;
-          window.jpage.openExternal(`${base}/api/files/${detail.id}/download`);
+          const base = window.pagesail.getConfig().base;
+          window.pagesail.openExternal(`${base}/api/files/${detail.id}/download`);
         };
 
         // 重命名
         mask.querySelector('.jp-rename').onclick = async () => {
-          void JP.modal({
+          void PS.modal({
             title: '重命名',
-            bodyHtml: `<input id="rn-input" class="input" value="${JP.escapeHtml(
+            bodyHtml: `<input id="rn-input" class="input" value="${PS.escapeHtml(
               detail.original_name
             )}" />`,
             footerHtml: `<button class="btn jp-close">取消</button><button class="btn btn-primary jp-ok">保存</button>`,
@@ -178,17 +178,17 @@ window.Detail = (function () {
               }, 50);
               m2.querySelector('.jp-ok').onclick = async () => {
                 const name = inp.value.trim();
-                if (!name) return JP.toast('文件名不能为空');
+                if (!name) return PS.toast('文件名不能为空');
                 try {
-                  await window.jpage.updateFile(detail.id, { name });
+                  await window.pagesail.updateFile(detail.id, { name });
                   detail.original_name = name;
                   mask.querySelector('#d-name').textContent = name;
                   modal.el.querySelector('.modal-header h3').textContent = name;
                   c2();
-                  JP.toast('✓ 已重命名');
-                  document.dispatchEvent(new CustomEvent('jpage:refresh'));
+                  PS.toast('✓ 已重命名');
+                  document.dispatchEvent(new CustomEvent('pagesail:refresh'));
                 } catch (err) {
-                  JP.showError(err);
+                  PS.showError(err);
                 }
               };
             },
@@ -198,13 +198,13 @@ window.Detail = (function () {
         // 分享设置
         mask.querySelector('.jp-share').onclick = () => openShareSettings(detail, (updated) => {
           Object.assign(detail, updated);
-          const newUrl = window.jpage.getShareUrl(detail.share_key);
+          const newUrl = window.pagesail.getShareUrl(detail.share_key);
           mask.querySelector('#d-shareurl').value = newUrl;
         });
 
         // 删除
         mask.querySelector('.jp-delete').onclick = async () => {
-          const ok = await JP.confirm({
+          const ok = await PS.confirm({
             title: '删除文件',
             message: `确定删除「${detail.original_name}」？\n此操作不可撤销，将同时清理所有版本历史。`,
             danger: true,
@@ -212,12 +212,12 @@ window.Detail = (function () {
           });
           if (!ok) return;
           try {
-            await window.jpage.deleteFile(detail.id);
-            JP.toast('✓ 已删除');
+            await window.pagesail.deleteFile(detail.id);
+            PS.toast('✓ 已删除');
             close();
-            document.dispatchEvent(new CustomEvent('jpage:refresh'));
+            document.dispatchEvent(new CustomEvent('pagesail:refresh'));
           } catch (err) {
-            JP.showError(err);
+            PS.showError(err);
           }
         };
       },
@@ -226,21 +226,21 @@ window.Detail = (function () {
 
   // ---- 分享设置弹窗 ----
   function openShareSettings(file, onUpdate) {
-    const shareUrl = window.jpage.getShareUrl(file.share_key);
+    const shareUrl = window.pagesail.getShareUrl(file.share_key);
     const expiresValue = file.share_expires_at
       ? new Date(file.share_expires_at).toISOString().slice(0, 16)
       : '';
-    JP.modal({
+    PS.modal({
       title: '分享设置',
       bodyHtml: `
         <div class="detail-url-box" style="margin-bottom:12px">
-          <input class="input" value="${JP.escapeHtml(shareUrl)}" readonly />
+          <input class="input" value="${PS.escapeHtml(shareUrl)}" readonly />
           <button class="btn btn-sm jp-copy-url">复制</button>
         </div>
         <div class="detail-grid">
           <div class="label">自定义别名</div>
           <div class="value">
-            <input id="share-alias" class="input" value="${JP.escapeHtml(file.share_key)}" placeholder="3-32位字母数字连字符" />
+            <input id="share-alias" class="input" value="${PS.escapeHtml(file.share_key)}" placeholder="3-32位字母数字连字符" />
             <div style="font-size:12px;color:var(--text-mute);margin-top:4px">留空并保存可重新生成随机短链</div>
           </div>
           <div class="label">过期时间</div>
@@ -262,26 +262,26 @@ window.Detail = (function () {
         <button class="btn btn-primary jp-save">保存</button>`,
       onMount: (mask, close) => {
         mask.querySelector('.jp-copy-url').onclick = () => {
-          window.jpage.copyText(shareUrl);
-          JP.toast('✓ 已复制分享链接');
+          window.pagesail.copyText(shareUrl);
+          PS.toast('✓ 已复制分享链接');
         };
         mask.querySelector('.jp-regenerate').onclick = async () => {
-          const ok = await JP.confirm({
+          const ok = await PS.confirm({
             title: '重新生成短链',
             message: '旧短链将立即失效，是否继续？',
             confirmText: '重新生成',
           });
           if (!ok) return;
           try {
-            const data = await window.jpage.regenerateShareKey(file.id);
+            const data = await window.pagesail.regenerateShareKey(file.id);
             file.share_key = data.share_key;
             file.share_expires_at = data.share_expires_at;
             file.has_share_password = data.has_share_password;
-            JP.toast('✓ 已重新生成短链');
+            PS.toast('✓ 已重新生成短链');
             onUpdate({ share_key: data.share_key, share_expires_at: data.share_expires_at, has_share_password: data.has_share_password });
             close();
           } catch (err) {
-            JP.showError(err);
+            PS.showError(err);
           }
         };
         mask.querySelector('.jp-save').onclick = async () => {
@@ -305,15 +305,15 @@ window.Detail = (function () {
             return;
           }
           try {
-            const data = await window.jpage.updateShareSettings(file.id, payload);
+            const data = await window.pagesail.updateShareSettings(file.id, payload);
             file.share_key = data.share_key;
             file.share_expires_at = data.share_expires_at;
             file.has_share_password = data.has_share_password;
-            JP.toast('✓ 分享设置已保存');
+            PS.toast('✓ 分享设置已保存');
             onUpdate({ share_key: data.share_key, share_expires_at: data.share_expires_at, has_share_password: data.has_share_password });
             close();
           } catch (err) {
-            JP.showError(err);
+            PS.showError(err);
           }
         };
       },
@@ -332,7 +332,7 @@ window.Detail = (function () {
         if (!t) return;
         const chip = document.createElement('span');
         chip.className = 'tag-chip';
-        chip.innerHTML = `${JP.escapeHtml(t.name)} <span class="remove" data-id="${tid}">×</span>`;
+        chip.innerHTML = `${PS.escapeHtml(t.name)} <span class="remove" data-id="${tid}">×</span>`;
         chip.querySelector('.remove').onclick = () => {
           selected.delete(tid);
           save();
@@ -359,12 +359,12 @@ window.Detail = (function () {
             }
           } else {
             try {
-              const created = await window.jpage.createTag(val);
+              const created = await window.pagesail.createTag(val);
               allTags.push(created);
               selected.add(created.id);
               save();
             } catch (err) {
-              JP.showError(err);
+              PS.showError(err);
             }
           }
           paint();
@@ -375,10 +375,10 @@ window.Detail = (function () {
 
     async function save() {
       try {
-        await window.jpage.setFileTags(detail.id, Array.from(selected));
-        JP.toast('✓ 标签已更新');
+        await window.pagesail.setFileTags(detail.id, Array.from(selected));
+        PS.toast('✓ 标签已更新');
       } catch (err) {
-        JP.showError(err);
+        PS.showError(err);
         console.error('[打标签失败]', 'fileId:', detail.id, 'uploaded_by:', detail.uploaded_by, 'err:', err);
       }
     }
@@ -394,18 +394,18 @@ window.Detail = (function () {
       allCategories
         .map(
           (c) =>
-            `<option value="${c.id}" ${c.id === detail.category_id ? 'selected' : ''}>${JP.escapeHtml(
+            `<option value="${c.id}" ${c.id === detail.category_id ? 'selected' : ''}>${PS.escapeHtml(
               c.name
             )} (${c.file_count || 0})</option>`
         )
         .join('');
     sel.onchange = async () => {
       try {
-        await window.jpage.setFileCategory(detail.id, sel.value ? Number(sel.value) : null);
-        JP.toast('✓ 分类已更新');
-        document.dispatchEvent(new CustomEvent('jpage:refresh'));
+        await window.pagesail.setFileCategory(detail.id, sel.value ? Number(sel.value) : null);
+        PS.toast('✓ 分类已更新');
+        document.dispatchEvent(new CustomEvent('pagesail:refresh'));
       } catch (err) {
-        JP.showError(err);
+        PS.showError(err);
       }
     };
   }
@@ -415,7 +415,7 @@ window.Detail = (function () {
     const box = mask.querySelector('#d-versions');
     box.innerHTML = '<div class="loading"><span class="spinner"></span><div>加载中…</div></div>';
     try {
-      const data = await window.jpage.listVersions(detail.id);
+      const data = await window.pagesail.listVersions(detail.id);
       const list = data.versions || [];
       if (!list.length) {
         box.innerHTML = '<div style="color:var(--text-mute);font-size:13px;padding:8px 0">暂无历史版本（仅当前版本）</div>';
@@ -424,13 +424,13 @@ window.Detail = (function () {
       box.innerHTML =
         '<div class="version-list">' +
         '<div class="version-item current"><div><strong>当前版本</strong></div><div>' +
-        JP.formatSize(data.current.size) + ' · ' + JP.formatDate(data.current.updated_at) +
+        PS.formatSize(data.current.size) + ' · ' + PS.formatDate(data.current.updated_at) +
         '</div></div>' +
         list
           .map(
             (v) =>
               `<div class="version-item">
-                 <div>v${v.version} · ${JP.formatSize(v.size)} · ${JP.formatDate(v.created_at)}</div>
+                 <div>v${v.version} · ${PS.formatSize(v.size)} · ${PS.formatDate(v.created_at)}</div>
                  <div style="display:flex;gap:6px">
                    <button class="btn btn-sm jp-restore" data-v="${v.version}">恢复</button>
                  </div>
@@ -441,24 +441,24 @@ window.Detail = (function () {
       box.querySelectorAll('.jp-restore').forEach((btn) => {
         btn.onclick = async () => {
           const v = btn.getAttribute('data-v');
-          const ok = await JP.confirm({
+          const ok = await PS.confirm({
             title: '恢复版本',
             message: `恢复到 v${v}？当前版本会自动备份到历史，不会丢失。`,
             confirmText: '恢复',
           });
           if (!ok) return;
           try {
-            await window.jpage.restoreVersion(detail.id, v);
-            JP.toast('✓ 已恢复到 v' + v);
+            await window.pagesail.restoreVersion(detail.id, v);
+            PS.toast('✓ 已恢复到 v' + v);
             loadVersions(mask, detail);
-            document.dispatchEvent(new CustomEvent('jpage:refresh'));
+            document.dispatchEvent(new CustomEvent('pagesail:refresh'));
           } catch (err) {
-            JP.showError(err);
+            PS.showError(err);
           }
         };
       });
     } catch (err) {
-      box.innerHTML = '<div style="color:var(--danger);font-size:13px">' + JP.escapeHtml(err.message) + '</div>';
+      box.innerHTML = '<div style="color:var(--danger);font-size:13px">' + PS.escapeHtml(err.message) + '</div>';
     }
   }
 

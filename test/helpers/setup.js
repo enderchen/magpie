@@ -9,8 +9,8 @@ let counter = 0;
 
 function createTestEnv() {
   const dataDir = path.join(__dirname, '..', '..', `data-test-${process.pid}-${counter++}`);
-  // 在 require server.js 之前设好环境变量（lib/paths 在 require 时读取 JPAGE_DATA_DIR）
-  process.env.JPAGE_DATA_DIR = dataDir;
+  // 在 require server.js 之前设好环境变量（lib/paths 在 require 时读取 PAGESAIL_DATA_DIR）
+  process.env.PAGESAIL_DATA_DIR = dataDir;
   process.env.NODE_ENV = 'test';
   process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'test-session-secret-fixed';
   process.env.ADMIN_USER = 'admin';

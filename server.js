@@ -1,4 +1,4 @@
-// 即页 jpage 服务端入口。
+// 页舟PageSail pagesail 服务端入口。
 // 仅负责：app 创建、中间件装配、路由挂载、MCP/静态/catch-all、全局错误处理、启动编排与关闭钩子。
 // 业务逻辑分布在 lib/（共享层）与 routes/（按域拆分的 Router）。
 
@@ -115,7 +115,7 @@ app.use(session({
   secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
-  name: 'jpage.sid',
+  name: 'pagesail.sid',
   cookie: {
     httpOnly: true,
     sameSite: 'lax',
@@ -402,7 +402,7 @@ function getIndexHtml(nonce) {
     ? `<p class="landing-icp"><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">${escapeHtml(ICP_BEIAN)}</a></p>`
     : '';
   html = html.replace('<!-- {{ICP_BEIAN_PLACEHOLDER}} -->', icpHtml);
-  html = html.replace('</head>', `<script nonce="${nonce}">window.__JPAGE_ICP_BEIAN__ = ${JSON.stringify(ICP_BEIAN)};</script></head>`);
+  html = html.replace('</head>', `<script nonce="${nonce}">window.__PAGESAIL_ICP_BEIAN__ = ${JSON.stringify(ICP_BEIAN)};</script></head>`);
   _indexHtmlCache = { html, manifestMtime, manifest, nonce };
   return html;
 }
@@ -498,14 +498,14 @@ if (require.main === module) {
         cron.schedule(backupCron, () => {
           try {
             const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-            const fname = `jpage-backup-${ts}.zip`;
+            const fname = `pagesail-backup-${ts}.zip`;
             const fpath = path.join(backupDir, fname);
             const output = fs.createWriteStream(fpath);
             const archive = createBackupArchive();
             output.on('close', () => {
               logger.info({ type: 'app', message: '自动备份完成', file: fpath });
               const backups = fs.readdirSync(backupDir)
-                .filter(f => f.startsWith('jpage-backup-') && f.endsWith('.zip'))
+                .filter(f => f.startsWith('pagesail-backup-') && f.endsWith('.zip'))
                 .sort();
               while (backups.length > 7) {
                 fs.unlinkSync(path.join(backupDir, backups.shift()));

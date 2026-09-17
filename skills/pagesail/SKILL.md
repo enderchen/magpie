@@ -1,8 +1,9 @@
 ---
-name: jpage
-description: 即页（jpage）统一技能：生成 HTML/Markdown 内容、制作 reveal.js 幻灯片、使用内容模板市场风格、上传到即页并管理文件。所有内容生产与文件管理操作都通过本技能完成。
-version: 1.6.6
-author: jpage
+name: pagesail
+description: 页舟PageSail统一技能：生成 HTML/Markdown 内容、制作 reveal.js 幻灯片、使用内容模板市场风格、上传到页舟PageSail并管理文件。所有内容生产与文件管理操作都通过本技能完成。
+metadata:
+  version: "1.6.7"
+  author: enderchen
 ---
 
 # 核心规则
@@ -12,40 +13,40 @@ author: jpage
 - 生成 HTML 页面、Markdown 文档、报告、仪表板、简历、可视化等可预览内容
 - 制作 PPT / 幻灯片 / 演示文稿 / deck
 - 参照模板市场风格生成内容
-- 上传到即页、获取预览链接、管理已上传文件
+- 上传到页舟PageSail、获取预览链接、管理已上传文件
 
 **统一走本技能的工作流**。
 
-> 内容生成后必须调用 `upload_file` 上传到即页，返回预览链接；不要只输出代码块让用户自己复制。
+> 内容生成后必须调用 `upload_file` 上传到页舟PageSail，返回预览链接；不要只输出代码块让用户自己复制。
 > 大段 base64 上传很慢且费 token，本地已有的大文件 / ZIP 优先用 CLI 或 curl multipart 上传。
 
 ---
 
 # 安装 CLI
 
-本 Skill 推荐配合 **jpage CLI** 使用。只要当前环境有 Node.js ≥ 20，就可以全局安装：
+本 Skill 推荐配合 **pagesail CLI** 使用。当前尚未发布 npm 包。准备好 Node.js ≥ 20 并取得 PageSail 源码后，在源码目录安装：
 
 ```bash
-npm install -g @code2rich/jpage
+npm install && npm link  # 在 PageSail 源码目录执行，npm 包尚未发布
 ```
 
 安装后验证：
 
 ```bash
-jpage --version
+pagesail --version
 ```
 
 配置 Token（三选一即可）：
 
 ```bash
 # 1. 环境变量
-export JPAGE_TOKEN="jp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+export PAGESAIL_TOKEN="ps_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
 # 2. 当前目录 .env
-# echo 'JPAGE_TOKEN=jp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' > .env
+# echo 'PAGESAIL_TOKEN=ps_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' > .env
 
 # 3. 临时命令参数
-jpage whoami --token jp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+pagesail whoami --token ps_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 > 没有 npm / 无法安装 CLI / 没有 Bash 能力的纯 MCP 客户端，直接调用下方的 MCP 工具即可，无需安装。
@@ -56,36 +57,36 @@ CLI 安装好后，把本 Skill 同步到 Claude Code / Desktop 的 skills 目�
 
 ```bash
 # 自动安装到默认 skills 目录（按 ~/.claude/skills → ~/.claude-code/skills → ~/.agents/skills 顺序检测）
-jpage skill install
+pagesail skill install
 
 # 或指定目录
-jpage skill install --dir ~/.claude/skills/jpage
+pagesail skill install --dir ~/.claude/skills/pagesail
 ```
 
-后续升级 jpage 后，用同一条命令覆盖更新：
+后续升级 pagesail 后，用同一条命令覆盖更新：
 
 ```bash
-jpage skill update
+pagesail skill update
 ```
 
-> 该命令会把 npm 包内置的 `skills/jpage/` 完整复制到目标目录，包括 SKILL.md 和 assets/ 资源。
+> 该命令会把 npm 包内置的 `skills/pagesail/` 完整复制到目标目录，包括 SKILL.md 和 assets/ 资源。
 
 ---
 
 # 入口优先级：CLI 优先，MCP 兜底
 
-本 Skill 同时对应 **jpage CLI（命令行）** 与 **MCP 工具** 两套入口。执行上传、模板实例化、批量管理等任何操作时：
+本 Skill 同时对应 **pagesail CLI（命令行）** 与 **MCP 工具** 两套入口。执行上传、模板实例化、批量管理等任何操作时：
 
-1. **优先使用 jpage CLI**。只要当前环境能调用 `jpage` 命令（或可通过 npm/pnpm 安装），就先走 CLI：二进制流式上传、base64 不进模型、速度最快、token 消耗最少。
+1. **优先使用 pagesail CLI**。只要当前环境能调用 `pagesail` 命令（或可通过 npm/pnpm 安装），就先走 CLI：二进制流式上传、base64 不进模型、速度最快、token 消耗最少。
 2. **CLI 不可用时，再调用 MCP 工具**。纯 MCP 客户端（无 Bash、无法执行命令、无法安装 CLI）才通过 `upload_file`、`instantiate_content_template` 等 tool 完成。
 
-> 判断标准：能否在当前环境执行 `jpage --version` 并成功返回版本号？能 → CLI；不能 → MCP。
+> 判断标准：能否在当前环境执行 `pagesail --version` 并成功返回版本号？能 → CLI；不能 → MCP。
 
 ---
 
 # 触发场景
 
-- 「上传到即页」「发到即页」「生成链接」
+- 「上传到页舟PageSail」「发到页舟PageSail」「生成链接」
 - 生成 HTML 页面、网页、落地页、仪表板、报告、邮件模板
 - 生成 Markdown 笔记、文档、README
 - 创建简历、名片、个人主页、作品展示页
@@ -93,7 +94,7 @@ jpage skill update
 - 将代码片段转为可预览的 HTML 展示页
 - 生成 PPT / 幻灯片 / 演示文稿 / deck / 答辩 slides
 - 「参照模板生成…」「用模板风格生成…」「从模板市场找一个…」
-- 管理即页文件：列表、查看、修改、标签、分类、版本、删除、分享链接
+- 管理页舟PageSail文件：列表、查看、修改、标签、分类、版本、删除、分享链接
 
 ---
 
@@ -108,7 +109,7 @@ jpage skill update
 - 图片用 data URI 或在线 URL
 - 全部塞进一个 `.html` 里
 
-不要把普通页面拆成 `index.html + style.css + app.js` 再打 ZIP——单文件在即页里预览最稳、分享最简单。
+不要把普通页面拆成 `index.html + style.css + app.js` 再打 ZIP——单文件在页舟PageSail里预览最稳、分享最简单。
 
 ### HTML 文件必须包含
 
@@ -137,7 +138,7 @@ jpage skill update
 
 ### Markdown 文件
 
-即页 Markdown 渲染引擎支持：
+页舟PageSail Markdown 渲染引擎支持：
 
 - 代码高亮（highlight.js）
 - 数学公式：行内 `$...$`，块级 `$$...$$`（KaTeX）
@@ -148,7 +149,7 @@ jpage skill update
 
 # 幻灯片 / PPT 工作流（Bundle 模式）
 
-reveal.js 引擎 ~85KB，单文件内联会让每个 PPT 膨胀。即页有 **Bundle 机制**（ZIP 解压成目录，资源共用），必须走这条路。
+reveal.js 引擎 ~85KB，单文件内联会让每个 PPT 膨胀。页舟PageSail有 **Bundle 机制**（ZIP 解压成目录，资源共用），必须走这条路。
 
 ## 1. 规划结构
 
@@ -242,7 +243,7 @@ deck/
 reveal.js 引擎 + 基础 CSS + 4 套主题 + notes/highlight 插件骨架**已随本 Skill 包下发**（`assets/` 目录）。生成幻灯片时直接复制：
 
 ```bash
-SKILL=~/.claude/skills/jpage
+SKILL=~/.claude/skills/pagesail
 
 mkdir -p deck/assets/plugin/notes deck/assets/plugin/highlight
 cp "$SKILL/assets/reveal.js"              deck/assets/
@@ -284,8 +285,8 @@ mv deck/assets/reveal.css deck/assets/reveal-base.css
 # 打 ZIP（flat 结构）
 cd deck && zip -rq ../deck.zip index.html assets/ && cd ..
 
-# 用 jpage CLI 上传（推荐）
-jpage upload deck.zip --public
+# 用 pagesail CLI 上传（推荐）
+pagesail upload deck.zip --public
 
 # 或 curl multipart
 curl -sS -X POST "$BASE/api/files/upload" \
@@ -334,7 +335,7 @@ upload_file(
    - 使用的 CSS 技术（Grid/Flexbox/absolute 等）
    - 特殊效果（渐变、阴影、动画等）
 5. 根据用户的具体内容需求，生成风格一致但内容全新的 HTML/Markdown
-6. 调 upload_file 上传到即页，返回预览链接
+6. 调 upload_file 上传到页舟PageSail，返回预览链接
 ```
 
 ## 场景二：自动推荐模板
@@ -371,10 +372,10 @@ upload_file(
 
 ```bash
 # 查看市场模板列表
-jpage template ls --category html-book --limit 5
+pagesail template ls --category html-book --limit 5
 
 # 使用指定模板实例化（默认私有）
-jpage template use 42 --name "我的报告.html" --public
+pagesail template use 42 --name "我的报告.html" --public
 ```
 
 **CLI 不可用时，再调用 MCP 工具**：
@@ -388,7 +389,7 @@ instantiate_content_template(
 ```
 
 > 注意：
-> - `instantiate_content_template` 需要有效的 API Token（`jp_...`）或 `MCP_TOKEN`，Session Cookie 会被拒绝。
+> - `instantiate_content_template` 需要有效的 API Token（`ps_...`）或 `MCP_TOKEN`，Session Cookie 会被拒绝。
 > - 实例化成功后会在用户账户下创建一个真实文件，返回 `url` 可直接分享。
 
 ## 分类与关键词对照
@@ -437,7 +438,7 @@ AI 拿到样例后应学习的维度（按优先级）：
   "size": 12345,
   "is_public": 1,
   "share_key": "abc12345",
-  "url": "http://jpage.example.com/s/abc12345"
+  "url": "http://pagesail.example.com/s/abc12345"
 }
 ```
 
@@ -498,7 +499,7 @@ restore_file_version(fileId=42, version=3)
 
 ```
 调 get_file_url(id=42)
-→ 返回 { id: 42, url: "http://jpage.example.com/s/abc12345" }
+→ 返回 { id: 42, url: "http://pagesail.example.com/s/abc12345" }
 ```
 
 短链接格式 `/s/:key` 是最佳分享方式，公开文件无需登录即可访问。
@@ -522,10 +523,10 @@ restore_file_version(fileId=42, version=3)
 有 Bash 时，直接走 REST multipart，二进制流式上传，base64 完全不进模型：
 
 ```bash
-# 推荐：jpage CLI
-jpage upload ./site.zip --public
-jpage upload ./report.html --public
-jpage upload ./x.html --overwrite 42
+# 推荐：pagesail CLI
+pagesail upload ./site.zip --public
+pagesail upload ./report.html --public
+pagesail upload ./x.html --overwrite 42
 
 # 或 curl multipart
 curl -sS -X POST "$BASE/api/files/upload" \
@@ -534,7 +535,7 @@ curl -sS -X POST "$BASE/api/files/upload" \
   -F "isPublic=true"
 ```
 
-> token 三选一：`.env` 里的 `MCP_TOKEN`、`.mcp.json` 里的 Bearer、用户给的 `jp_` 用户 token。
+> token 三选一：`.env` 里的 `MCP_TOKEN`、`.mcp.json` 里的 Bearer、用户给的 `ps_` 用户 token。
 
 ## 模型现场生成的多文件站点 → Write 写盘 → zip → 上传
 
@@ -542,7 +543,7 @@ curl -sS -X POST "$BASE/api/files/upload" \
 
 ```bash
 zip -r site.zip index.html assets/
-jpage upload site.zip --public
+pagesail upload site.zip --public
 ```
 
 ## 模型刚生成的 HTML/MD（含大文件）→ 直接 upload_file

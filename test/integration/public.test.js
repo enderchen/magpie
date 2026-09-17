@@ -24,7 +24,7 @@ test('POST /api/public/try-paste → 空内容返回 400', async () => {
 test('POST /api/public/try-paste → HTML 内容生成临时页面', async () => {
   const res = await request(env.app)
     .post('/api/public/try-paste')
-    .send({ content: '<h1>Hello jpage</h1>' });
+    .send({ content: '<h1>Hello pagesail</h1>' });
   assert.strictEqual(res.status, 200);
   assert.ok(res.body.id);
   assert.strictEqual(res.body.file_type, 'html');
@@ -35,7 +35,7 @@ test('POST /api/public/try-paste → HTML 内容生成临时页面', async () =>
   // 短链可公开访问
   const shareRes = await request(env.app).get(res.body.url);
   assert.strictEqual(shareRes.status, 200);
-  assert.match(shareRes.text, /Hello jpage/);
+  assert.match(shareRes.text, /Hello pagesail/);
 });
 
 test('POST /api/public/try-paste → Markdown 内容生成临时页面', async () => {

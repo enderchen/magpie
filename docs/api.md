@@ -1,6 +1,6 @@
-# 即页 REST API 参考
+# 页舟PageSail REST API 参考
 
-端口 `8858`（`PORT` 可覆盖）。所有写入类端点要求登录（session cookie `jpage.sid`）或 Bearer token。
+端口 `8858`（`PORT` 可覆盖）。所有写入类端点要求登录（session cookie `pagesail.sid`）或 Bearer token。
 
 ## 通用说明
 
@@ -8,7 +8,7 @@
 |---|---|
 | Base URL | `http://localhost:8858` |
 | 内容类型 | 除 `POST /api/files/upload`（multipart）外均为 `application/json` |
-| 鉴权 | 三选一：session cookie `jpage.sid`（登录后获得）**或** 用户级 API Token（`Authorization: Bearer jp_xxx`）**或** 全局 `MCP_TOKEN`（向后兼容） |
+| 鉴权 | 三选一：session cookie `pagesail.sid`（登录后获得）**或** 用户级 API Token（`Authorization: Bearer ps_xxx`）**或** 全局 `MCP_TOKEN`（向后兼容） |
 | 字符集 | UTF-8 |
 | 文件大小上限 | 50 MB |
 | 允许扩展名（上传） | `.html` `.htm` `.md` `.markdown` `.zip` |
@@ -26,7 +26,7 @@
 当前登录信息。返回 `{id, username, email, emailVerified, role}` 或 401。
 
 ```bash
-curl -b jpage.sid=<cookie> http://localhost:8858/api/auth/me
+curl -b pagesail.sid=<cookie> http://localhost:8858/api/auth/me
 ```
 
 ### `POST /api/auth/login`
@@ -39,7 +39,7 @@ curl -b jpage.sid=<cookie> http://localhost:8858/api/auth/me
 - 用户名不存在 → 404。
 
 ```bash
-curl -c jpage.sid -X POST http://localhost:8858/api/auth/login \
+curl -c pagesail.sid -X POST http://localhost:8858/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"account":"admin","password":"admin1234"}'
 ```
@@ -138,7 +138,7 @@ Google OIDC 授权回调。服务端校验 state、nonce、签名、issuer 与 a
 - `isPublic` — `true` / `false`（可选，默认 `true`）
 
 ```bash
-curl -b jpage.sid -X POST http://localhost:8858/api/files/upload \
+curl -b pagesail.sid -X POST http://localhost:8858/api/files/upload \
   -F "file=@report.html" \
   -F "isPublic=true"
 ```
@@ -168,7 +168,7 @@ curl -b jpage.sid -X POST http://localhost:8858/api/files/upload \
 返回同 multipart 端点。`uploaded_by` 自动取 session 用户 id。同名文件自动覆盖（备份旧版本到 `file_versions`）。
 
 ```bash
-curl -b jpage.sid -X POST http://localhost:8858/api/files/upload-json \
+curl -b pagesail.sid -X POST http://localhost:8858/api/files/upload-json \
   -H "Content-Type: application/json" \
   -d '{"name":"hello.html","content":"<h1>hi</h1>"}'
 ```
@@ -187,7 +187,7 @@ MCP `upload_file` 调用的 ZIP 入口。Body: `{name, content(base64), ...}`，
 至少传一个字段。仅 admin 或文件所有者。
 
 ```bash
-curl -b jpage.sid -X PUT http://localhost:8858/api/files/1 \
+curl -b pagesail.sid -X PUT http://localhost:8858/api/files/1 \
   -H "Content-Type: application/json" \
   -d '{"name":"new-name.html"}'
 ```
@@ -346,7 +346,7 @@ MCP 使用的 JSON 覆盖上传，自动版本备份。
 
 ## API Token
 
-每用户最多 10 个，格式 `jp_` + 32 位 base62，DB 存 SHA-256 哈希 + 前 8 位前缀，明文仅创建时返回一次。
+每用户最多 10 个，格式 `ps_` + 32 位 base62，DB 存 SHA-256 哈希 + 前 8 位前缀，明文仅创建时返回一次。
 
 | 端点 | 方法 | 说明 |
 |---|---|---|
@@ -397,7 +397,7 @@ MCP 使用的 JSON 覆盖上传，自动版本备份。
 
 ## Skills（AI 技能包）
 
-技能包是与 jpage MCP server 配套的 [Claude Code / Claude Desktop Skill](https://modelcontextprotocol.io) 仓库。Web UI 的"AI 技能"区域支持浏览与下载。
+技能包是与 pagesail MCP server 配套的 [Claude Code / Claude Desktop Skill](https://modelcontextprotocol.io) 仓库。Web UI 的"AI 技能"区域支持浏览与下载。
 
 - `GET /api/skills` — 列出 `skills/*/SKILL.md` 中的所有 skill
 - `GET /api/skills/:name` — 返回 skill 详情（含 SKILL.md 正文 + 文件清单）
@@ -413,16 +413,16 @@ MCP 使用的 JSON 覆盖上传，自动版本备份。
 ### `GET /api/skills`
 
 ```bash
-curl -b jpage.sid http://localhost:8858/api/skills
+curl -b pagesail.sid http://localhost:8858/api/skills
 ```
 
 ```json
 {
   "skills": [
     {
-      "name": "jpage",
-      "title": "jpage",
-      "description": "即页统一技能：生成 HTML / Markdown 内容、制作幻灯片、使用模板市场、上传文件…",
+      "name": "pagesail",
+      "title": "pagesail",
+      "description": "页舟PageSail统一技能：生成 HTML / Markdown 内容、制作幻灯片、使用模板市场、上传文件…",
       "version": "",
       "author": "",
       "fileCount": 1,
@@ -435,7 +435,7 @@ curl -b jpage.sid http://localhost:8858/api/skills
 ### `GET /api/skills/:name`
 
 ```bash
-curl -b jpage.sid http://localhost:8858/api/skills/jpage
+curl -b pagesail.sid http://localhost:8858/api/skills/pagesail
 ```
 
 返回：`{name, title, description, version, author, fileCount, totalSize, files: [...], body: "<SKILL.md 正文 markdown>"}`
@@ -443,10 +443,10 @@ curl -b jpage.sid http://localhost:8858/api/skills/jpage
 ### `GET /api/skills/:name/download`
 
 ```bash
-curl -b jpage.sid -OJ http://localhost:8858/api/skills/jpage/download
+curl -b pagesail.sid -OJ http://localhost:8858/api/skills/pagesail/download
 ```
 
-下载 `jpage.zip`，解压后是完整的 skill 目录（顶层目录名为 skill 名），可直接复制到 `~/.claude/skills/`。
+下载 `pagesail.zip`，解压后是完整的 skill 目录（顶层目录名为 skill 名），可直接复制到 `~/.claude/skills/`。
 
 ---
 
@@ -484,10 +484,10 @@ curl -X POST http://localhost:8858/api/feedback \
 | 项 | 值 |
 |---|---|
 | 路径 | `POST`/`GET`/`DELETE` `/mcp` |
-| 鉴权 | `Authorization: Bearer <MCP_TOKEN>`（全局，向后兼容）**或** 用户级 API Token（`jp_xxx`） |
+| 鉴权 | `Authorization: Bearer <MCP_TOKEN>`（全局，向后兼容）**或** 用户级 API Token（`ps_xxx`） |
 | 协议 | MCP Streamable HTTP（最新规范） |
 | 工具（15 个） | `list_files` / `upload_file` / `get_file_content` / `delete_file` / `rename_file` / `get_file_url` / `list_file_versions` / `restore_file_version` / `list_tags` / `add_tags_to_file` / `star_file` / `unstar_file` / `list_categories` / `create_category` / `set_file_category` |
-| 资源 | `jpage://files` / `jpage://file/{id}`（≤ 256KB） |
+| 资源 | `pagesail://files` / `pagesail://file/{id}`（≤ 256KB） |
 
 工具和资源**不走 `fetch('http://127.0.0.1:port/...')` 自调用**，而是通过 `lib/dispatch.js` 的进程内分发器直接调用 `app.handle()`，复用同一 Bearer token。绕过 TCP 序列化与二次鉴权 DB 查询（单次调用约快 80%），同时权限、限流、审计与 HTTP 完全一致。
 
@@ -502,7 +502,7 @@ curl -X POST http://localhost:8858/api/feedback \
 | `PORT` | `8858` | HTTP 监听端口 |
 | `NODE_ENV` | `development` | `production` 时强制要求 `SESSION_SECRET`，Cookie 仅 HTTPS 下发送 |
 | `SESSION_SECRET` | 随机生成（开发） | session 签名密钥。生产必设 |
-| `JPAGE_DATA_DIR` | `./data` | 数据目录（数据库、会话、上传文件） |
+| `PAGESAIL_DATA_DIR` | `./data` | 数据目录（数据库、会话、上传文件） |
 | `ADMIN_USER` | `admin` | 启动时若 users 表为空，自动创建该用户名的管理员 |
 | `ADMIN_PASSWORD` | — | 管理员密码（≥ 8 位）。留空则自动生成 16 位随机密码并打到启动日志 |
 | `MCP_TOKEN` | — | 全局 `/mcp` Bearer token（可选）。**未设置时仍可用用户级 API Token 访问 `/mcp`** |

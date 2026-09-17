@@ -25,7 +25,7 @@ const { registerResources } = require('./resources');
  */
 function createMcpServer({ port, api, mcpIp, protocol }) {
   const server = new McpServer(
-    { name: 'jpage', version: pkgVersion },
+    { name: 'pagesail', version: pkgVersion },
     { capabilities: {} }
   );
 

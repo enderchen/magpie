@@ -16,7 +16,7 @@ const router = express.Router();
 function generateApiToken() {
   const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   const bytes = crypto.randomBytes(32);
-  let token = 'jp_';
+  let token = 'ps_';
   for (let i = 0; i < 32; i++) {
     token += chars[bytes[i] % chars.length];
   }

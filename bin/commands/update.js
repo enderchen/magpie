@@ -1,6 +1,6 @@
-// update 命令：把 jpage 自更新到最新版（npm 全局包）。
+// update 命令：把 pagesail 自更新到最新版（npm 全局包）。
 //
-// 纯客户端操作：不调后端 API，不需 token（自更新与 jpage 服务端无关）。
+// 纯客户端操作：不调后端 API，不需 token（自更新与 pagesail 服务端无关）。
 // 流程：npm view 查最新版本 → 与本地对比 → 有新版则 npm install -g 重装。
 //
 // 可注入 npmExec（形如 (args) => string）：测试时注入假执行器，避免真的跑 npm。
@@ -9,7 +9,7 @@
 const { execFileSync } = require('child_process');
 const { out, err } = require('./_shared');
 
-const PKG_NAME = '@code2rich/jpage';
+const PKG_NAME = require('../../package.json').name;
 const npmBin = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 // 默认 npm 执行器：同步拿 stdout（trim 尾部换行）。
@@ -27,13 +27,13 @@ async function run(_client, args, ctx) {
 
   // --registry 后面没给值时，args.js 会把它解析成 true。
   if (o.registry === true) {
-    const e = new Error('用法：jpage update [--registry <url>] [--check]');
+    const e = new Error('用法：pagesail update [--registry <url>] [--check]');
     e.name = 'UsageError';
     throw e;
   }
-  // Forks must never replace their CLI with the upstream npm package.
+  // Keep npm updates disabled until this package is published.
   if (require('../../package.json').private) {
-    out('PageSail 从自己的 Git 仓库更新，不执行上游 npm 自更新。\n');
+    out('PageSail 从自己的 Git 仓库更新，当前尚未发布 npm 包。\n');
     out('请审阅并合并 https://github.com/enderchen/pagesail 中的更新。\n');
     return;
   }
@@ -75,7 +75,7 @@ async function run(_client, args, ctx) {
     return;
   }
 
-  out(`✓ 已更新到 ${latest}，重新运行 jpage 生效\n`);
+  out(`✓ 已更新到 ${latest}，重新运行 pagesail 生效\n`);
 }
 
 module.exports = { run };

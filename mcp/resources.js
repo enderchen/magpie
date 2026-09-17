@@ -1,17 +1,17 @@
-// MCP 资源：jpage://files（全部文件元数据）/ jpage://file/{id}（单文件内容）。
+// MCP 资源：pagesail://files（全部文件元数据）/ pagesail://file/{id}（单文件内容）。
 // 从 mcp-server.js 提取，行为保持不变。
 
 const { ResourceTemplate } = require('@modelcontextprotocol/sdk/server/mcp.js');
 const { RESOURCE_MAX_BYTES } = require('./constants');
 
 function registerResources(server, { api }) {
-  // --- jpage://files ---
+  // --- pagesail://files ---
   server.registerResource(
     'files',
-    'jpage://files',
+    'pagesail://files',
     {
       title: 'All Files',
-      description: 'jpage 中所有文件的元数据列表（id, name, type, size, is_public, created_at）。适用于快速浏览文件概况，无需逐个查询。',
+      description: 'pagesail 中所有文件的元数据列表（id, name, type, size, is_public, created_at）。适用于快速浏览文件概况，无需逐个查询。',
       mimeType: 'application/json',
     },
     async () => {
@@ -19,7 +19,7 @@ function registerResources(server, { api }) {
       return {
         contents: [
           {
-            uri: 'jpage://files',
+            uri: 'pagesail://files',
             mimeType: 'application/json',
             text: JSON.stringify(data.files, null, 2),
           },
@@ -28,10 +28,10 @@ function registerResources(server, { api }) {
     }
   );
 
-  // --- jpage://file/{id} ---
+  // --- pagesail://file/{id} ---
   server.registerResource(
     'file',
-    new ResourceTemplate('jpage://file/{id}', { list: undefined }),
+    new ResourceTemplate('pagesail://file/{id}', { list: undefined }),
     {
       title: 'Single File Content',
       description:

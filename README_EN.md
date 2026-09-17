@@ -1,10 +1,10 @@
-# PageSail · 页舟
+# 页舟PageSail
 
 > A page carries a world.
 
-PageSail is an independent fork of [JPage](https://github.com/code2rich/jpage), distributed under the original MIT license. Original copyright notices are retained.
+PageSail provides HTML, Markdown and ZIP preview and sharing under the MIT license.
 
-No standalone PageSail npm package has been published. The JPage CLI, uTools plugin and Skills described below are upstream compatibility tools; always set `--base` or `JPAGE_BASE` to your PageSail server. The bundled CLI defaults to localhost:8858 and disables upstream npm self-update. Protocol and storage identifiers remain compatible.
+The npm package is prepared locally and has not been published. Install the CLI from source using the instructions below. It defaults to localhost:8858; set PAGESAIL_BASE or --base for another server. Plugin source remains available for development, without a website entrypoint.
 
 [![CI](https://github.com/enderchen/pagesail/actions/workflows/ci.yml/badge.svg)](https://github.com/enderchen/pagesail/actions/workflows/ci.yml)
 
@@ -24,7 +24,7 @@ No standalone PageSail npm package has been published. The JPage CLI, uTools plu
 - [REST API](#rest-api)
 - [MCP / AI Integration](#mcp--ai-integration)
 - [Use Cases](#use-cases)
-- [Why jpage](#why-jpage)
+- [Why pagesail](#why-pagesail)
 - [License](#license)
 
 ---
@@ -128,28 +128,23 @@ node test/mcp-harness.js 8858    # MCP endpoint
 node test/perf-bench.js 8858     # Render/list/cache latency benchmarks
 ```
 
-### CLI Tool (Published on npm)
+### CLI Tool (Install from source)
 
-jpage ships with a `jpage` CLI for uploading, listing, and managing files via the REST API. For large files and ZIPs it uses multipart binary streaming, which is faster and cheaper than MCP's base64-in-token flow:
-
-```bash
-npm install -g @code2rich/jpage
-export JPAGE_BASE=http://localhost:8858  # Your own PageSail server
-jpage upload ./report.html --public --token <your-token>
-jpage ls --kw quarterly
-jpage cat 8
-jpage --help
-```
-
-`jpage` and MCP are symmetric client entry points over the same REST API. See `jpage --help` for details.
-
-Update to the latest version (no token required):
+pagesail ships with a `pagesail` CLI for uploading, listing, and managing files via the REST API. For large files and ZIPs it uses multipart binary streaming, which is faster and cheaper than MCP's base64-in-token flow:
 
 ```bash
-jpage update                  # Self-update to the latest version
-jpage update --check          # Check for updates only
-jpage update --registry https://registry.npmmirror.com   # Mirror registry
+npm install
+npm link  # Run in this source checkout
+export PAGESAIL_BASE=http://localhost:8858  # Your own PageSail server
+pagesail upload ./report.html --public --token <your-token>
+pagesail ls --kw quarterly
+pagesail cat 8
+pagesail --help
 ```
+
+`pagesail` and MCP are symmetric client entry points over the same REST API. See `pagesail --help` for details.
+
+Until the npm release is enabled, `pagesail update` only prints source update instructions and does not call npm.
 
 ### Release Process
 
@@ -159,7 +154,7 @@ Maintainer release guide (GitHub Actions automated release, token rotation, trou
 
 ## Auth & Security
 
-jpage supports a multi-user system. The admin manages all users and files; regular users can only access their own files and public files.
+pagesail supports a multi-user system. The admin manages all users and files; regular users can only access their own files and public files.
 
 Share links (`/api/files/:id/render`, `/s/:key`, download, source) are anonymously accessible when the file is marked public. Uncheck **Public access** on upload to make the file visible only to the owner and admin.
 
@@ -169,8 +164,8 @@ Share links (`/api/files/:id/render`, `/s/:key`, download, source) are anonymous
 
 API and MCP endpoints support three authentication methods:
 
-1. **Session Cookie** — `jpage.sid` cookie after login, for browser access.
-2. **API Token** — User-created `jp_` prefixed tokens, for script and AI integration.
+1. **Session Cookie** — `pagesail.sid` cookie after login, for browser access.
+2. **API Token** — User-created `ps_` prefixed tokens, for script and AI integration.
 3. **MCP Token** — `MCP_TOKEN` environment variable, for AI tool connections (backward compatible).
 
 ### Environment Variables
@@ -182,34 +177,34 @@ API and MCP endpoints support three authentication methods:
 | `SESSION_SECRET` | Production | Encrypts session cookies; in dev mode a temporary key is auto-generated (lost on restart). Missing in production refuses startup. |
 | `NODE_ENV` | No | When `production`, cookies are sent only over HTTPS. |
 | `PORT` | No | Default `8858`. |
-| `MCP_TOKEN` | No | Global Bearer token for the `/mcp` endpoint (backward compatible); when unset, `/mcp` is still accessible via a user-level API token (`jp_` prefix). |
+| `MCP_TOKEN` | No | Global Bearer token for the `/mcp` endpoint (backward compatible); when unset, `/mcp` is still accessible via a user-level API token (`ps_` prefix). |
 | `ALLOW_REGISTRATION` | No | Set to `true` to enable self-service registration; defaults to off (admin-only user creation). |
 | `SMTP_HOST` | No | SMTP server address (e.g. `smtp.qq.com`); enables email verification when configured. |
 | `SMTP_PORT` | No | SMTP port (e.g. `465`). |
 | `SMTP_SECURE` | No | Use SSL (`true`/`false`). |
 | `SMTP_USER` | No | SMTP login username. |
 | `SMTP_PASS` | No | SMTP login password or authorization code. |
-| `SMTP_FROM` | No | Sender address (e.g. `"jpage <user@example.com>"`). |
-| `APP_URL` | No | External app URL used to build verification links (e.g. `https://jpage.cn`). |
+| `SMTP_FROM` | No | Sender address (e.g. `"pagesail <user@example.com>"`). |
+| `APP_URL` | No | External app URL used to build verification links (e.g. `http://localhost:8858`). |
 | `GOOGLE_CLIENT_ID` | No | Google Web application OAuth Client ID; enables Google sign-in together with `GOOGLE_CLIENT_SECRET`. |
 | `GOOGLE_CLIENT_SECRET` | No | Google Web application OAuth Client Secret; keep it only in the server-side environment. |
 | `GOOGLE_HTTP_TIMEOUT_MS` | No | Timeout for Google token and OIDC certificate requests, clamped to 1000-60000 ms; defaults to 10000. |
 | `GOOGLE_HTTPS_PROXY` | No | Trusted HTTP CONNECT proxy used only for Google OAuth egress; supports `http://` or `https://`. |
-| `JPAGE_DATA_DIR` | No | Data directory, defaults to `./data`. |
+| `PAGESAIL_DATA_DIR` | No | Data directory, defaults to `./data`. |
 | `COOKIE_SECURE` | No | When `true`, cookies are sent only over HTTPS (recommended for production). |
 | `MCP_IP` | No | Hostname shown in MCP endpoint logs, defaults to `localhost`. |
 | `MCP_PROTOCOL` | No | MCP endpoint protocol, defaults to `http`. |
 | `TOKEN_ENCRYPTION_KEY` | No | API token encryption key (hex 32 bytes); if unset, a `token-key.key` is auto-generated in the data directory. |
 | `MAX_FILE_VERSIONS` | No | Maximum number of versions kept per file, defaults to `20`. |
 | `BACKUP_CRON` | No | Automatic backup cron expression (e.g. `0 3 * * *`). |
-| `BACKUP_DIR` | No | Automatic backup directory, defaults to `<JPAGE_DATA_DIR>/backups`. |
+| `BACKUP_DIR` | No | Automatic backup directory, defaults to `<PAGESAIL_DATA_DIR>/backups`. |
 
 If both `ADMIN_USER` and `ADMIN_PASSWORD` are left empty, the startup log will output:
 
 ```
-[jpage] Created initial admin: admin
-[jpage] Initial password (save this): 7Hk2mN9pq4rTv8wX
-[jpage] ⚠️  Please change the password after first login
+[pagesail] Created initial admin: admin
+[pagesail] Initial password (save this): 7Hk2mN9pq4rTv8wX
+[pagesail] ⚠️  Please change the password after first login
 ```
 
 Copy the password from the log to log in.
@@ -236,7 +231,7 @@ sqlite3 data/database.sqlite "UPDATE users SET password_hash='<hash-from-above>'
 ## Project Structure
 
 ```
-jpage/
+pagesail/
 ├── server.js           # Entry: app assembly + middleware + startup orchestration (logic split out)
 ├── routes/             # Domain-split Express Routers
 │   ├── auth.js         # Login/register/email verification
@@ -282,7 +277,7 @@ jpage/
 │   ├── api.md          # Complete REST API reference
 │   └── design/         # Design documents
 ├── skills/
-│   └── jpage/          # Claude Code / Desktop unified skill: upload, generate content, presentations, templates
+│   └── pagesail/          # Claude Code / Desktop unified skill: upload, generate content, presentations, templates
 ├── test/               # Unit + integration tests (node:test + supertest) + e2e harness
 ├── data/               # SQLite databases, uploaded files & sessions (auto-created)
 └── public/             # Frontend static assets
@@ -410,11 +405,11 @@ Port `8858` (overridable via `PORT`). All write endpoints require login or Beare
 
 ## MCP / AI Integration
 
-jpage includes a built-in [MCP Streamable HTTP](https://modelcontextprotocol.io) endpoint, enabling AI tools like Claude Code and Claude Desktop to directly upload and manage files.
+pagesail includes a built-in [MCP Streamable HTTP](https://modelcontextprotocol.io) endpoint, enabling AI tools like Claude Code and Claude Desktop to directly upload and manage files.
 
 ### Enable
 
-Set the `MCP_TOKEN` environment variable, or use any user-level API Token (`jp_` prefix). Both work:
+Set the `MCP_TOKEN` environment variable, or use any user-level API Token (`ps_` prefix). Both work:
 
 ```bash
 MCP_TOKEN=your-secret-token
@@ -427,7 +422,7 @@ MCP_TOKEN=your-secret-token
 ```json
 {
   "mcpServers": {
-    "jpage": {
+    "pagesail": {
       "type": "http",
       "url": "http://localhost:8858/mcp",
       "headers": {
@@ -468,21 +463,21 @@ MCP_TOKEN=your-secret-token
 
 | URI | Description |
 |---|---|
-| `jpage://files` | All file metadata (JSON list). |
-| `jpage://file/{id}` | Single file content (≤ 256KB). |
+| `pagesail://files` | All file metadata (JSON list). |
+| `pagesail://file/{id}` | Single file content (≤ 256KB). |
 
 ### Companion Skill
 
-The repo includes `skills/jpage/SKILL.md`, a ready-to-use skill for Claude Code / Desktop. Once installed, AI-generated HTML, Markdown, reports, visualizations, presentations, and template-market-styled content are automatically uploaded to jpage with a preview link.
+The repo includes `skills/pagesail/SKILL.md`, a ready-to-use skill for Claude Code / Desktop. Once installed, AI-generated HTML, Markdown, reports, visualizations, presentations, and template-market-styled content are automatically uploaded to pagesail with a preview link.
 
 ```bash
-ln -s "$(pwd)/skills/jpage" ~/.claude/skills/jpage
+ln -s "$(pwd)/skills/pagesail" ~/.claude/skills/pagesail
 ```
 
 Or install via CLI:
 
 ```bash
-jpage skill install
+pagesail skill install
 ```
 
 ### Web Management
@@ -508,11 +503,11 @@ npx -y @modelcontextprotocol/inspector http://localhost:8858/mcp
 
 ---
 
-## Why jpage
+## Why pagesail
 
 Existing solutions are either too heavy (requiring server setup, domains, CI) or too closed (locked to specific platforms).
 
-jpage does one thing: make static content sharing simple again. Drop a file, get a link. An optional multi-user system exists, but the default is zero-friction — drop a file to get a link, share public files anonymously without registering.
+pagesail does one thing: make static content sharing simple again. Drop a file, get a link. An optional multi-user system exists, but the default is zero-friction — drop a file to get a link, share public files anonymously without registering.
 
 ---
 

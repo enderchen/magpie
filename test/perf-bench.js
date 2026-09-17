@@ -46,7 +46,7 @@ function stats(arr) {
 }
 
 async function run() {
-  console.log(`\n=== jpage 性能基准 (port ${PORT}) ===\n`);
+  console.log(`\n=== pagesail 性能基准 (port ${PORT}) ===\n`);
   const auth = await login();
 
   // 上传一篇含代码块+公式的 Markdown（渲染开销大）

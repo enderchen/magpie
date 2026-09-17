@@ -1,8 +1,8 @@
 // template 命令：浏览内容模板市场并使用模板实例化文件。
 //
-//   jpage template ls [--category <slug>] [--file-type html|markdown] [--kw <词>] [--limit N]
-//   jpage template get <shareKey>
-//   jpage template use <shareKey> [--name <文件名>] [--public]
+//   pagesail template ls [--category <slug>] [--file-type html|markdown] [--kw <词>] [--limit N]
+//   pagesail template get <shareKey>
+//   pagesail template use <shareKey> [--name <文件名>] [--public]
 //
 // 市场公开端点使用 share_key 作为标识，不再暴露内部自增 id。
 
@@ -16,7 +16,7 @@ async function run(client, args) {
 
   const shareKey = args.positional[2];
   if (!shareKey) {
-    const e = new Error('用法：jpage template get <shareKey> | jpage template use <shareKey> [--name ...] [--public]');
+    const e = new Error('用法：pagesail template get <shareKey> | pagesail template use <shareKey> [--name ...] [--public]');
     e.name = 'UsageError';
     throw e;
   }
@@ -58,7 +58,7 @@ async function getTemplate(client, shareKey) {
   out(`${t.share_key || shareKey} ${t.title}\n`);
   out(`类型：${t.file_type}\n`);
   if (t.description) out(`描述：${t.description}\n`);
-  out(`\n使用此模板：jpage template use ${shareKey}\n`);
+  out(`\n使用此模板：pagesail template use ${shareKey}\n`);
 }
 
 async function useTemplate(client, shareKey, opts) {

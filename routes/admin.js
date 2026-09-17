@@ -45,7 +45,7 @@ function createBackupArchive() {
 router.get('/export', requireAuth, requireAdmin, (req, res) => {
   try {
     const date = new Date().toISOString().slice(0, 10);
-    const fname = `jpage-backup-${date}.zip`;
+    const fname = `pagesail-backup-${date}.zip`;
     const encoded = encodeURIComponent(fname);
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${encoded}"; filename*=UTF-8''${encoded}`);

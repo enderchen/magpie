@@ -6,7 +6,7 @@ const { shareUrl, out, err } = require('./_shared');
 async function run(client, args, { base, exit }) {
   const id = args.sub;
   if (!id) {
-    const e = new Error('用法：jpage url <id>');
+    const e = new Error('用法：pagesail url <id>');
     e.name = 'UsageError';
     throw e;
   }
@@ -14,7 +14,7 @@ async function run(client, args, { base, exit }) {
   const url = shareUrl(base, data);
   if (!url) {
     err(
-      `文件 #${id} 没有公开短链（私有文件）。用 \`jpage mv ${id} --public\` 设为公开后再获取链接。\n`
+      `文件 #${id} 没有公开短链（私有文件）。用 \`pagesail mv ${id} --public\` 设为公开后再获取链接。\n`
     );
     (exit || ((c) => { process.exitCode = c; }))(1);
     return;

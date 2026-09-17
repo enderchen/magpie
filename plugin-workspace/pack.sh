@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# 即页 uTools 插件打包脚本
+# 页舟PageSail uTools 插件打包脚本
 #
 # 用法：
-#   ./pack.sh            # 打包成 dist/jpage-utools-<version>.upx
-#   ./pack.sh --dir      # 只输出 dist/jpage/ 目录（便于 uTools 开发者工具直接加载）
+#   ./pack.sh            # 打包成 dist/pagesail-utools-<version>.upx
+#   ./pack.sh --dir      # 只输出 dist/pagesail/ 目录（便于 uTools 开发者工具直接加载）
 #
 # 说明：uTools 插件包（.upx）本质就是 zip。uTools 开发者工具也支持
 #      直接「加载未打包插件目录」做开发调试，开发期建议用 --dir。
@@ -13,7 +13,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 VERSION=$(node -pe "require('./plugin.json').version")
-NAME="jpage-utools"
+NAME="pagesail-utools"
 DIST="dist"
 DIR="$DIST/$NAME"
 
@@ -23,7 +23,7 @@ mkdir -p "$DIR"
 
 echo "▸ 复制插件文件…"
 # 插件运行所需文件（排除 dist/、pack.sh、README 等）
-for item in plugin.json preload.js logo.png index.html css js; do
+for item in plugin.json preload.js pagesail-mark.svg index.html css js; do
   [ -e "$item" ] && cp -R "$item" "$DIR/"
 done
 

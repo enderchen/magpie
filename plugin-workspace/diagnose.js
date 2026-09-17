@@ -1,6 +1,6 @@
-// 即页「无权操作」诊断脚本
+// 页舟PageSail「无权操作」诊断脚本
 // 用法：node diagnose.js <服务器地址> <账号> <密码> [文件ID]
-// 例：  node diagnose.js http://36.138.227.105:8858 code2rich 你的密码 22
+// 例：  node diagnose.js http://localhost:8858 admin 你的密码 22
 const store = {};
 global.utools = {
   dbStorage: { getItem:(k)=>k in store?store[k]:null, setItem:(k,v)=>{store[k]=v}, removeItem:(k)=>{delete store[k]} },
@@ -8,7 +8,7 @@ global.utools = {
 };
 global.window = {};
 require('./preload.js');
-const jpage = global.window.jpage;
+const pagesail = global.window.pagesail;
 
 (async () => {
   const [,, base, account, password, fileIdArg] = process.argv;
@@ -16,16 +16,16 @@ const jpage = global.window.jpage;
     console.log('用法: node diagnose.js <服务器地址> <账号> <密码> [文件ID]');
     process.exit(1);
   }
-  jpage.setBase(base);
+  pagesail.setBase(base);
 
   console.log('=== 1. 登录 ===');
   let user;
-  try { user = await jpage.login({ account, password }); }
+  try { user = await pagesail.login({ account, password }); }
   catch (e) { console.log('✗ 登录失败:', e.message); process.exit(1); }
   console.log('登录用户:', JSON.stringify({ id: user.id, username: user.username, role: user.role }));
 
   console.log('\n=== 2. 文件列表（看 uploaded_by）===');
-  const list = await jpage.listFiles({ limit: 5 });
+  const list = await pagesail.listFiles({ limit: 5 });
   console.log('前5个文件:');
   list.files.forEach(f => {
     const mine = Number(f.uploaded_by) === Number(user.id) ? '✓我的' : '✗非我';
@@ -44,17 +44,17 @@ const jpage = global.window.jpage;
   // 先建一个标签
   let tagId;
   try {
-    const tag = await jpage.createTag('诊断测试标签');
+    const tag = await pagesail.createTag('诊断测试标签');
     tagId = tag.id;
     console.log('  建标签成功, id:', tagId);
   } catch (e) {
     console.log('  建标签失败:', e.message, '（用已有标签重试）');
-    const tags = await jpage.listTags();
+    const tags = await pagesail.listTags();
     tagId = tags.tags[0] && tags.tags[0].id;
   }
   if (tagId) {
     try {
-      await jpage.setFileTags(targetId, [tagId]);
+      await pagesail.setFileTags(targetId, [tagId]);
       console.log('  ✓ 打标签成功！');
     } catch (e) {
       console.log('  ✗ 打标签失败:', e.message, '| status:', e.status);
@@ -64,7 +64,7 @@ const jpage = global.window.jpage;
 
   console.log('\n=== 5. 尝试设分类（复现 403）===');
   try {
-    await jpage.setFileCategory(targetId, null);
+    await pagesail.setFileCategory(targetId, null);
     console.log('  ✓ 设分类成功（设为空）！');
   } catch (e) {
     console.log('  ✗ 设分类失败:', e.message, '| status:', e.status);
@@ -73,7 +73,7 @@ const jpage = global.window.jpage;
   console.log('\n=== 6. 尝试改文件名（同一套 ownership 校验）===');
   if (target) {
     try {
-      await jpage.updateFile(targetId, { name: target.original_name }); // 改成原名，不应有变化
+      await pagesail.updateFile(targetId, { name: target.original_name }); // 改成原名，不应有变化
       console.log('  ✓ 改名成功！');
     } catch (e) {
       console.log('  ✗ 改名失败:', e.message, '| status:', e.status);

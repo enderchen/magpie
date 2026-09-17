@@ -1,12 +1,12 @@
 /**
- * 即页 uTools 插件 · preload 脚本
+ * 页舟PageSail uTools 插件 · preload 脚本
  *
- * 运行在 Node 环境，通过 window.jpage 把 API 暴露给前端页面。
+ * 运行在 Node 环境，通过 window.pagesail 把 API 暴露给前端页面。
  *
  * 为什么所有 HTTP 都在 preload（Node 侧）做？
- *  - 即页服务端 CORS 设的是 `Access-Control-Allow-Origin: *`，但**没有**
+ *  - 页舟PageSail服务端 CORS 设的是 `Access-Control-Allow-Origin: *`，但**没有**
  *    `Access-Control-Allow-Credentials: true`，浏览器 fetch 无法跨域携带 cookie。
- *  - 即页是 session/cookie 鉴权（非 token），cookie 必须随请求带上。
+ *  - 页舟PageSail是 session/cookie 鉴权（非 token），cookie 必须随请求带上。
  *  - 所以用 Node 原生 http/https + 自带 cookie jar 发请求，绕开浏览器 CORS 限制。
  *
  * 只依赖 Node 内置模块（http/https/url/fs/path/crypto），不引第三方包，
@@ -26,11 +26,11 @@ const path = require('path');
 // ---------------------------------------------------------------------------
 
 const DB_KEYS = {
-  base: 'jpage.base',        // 服务器地址，如 https://jpage.example.com
-  account: 'jpage.account',  // 上次登录用的账号（仅用于回填输入框，不存密码）
-  cookies: 'jpage.cookies',  // cookie jar（数组）
-  user: 'jpage.user',        // 上次登录的用户信息
-  theme: 'jpage.theme',      // 'dark' | 'light' | 'auto'
+  base: 'pagesail.base',        // 服务器地址，如 https://pagesail.example.com
+  account: 'pagesail.account',  // 上次登录用的账号（仅用于回填输入框，不存密码）
+  cookies: 'pagesail.cookies',  // cookie jar（数组）
+  user: 'pagesail.user',        // 上次登录的用户信息
+  theme: 'pagesail.theme',      // 'dark' | 'light' | 'auto'
 };
 
 function getCfg(key, fallback) {
@@ -61,7 +61,7 @@ function removeCfg(key) {
 // ---------------------------------------------------------------------------
 
 function getBase() {
-  let base = (getCfg(DB_KEYS.base, 'https://jpage.cn') || '').trim();
+  let base = (getCfg(DB_KEYS.base, 'http://localhost:8858') || '').trim();
   if (base.endsWith('/')) base = base.slice(0, -1);
   return base;
 }
@@ -302,7 +302,7 @@ function buildMultipartBody(mp) {
 }
 
 // ---------------------------------------------------------------------------
-// 即页 API 封装（统一拼 base + /api/...）
+// 页舟PageSail API 封装（统一拼 base + /api/...）
 // ---------------------------------------------------------------------------
 
 function apiUrl(pathAndQuery) {
@@ -380,15 +380,15 @@ function applyTheme(theme) {
       html.classList.add(theme);
     }
   } catch (e) {
-    console.error('[即页] 应用主题失败', e);
+    console.error('[页舟PageSail] 应用主题失败', e);
   }
 }
 
 // ---------------------------------------------------------------------------
-// 暴露给前端的 API：window.jpage
+// 暴露给前端的 API：window.pagesail
 // ---------------------------------------------------------------------------
 
-const jpage = {
+const pagesail = {
   // ---- 配置 ----
   getConfig() {
     return {
@@ -482,7 +482,7 @@ const jpage = {
     });
   },
 
-  /** 探测目标服务器是否是即页（调 /health） */
+  /** 探测目标服务器是否是页舟PageSail（调 /health） */
   async ping(baseUrl) {
     let target = baseUrl || getBase();
     if (!target) throw new Error('请先填写服务器地址');
@@ -558,7 +558,7 @@ const jpage = {
       ext === '.html' || ext === '.htm' ? 'text/html' :
       ext === '.md' || ext === '.markdown' ? 'text/markdown' :
       'application/octet-stream';
-    const boundary = 'jpage-' + Math.random().toString(16).slice(2) + Date.now().toString(16);
+    const boundary = 'pagesail-' + Math.random().toString(16).slice(2) + Date.now().toString(16);
     return api('POST', '/api/files/upload', {
       multipart: {
         boundary,
@@ -665,7 +665,7 @@ const jpage = {
       title: title || '选择文件',
       properties: ['openFile'],
       filters: [
-        { name: '即页支持的文件', extensions: ['html', 'htm', 'md', 'markdown', 'zip'] },
+        { name: '页舟PageSail支持的文件', extensions: ['html', 'htm', 'md', 'markdown', 'zip'] },
         { name: '所有文件', extensions: ['*'] },
       ],
     });
@@ -678,7 +678,7 @@ const jpage = {
 
 // 注入到渲染进程
 try {
-  window.jpage = jpage;
+  window.pagesail = pagesail;
 } catch (e) {
-  console.error('[即页 preload] 注入 window.jpage 失败', e);
+  console.error('[页舟PageSail preload] 注入 window.pagesail 失败', e);
 }

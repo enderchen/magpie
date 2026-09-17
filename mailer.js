@@ -25,7 +25,7 @@ function initMailer() {
     socketTimeout: 30000,
     dnsTimeout: 10000,
   });
-  fromAddress = SMTP_FROM || SMTP_USER || 'noreply@jpage.local';
+  fromAddress = SMTP_FROM || SMTP_USER || 'noreply@pagesail.local';
   appUrl = APP_URL || 'http://localhost:8858';
   logger.info({ type: 'app', message: 'SMTP 已配置', host: SMTP_HOST, port: SMTP_PORT || 465 });
   return true;

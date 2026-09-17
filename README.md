@@ -1,16 +1,16 @@
-# 页舟 · PageSail
+# 页舟PageSail
 
 > 一页，载万千。
 
-PageSail 是基于 [JPage](https://github.com/code2rich/jpage) 的独立衍生项目，沿用 MIT 许可证，保留原版权声明。当前聚焦 HTML、Markdown 与 ZIP 的上传、预览和分享。
+页舟PageSail 用于 HTML、Markdown 与 ZIP 的上传、预览和分享，使用 MIT 许可证。
 
-本项目尚未发布独立 npm 包。下文 `@code2rich/jpage`、uTools 与 Skills 属于上游兼容工具；使用上游客户端时，务必通过 `--base` 或 `JPAGE_BASE` 指向自己的 PageSail 服务。源码内置 CLI 默认连接 `http://localhost:8858`，并禁用上游 npm 自更新。`JPAGE_*`、Cookie 名、MCP 资源名等保留兼容标识。
+当前 npm 包处于本地打包验证阶段，尚未公开发布；请按下文从源码安装 CLI。默认服务地址为 `http://localhost:8858`，可通过 `PAGESAIL_BASE` 或 `--base` 修改。插件源码保留用于开发，网页暂不提供插件入口。
 
 [![CI](https://github.com/enderchen/pagesail/actions/workflows/ci.yml/badge.svg)](https://github.com/enderchen/pagesail/actions/workflows/ci.yml)
 
 [English](README_EN.md) | 中文
 
-**页舟 PageSail**是一个零配置的 HTML / Markdown 即时预览与分享工具。把写好的文档拖进来，立刻获得一个干净的在线页面——无需部署流程，无需服务器知识。特别适合 AI 生成内容的一键分享。
+**页舟PageSail**是一个零配置的 HTML / Markdown 即时预览与分享工具。把写好的文档拖进来，立刻获得一个干净的在线页面——无需部署流程，无需服务器知识。特别适合 AI 生成内容的一键分享。
 
 ---
 
@@ -107,36 +107,31 @@ node test/mcp-harness.js 8858    # MCP 端点
 node test/perf-bench.js 8858     # 渲染/列表/缓存延迟基准
 ```
 
-### 上游兼容 CLI（PageSail 尚未发布独立 npm 包）
+### PageSail CLI（从源码安装）
 
-页舟随包提供 `jpage` 命令行工具，可通过 REST API 上传 / 列出 / 管理文件，对大文件和 ZIP 走 multipart 二进制流式上传（比 MCP 的 base64 进 token 流更快更省）：
-
-```bash
-npm install -g @code2rich/jpage
-export JPAGE_BASE=http://localhost:8858  # 改为你自己的 PageSail 服务地址
-jpage upload ./report.html --public --token <你的 token>
-jpage ls --kw 季度
-jpage cat 8
-jpage --help
-```
-
-`jpage` 与 MCP 是对称的两个客户端入口，都架在同一套 REST API 之上。详见 `jpage --help`。
-
-更新到最新版（不需 token）：
+页舟PageSail随包提供 `pagesail` 命令行工具，可通过 REST API 上传 / 列出 / 管理文件，对大文件和 ZIP 走 multipart 二进制流式上传（比 MCP 的 base64 进 token 流更快更省）：
 
 ```bash
-jpage update                  # 自更新到最新版
-jpage update --check          # 只查有没有新版本
-jpage update --registry https://registry.npmmirror.com   # 国内源
+npm install
+npm link  # 在本项目源码目录执行，注册 pagesail 命令
+export PAGESAIL_BASE=http://localhost:8858  # 改为你自己的 PageSail 服务地址
+pagesail upload ./report.html --public --token <你的 token>
+pagesail ls --kw 季度
+pagesail cat 8
+pagesail --help
 ```
+
+`pagesail` 与 MCP 是对称的两个客户端入口，都架在同一套 REST API 之上。详见 `pagesail --help`。
+
+当前 `pagesail update` 仅显示源码更新说明，不访问 npm 或安装其他包。正式发布前的打包、安装与发布步骤见下方指南。
 
 ### 发版
 
-维护者发版指南（含 GitHub Actions 自动发版配置、token 轮换、故障排查）见 [`docs/RELEASING.md`](docs/RELEASING.md)。
+维护者打包与后续发布指南见 [`docs/RELEASING.md`](docs/RELEASING.md)。
 
 ## 鉴权与安全
 
-页舟支持多用户体系。admin 可管理全部用户和文件，普通用户只能操作自己的文件和公开文件。
+页舟PageSail支持多用户体系。admin 可管理全部用户和文件，普通用户只能操作自己的文件和公开文件。
 
 **内容安全（CSP）**：通过 helmet + 分级策略加固——管理界面下发严格 CSP（仅放行同源 script），用户内容渲染页用 iframe sandbox（无 `allow-same-origin`，阻断对父窗口的访问）隔离，其中 Markdown 页套严格 CSP（内联 mermaid 脚本靠 nonce 放行），HTML 页用宽松 CSP + sandbox 兜底（用户 HTML 常含合法 script）。分享链接（`/api/files/:id/render`、`/s/:key`、下载、源码）在文件标记为公开时可匿名访问；上传时取消勾选「公开访问」可让该文件仅所有者和 admin 可见。
 
@@ -144,8 +139,8 @@ jpage update --registry https://registry.npmmirror.com   # 国内源
 
 API 和 MCP 端点支持三种认证方式：
 
-1. **Session Cookie** — 登录后获得 `jpage.sid`，适合浏览器访问
-2. **API Token** — 用户在设置中创建 `jp_` 前缀的 Token，适合脚本调用
+1. **Session Cookie** — 登录后获得 `pagesail.sid`，适合浏览器访问
+2. **API Token** — 用户在设置中创建 `ps_` 前缀的 Token，适合脚本调用
 3. **MCP Token** — 环境变量 `MCP_TOKEN`，适合 AI 工具连接（向后兼容）
 
 ### 环境变量
@@ -157,28 +152,28 @@ API 和 MCP 端点支持三种认证方式：
 | `SESSION_SECRET` | 生产必填 | 加密会话 Cookie；缺失时开发模式自动生成临时密钥，重启会失效 |
 | `NODE_ENV` | 否 | `production` 时 Cookie 仅 HTTPS 下发送，SESSION_SECRET 缺失会拒绝启动 |
 | `PORT` | 否 | 默认 8858 |
-| `MCP_TOKEN` | 否 | `/mcp` 端点的全局 Bearer token（向后兼容）；未设置时仍可用用户级 API Token（`jp_` 前缀）访问 MCP |
+| `MCP_TOKEN` | 否 | `/mcp` 端点的全局 Bearer token（向后兼容）；未设置时仍可用用户级 API Token（`ps_` 前缀）访问 MCP |
 | `ALLOW_REGISTRATION` | 否 | 设为 `true` 开放用户自助注册；默认关闭，仅 admin 可创建用户 |
 | `SMTP_HOST` | 否 | SMTP 服务器地址（如 `smtp.qq.com`），配置后支持邮箱验证 |
 | `SMTP_PORT` | 否 | SMTP 端口（如 `465`） |
 | `SMTP_SECURE` | 否 | 是否使用 SSL（`true`/`false`） |
 | `SMTP_USER` | 否 | SMTP 登录用户名 |
 | `SMTP_PASS` | 否 | SMTP 登录密码或授权码 |
-| `SMTP_FROM` | 否 | 发件人地址（如 `"页舟 <user@example.com>"`） |
-| `APP_URL` | 否 | 应用外部访问地址，用于拼接验证链接（如 `https://jpage.cn`） |
+| `SMTP_FROM` | 否 | 发件人地址（如 `"页舟PageSail <user@example.com>"`） |
+| `APP_URL` | 否 | 应用外部访问地址，用于拼接验证链接（如 `http://localhost:8858`） |
 | `FEEDBACK_EMAIL` | 否 | 问题反馈邮件接收地址；留空时回退到首个管理员邮箱 → `SMTP_FROM` |
 | `GOOGLE_CLIENT_ID` | 否 | Google Web 应用 OAuth Client ID；与 `GOOGLE_CLIENT_SECRET` 同时配置后启用 Google 登录 |
 | `GOOGLE_CLIENT_SECRET` | 否 | Google Web 应用 OAuth Client Secret；仅保存在服务端环境变量中 |
 | `GOOGLE_HTTP_TIMEOUT_MS` | 否 | Google Token 与 OIDC 公钥请求超时，范围 1000-60000 毫秒，默认 10000 |
 | `GOOGLE_HTTPS_PROXY` | 否 | 仅供 Google OAuth 出站请求使用的可信 HTTP CONNECT 代理，支持 `http://` 或 `https://` |
-| `JPAGE_DATA_DIR` | 否 | 数据目录，默认 `./data` |
+| `PAGESAIL_DATA_DIR` | 否 | 数据目录，默认 `./data` |
 | `COOKIE_SECURE` | 否 | 设为 `true` 时 Cookie 仅 HTTPS 传输（生产推荐） |
 | `MCP_IP` | 否 | MCP 端点日志中显示的主机名，默认 `localhost` |
 | `MCP_PROTOCOL` | 否 | MCP 端点协议，默认 `http` |
 | `TOKEN_ENCRYPTION_KEY` | 否 | API Token 加密密钥（hex 32 字节）；未设置时自动在数据目录生成 `token-key.key` |
 | `MAX_FILE_VERSIONS` | 否 | 单个文件保留的最大版本数，默认 `20` |
 | `BACKUP_CRON` | 否 | 自动备份 cron 表达式（如 `0 3 * * *`） |
-| `BACKUP_DIR` | 否 | 自动备份目录，默认 `<JPAGE_DATA_DIR>/backups` |
+| `BACKUP_DIR` | 否 | 自动备份目录，默认 `<PAGESAIL_DATA_DIR>/backups` |
 
 如果 `ADMIN_USER` 和 `ADMIN_PASSWORD` 都留空启动，首次初始化日志会提示已创建管理员，并输出生成的初始密码。复制日志里的密码登录，并妥善保存。
 
@@ -201,7 +196,7 @@ sqlite3 data/database.sqlite "UPDATE users SET password_hash='<上面生成的ha
 ## 项目结构
 
 ```
-jpage/
+pagesail/
 ├── server.js           # 入口：app 装配 + 中间件 + 启动编排（业务逻辑已拆分）
 ├── routes/             # 按域拆分的 Express Router
 │   ├── auth.js         # 登录/注册/邮箱验证
@@ -247,7 +242,7 @@ jpage/
 │   ├── api.md          # REST API 完整参考
 │   └── design/         # 设计文档
 ├── skills/
-│   └── jpage/                # Claude Code / Desktop 统一技能：上传、生成内容、幻灯片、模板市场
+│   └── pagesail/                # Claude Code / Desktop 统一技能：上传、生成内容、幻灯片、模板市场
 ├── test/               # 单元 + 集成测试（node:test + supertest）+ e2e harness
 ├── data/               # SQLite 数据库、上传文件与会话存储（运行时自动创建）
 └── public/             # 前端静态资源
@@ -380,11 +375,11 @@ jpage/
 
 ## MCP / AI 集成
 
-页舟内置 [MCP Streamable HTTP](https://modelcontextprotocol.io) 端点，让 Claude Code、Claude Desktop 等 AI 工具能够直接上传、管理文件。
+页舟PageSail内置 [MCP Streamable HTTP](https://modelcontextprotocol.io) 端点，让 Claude Code、Claude Desktop 等 AI 工具能够直接上传、管理文件。
 
 ### 启用
 
-设置全局 `MCP_TOKEN` 环境变量，或使用任意用户级 API Token（`jp_` 前缀）即可启用 `/mcp`。两者二选一：
+设置全局 `MCP_TOKEN` 环境变量，或使用任意用户级 API Token（`ps_` 前缀）即可启用 `/mcp`。两者二选一：
 
 ```bash
 MCP_TOKEN=your-secret-token
@@ -397,7 +392,7 @@ MCP_TOKEN=your-secret-token
 ```json
 {
   "mcpServers": {
-    "jpage": {
+    "pagesail": {
       "type": "http",
       "url": "http://localhost:8858/mcp",
       "headers": {
@@ -438,15 +433,15 @@ MCP_TOKEN=your-secret-token
 
 | URI | 说明 |
 |---|---|
-| `jpage://files` | 所有文件元数据（JSON 列表） |
-| `jpage://file/{id}` | 单文件正文（≤ 256KB） |
+| `pagesail://files` | 所有文件元数据（JSON 列表） |
+| `pagesail://file/{id}` | 单文件正文（≤ 256KB） |
 
 ### 配套 Skill
 
-仓库内 `skills/jpage/SKILL.md` 是 Claude Code / Desktop 的开箱即用技能。安装后，AI 生成 HTML、Markdown、报告、可视化、幻灯片、使用模板市场风格等内容时会自动上传到页舟并返回预览链接。
+仓库内 `skills/pagesail/SKILL.md` 是 Claude Code / Desktop 的开箱即用技能。安装后，AI 生成 HTML、Markdown、报告、可视化、幻灯片、使用模板市场风格等内容时会自动上传到页舟PageSail并返回预览链接。
 
 ```bash
-ln -s "$(pwd)/skills/jpage" ~/.claude/skills/jpage
+ln -s "$(pwd)/skills/pagesail" ~/.claude/skills/pagesail
 ```
 
 ### Web 管理
@@ -471,7 +466,7 @@ npx -y @modelcontextprotocol/inspector http://localhost:8858/mcp
 
 现有的方案要么太重（需要配置服务器、域名、CI），要么太封闭（绑定特定平台）。
 
-页舟只想做一件事：让静态内容的分享回归简单。拖入文件，得到一个链接。支持可选的多用户体系，但默认开箱即用——拖入文件即得链接，匿名也能分享公开文件，无需注册。
+页舟PageSail只想做一件事：让静态内容的分享回归简单。拖入文件，得到一个链接。支持可选的多用户体系，但默认开箱即用——拖入文件即得链接，匿名也能分享公开文件，无需注册。
 
 ## 协议
 

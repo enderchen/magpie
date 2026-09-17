@@ -1,12 +1,12 @@
 # AGENTS.md
 
-本文件为 AI 编程助手（Codex / Claude Code 等）提供即页（jpage）项目的工作指南。读者应假设对项目一无所知；所有改动请以此文件为上下文基准。
+本文件为 AI 编程助手（Codex / Claude Code 等）提供页舟PageSail项目的工作指南。读者应假设对项目一无所知；所有改动请以此文件为上下文基准。
 
 ---
 
 ## 项目概述
 
-**即页（jpage）** 是一个零配置的 HTML / Markdown 即时预览与分享工具。用户上传 `.html`、`.md`/`.markdown` 或 `.zip` 文件后，即可得到在线渲染页面与短链接（`/s/:key`），无需额外部署流程。项目同时面向 AI 工作流：内置 MCP Streamable HTTP 端点与 CLI 工具，支持通过 API Token 自动上传、管理文件。
+**页舟PageSail** 是一个零配置的 HTML / Markdown 即时预览与分享工具。用户上传 `.html`、`.md`/`.markdown` 或 `.zip` 文件后，即可得到在线渲染页面与短链接（`/s/:key`），无需额外部署流程。项目同时面向 AI 工作流：内置 MCP Streamable HTTP 端点与 CLI 工具，支持通过 API Token 自动上传、管理文件。
 
 核心能力：
 
@@ -15,7 +15,7 @@
 - 文件版本历史与回滚
 - 标签、分类、收藏
 - 多用户 + admin / user 角色体系
-- API Token（`jp_` 前缀）与全局 `MCP_TOKEN` 双认证
+- API Token（`ps_` 前缀）与全局 `MCP_TOKEN` 双认证
 - 内容模板市场（用户上架 → 管理员审核 → 公开使用）
 - Skills 注册与打包下载
 
@@ -99,11 +99,11 @@ mcp/                      # MCP 实现
   tools-tags.js           # 标签 tool
   tools-categories.js     # 分类 tool
   tools-content-templates.js # 内容模板 tool
-  resources.js            # jpage://files / jpage://file/{id}
+  resources.js            # pagesail://files / pagesail://file/{id}
   util.js / constants.js  # 共享
 
-bin/                      # CLI 工具（npm 包入口 `jpage`）
-  jpage.js                # CLI 入口与命令分发
+bin/                      # CLI 工具（npm 包入口 `pagesail`）
+  pagesail.js                # CLI 入口与命令分发
   args.js / config.js / client.js
   commands/               # upload、ls、cat、url、mv、rm、star、tags、skills、whoami、update
 
@@ -177,7 +177,7 @@ npm run test:integration      # 仅集成测试
 
 - `test/unit/*.test.js`：纯函数与独立模块（util、render-cache、zip、fts、crypto、cli-args、cli-config）。
 - `test/integration/*.test.js`：完整 Express app 集成测试（auth、users、tokens、files、versions、tags、categories、skills、admin、share、content-templates、cli）。
-- `test/helpers/setup.js`：每个测试文件使用独立数据目录 `data-test-<pid>-<n>`，require server 前设置 `JPAGE_DATA_DIR`，避免并发污染。
+- `test/helpers/setup.js`：每个测试文件使用独立数据目录 `data-test-<pid>-<n>`，require server 前设置 `PAGESAIL_DATA_DIR`，避免并发污染。
 - 手动 harness：`test/perf-harness.js`、`test/mcp-harness.js`、`test/perf-bench.js`、`test/browser-harness.js`、`test/dispatch-bench.js`、`test/run-server.sh`。
 
 CI（`.github/workflows/ci.yml`）在 Node 20/22 矩阵上执行 `npm run lint`、`npm test`、`npm run build`。
@@ -238,7 +238,7 @@ CI（`.github/workflows/ci.yml`）在 Node 20/22 矩阵上执行 `npm run lint`�
 - `data/token-key.key` — API Token 加密密钥（未设置 `TOKEN_ENCRYPTION_KEY` 时自动生成）
 - `data/backups/` — 自动备份目录（`BACKUP_CRON` 启用时）
 
-数据目录可通过 `JPAGE_DATA_DIR` 覆盖，默认 `./data`。
+数据目录可通过 `PAGESAIL_DATA_DIR` 覆盖，默认 `./data`。
 
 ### 数据库 Schema
 
@@ -288,7 +288,7 @@ CI（`.github/workflows/ci.yml`）在 Node 20/22 矩阵上执行 `npm run lint`�
 ### MCP 端点
 
 - 路径：`POST`/`GET`/`DELETE /mcp`
-- 鉴权：`Authorization: Bearer <MCP_TOKEN>` 或任意用户级 API Token（`jp_` 前缀）。未配置任何 token 时 `/mcp` 禁用。
+- 鉴权：`Authorization: Bearer <MCP_TOKEN>` 或任意用户级 API Token（`ps_` 前缀）。未配置任何 token 时 `/mcp` 禁用。
 - 实现：`mcp/transport.js` 管理 Streamable HTTP session；`mcp/server.js` 注册 **17 个 tools + 2 个 resources**。
 - Tools 类别：
   - 文件：`list_files`、`upload_file`、`get_file_content`、`delete_file`、`rename_file`、`get_file_url`、`star_file`、`unstar_file`
@@ -296,12 +296,12 @@ CI（`.github/workflows/ci.yml`）在 Node 20/22 矩阵上执行 `npm run lint`�
   - 标签：`list_tags`、`add_tags_to_file`
   - 分类：`list_categories`、`create_category`、`set_file_category`
   - 内容模板：`list_content_templates`、`get_content_template`
-- Resources：`jpage://files`、`jpage://file/{id}`（内容 ≤ 256KB）
+- Resources：`pagesail://files`、`pagesail://file/{id}`（内容 ≤ 256KB）
 - 内部：tool 通过 `lib/dispatch.js` 进程内调用 REST API，复用同一 Bearer token，权限/限流/审计与 HTTP 完全一致。
 
 ### CLI
 
-`bin/jpage.js` 提供 `jpage` 命令，token 优先级：`--token` > `JPAGE_TOKEN` 环境变量 > `MCP_TOKEN` 环境变量 > `.env`。
+`bin/pagesail.js` 提供 `pagesail` 命令，token 优先级：`--token` > `PAGESAIL_TOKEN` 环境变量 > `MCP_TOKEN` 环境变量 > `.env`。
 
 命令：`upload`、`ls`、`cat`、`url`、`mv`、`rm`、`star`、`unstar`、`tags`、`skills`、`whoami`、`update`。
 
@@ -311,11 +311,11 @@ CLI 与 MCP 共用同一套 REST API，是对等的两个客户端入口。
 
 ## 安全与权限
 
-- **鉴权三选一**：(1) session cookie `jpage.sid`；(2) 用户级 API Token `jp_...`；(3) 全局 `MCP_TOKEN`（向后兼容）。`requireAuth` 设置 `req.userId` 与 `req.userRole`。
+- **鉴权三选一**：(1) session cookie `pagesail.sid`；(2) 用户级 API Token `ps_...`；(3) 全局 `MCP_TOKEN`（向后兼容）。`requireAuth` 设置 `req.userId` 与 `req.userRole`。
 - **角色**：`users.role` 为 `admin` 或 `user`。admin 可访问所有文件与用户；普通用户只能操作自己的文件和公开文件。
 - **文件访问**：`loadFileWithPrivacy` 按 admin / 所有者 / 公开 / 未登录 分层校验；`checkFileOwnership` 用于写操作。
 - **密码**：bcrypt 哈希（cost 10）。
-- **API Token**：`jp_` + 32 位 base62；数据库存 SHA-256 哈希用于鉴权，可选 AES-256-GCM 密文（`token_enc`）用于界面查看/复制。每用户最多 10 个。
+- **API Token**：`ps_` + 32 位 base62；数据库存 SHA-256 哈希用于鉴权，可选 AES-256-GCM 密文（`token_enc`）用于界面查看/复制。每用户最多 10 个。
 - **限流**：
   - 登录 `30 req / 15 min / IP`
   - 注册 `5 req / 15 min / IP`
@@ -374,9 +374,9 @@ CLI 与 MCP 共用同一套 REST API，是对等的两个客户端入口。
 ## 发版与部署
 
 - 版本号以 `package.json` 为准。
-- 推荐发版：`npm version patch|minor|major` → `git push origin main` → `git push origin vX.Y.Z`，由 `.github/workflows/release.yml` 自动执行 lint、test、build、校验 tag、发布到 npm。
+- 当前尚未发布 npm：使用 `npm pack` 制作本地安装包；`.github/workflows/release.yml` 仅手动验证与打包，不执行发布。正式发布前依照 `docs/RELEASING.md` 确认账号、版本及授权。
 - Docker：`Dockerfile` 多阶段构建（builder / frontend / runner），`EXPOSE 8858`；`docker-compose.yml` 映射 host 8858 → container 8858，挂载 `./data:/app/data`。
-- 环境变量完整清单（按需配置）：`PORT`、`NODE_ENV`、`JPAGE_DATA_DIR`、`ADMIN_USER`、`ADMIN_PASSWORD`、`SESSION_SECRET`、`COOKIE_SECURE`、`MCP_TOKEN`、`MCP_IP`、`MCP_PROTOCOL`、`TOKEN_ENCRYPTION_KEY`、`SMTP_HOST`、`SMTP_PORT`、`SMTP_SECURE`、`SMTP_USER`、`SMTP_PASS`、`SMTP_FROM`、`APP_URL`、`FEEDBACK_EMAIL`、`ALLOW_REGISTRATION`、`GITHUB_CLIENT_ID`、`GITHUB_CLIENT_SECRET`、`GOOGLE_CLIENT_ID`、`GOOGLE_CLIENT_SECRET`、`WECHAT_OPEN_APP_ID`、`WECHAT_OPEN_APP_SECRET`、`MAX_FILE_VERSIONS`、`BACKUP_CRON`、`BACKUP_DIR`、`ICP_BEIAN`。
+- 环境变量完整清单（按需配置）：`PORT`、`NODE_ENV`、`PAGESAIL_DATA_DIR`、`ADMIN_USER`、`ADMIN_PASSWORD`、`SESSION_SECRET`、`COOKIE_SECURE`、`MCP_TOKEN`、`MCP_IP`、`MCP_PROTOCOL`、`TOKEN_ENCRYPTION_KEY`、`SMTP_HOST`、`SMTP_PORT`、`SMTP_SECURE`、`SMTP_USER`、`SMTP_PASS`、`SMTP_FROM`、`APP_URL`、`FEEDBACK_EMAIL`、`ALLOW_REGISTRATION`、`GITHUB_CLIENT_ID`、`GITHUB_CLIENT_SECRET`、`GOOGLE_CLIENT_ID`、`GOOGLE_CLIENT_SECRET`、`WECHAT_OPEN_APP_ID`、`WECHAT_OPEN_APP_SECRET`、`MAX_FILE_VERSIONS`、`BACKUP_CRON`、`BACKUP_DIR`、`ICP_BEIAN`。
 
 ---
 

@@ -148,7 +148,7 @@ function renderMarketShell(container, { active, navigate }) {
     <div class="market-page mw-market-page">
       <aside class="mw-sidebar">
         <a href="#/" class="mw-brand" aria-label="返回首页">
-          <img class="mw-brand-mark" src="/pagesail-mark.svg" alt="页舟">
+          <img class="mw-brand-mark" src="/pagesail-mark.svg" alt="页舟PageSail">
           <span class="mw-brand-text">PageSail<br><strong>Market</strong></span>
         </a>
         <nav class="mw-side-nav">
@@ -164,7 +164,7 @@ function renderMarketShell(container, { active, navigate }) {
         </div>` : ''}
         <div class="mw-side-footer">
           <a href="#/">${isLoggedIn ? '返回我的页面' : '返回首页'}</a>
-          ${window.__JPAGE_ICP_BEIAN__ ? `<p class="mw-icp"><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">${window.__JPAGE_ICP_BEIAN__}</a></p>` : ''}
+          ${window.__PAGESAIL_ICP_BEIAN__ ? `<p class="mw-icp"><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">${window.__PAGESAIL_ICP_BEIAN__}</a></p>` : ''}
         </div>
       </aside>
       <main class="mw-main" id="market-body"></main>
@@ -654,13 +654,13 @@ async function showTemplateUseGuide({ shareKey, title }) {
             <div class="use-template-option">
               <div class="option-icon" aria-hidden="true">📥</div>
               <div class="option-title">方式一：下载源文件</div>
-              <div class="option-desc">适合大部分用户。下载后在本地用任意编辑器修改，再上传到页舟即可预览分享。</div>
+              <div class="option-desc">适合大部分用户。下载后在本地用任意编辑器修改，再上传到页舟PageSail即可预览分享。</div>
               ${downloadLink}
             </div>
             <div class="use-template-option">
               <div class="option-icon" aria-hidden="true">⌨️</div>
               <div class="option-title">方式二：CLI 命令行</div>
-              <div class="option-desc">已安装 jpage CLI 并配置 Token 的用户，复制后在终端执行。</div>
+              <div class="option-desc">已安装 pagesail CLI 并配置 Token 的用户，复制后在终端执行。</div>
               <div class="use-template-field">
                 <div class="use-template-field-header">
                   <label>CLI 命令</label>

@@ -51,7 +51,7 @@ const cssArgs = [
 ];
 if (!isDev) cssArgs.push('--minify');
 // esbuild 对单文件 css 用 --outfile；但我们要带哈希名 → 先输出再改名
-runEsbuild([cssSrc, '--outfile=' + path.join(DIST, 'style.tmp.css'), ...(isDev ? [] : ['--minify'])]);
+runEsbuild([cssSrc, '--bundle', '--external:/home-share/*', '--external:/magpie-logo.png', '--outfile=' + path.join(DIST, 'style.tmp.css'), ...(isDev ? [] : ['--minify'])]);
 
 // --- 3. 生成 manifest + 重命名 CSS 带哈希 ---
 const manifest = {};

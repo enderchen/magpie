@@ -669,7 +669,7 @@ function applyFilters(container) {
   list.innerHTML = '';
 
   if (!filtered.length) {
-    if (!allFiles.length && pagination.total === 0) {
+    if (!hasFilter && !allFiles.length && pagination.total === 0) {
       empty.style.display = 'block';
       const cta = empty.querySelector('#empty-state-cta');
       if (cta && !cta.dataset.bound) {
@@ -796,7 +796,7 @@ function renderFileList(container, list, files) {
 
     el.innerHTML = `
       <label class="file-checkbox-wrap">
-        <input type="checkbox" class="file-checkbox" data-id="${f.id}" data-index="${index}">
+        <input type="checkbox" class="file-checkbox" data-id="${f.id}" data-index="${index}" aria-label="选择 ${escapeHtml(f.original_name)}">
         <span class="file-checkbox-visual"></span>
       </label>
       <div class="file-info" data-id="${f.id}" role="button" tabindex="0">
@@ -807,11 +807,15 @@ function renderFileList(container, list, files) {
           <div class="file-subline">${typeBadge}${privacyBadge}${versionBadge}${tagBadges}${categoryBadge}${viewBadge}${sourceBadge(f.upload_source)}${uploaderBadge(f.uploader_name)}<span class="file-detail">${size} · ${timeStr}</span></div>
         </div>
       </div>
+      <span class="neo-file-type">${typeBadge}</span>
+      <span class="neo-file-privacy">${privacyBadge}</span>
+      <time class="neo-file-time">${escapeHtml(timeStr)}</time>
       <div class="file-actions">
-        <button type="button" class="btn btn-small btn-star ${f.starred ? 'starred' : ''}" data-id="${f.id}">${f.starred ? '★' : '☆'}</button>
+        <a class="neo-preview-link" href="#/view/${f.id}" aria-label="预览 ${safeName}">预览</a>
+        <button type="button" aria-label="${f.starred ? '取消收藏' : '收藏文件'}" class="btn btn-small btn-star ${f.starred ? 'starred' : ''}" data-id="${f.id}">${f.starred ? '★' : '☆'}</button>
         <button type="button" class="btn btn-small btn-copy-link" data-id="${f.id}" title="复制链接" aria-label="复制链接"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
         <div class="file-more-dropdown">
-          <button type="button" class="btn btn-small file-more-trigger" title="更多操作">⋯</button>
+          <button type="button" class="btn btn-small file-more-trigger" title="更多操作" aria-label="更多操作 ${escapeHtml(f.original_name)}">⋯</button>
           <div class="file-more-menu">
             <button type="button" class="file-more-item btn-privacy" data-id="${f.id}" data-public="${isPublic}">${isPublic ? '设为私有' : '设为公开'}</button>
             <button type="button" class="file-more-item btn-share-settings" data-id="${f.id}">分享设置</button>
@@ -1015,7 +1019,7 @@ function renderCardList(container, list, files) {
 
     el.innerHTML = `
       <label class="file-checkbox-wrap file-card-checkbox">
-        <input type="checkbox" class="file-checkbox" data-id="${f.id}" data-index="${index}">
+        <input type="checkbox" class="file-checkbox" data-id="${f.id}" data-index="${index}" aria-label="选择 ${escapeHtml(f.original_name)}">
         <span class="file-checkbox-visual"></span>
       </label>
       <div class="file-card-thumb" aria-hidden="true">

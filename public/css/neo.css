@@ -1,0 +1,325 @@
+/* Approved Magpie application design. Scoped so the deferred market and uploaded
+   documents retain their own styles. Imported into the existing production bundle. */
+@font-face{font-family:MagpieGeist;src:url('/home-share/assets/fonts/geist.woff2') format('woff2');font-weight:100 900;font-display:swap}
+@font-face{font-family:MagpieSans;src:url('/home-share/assets/fonts/noto-sans-sc-content.woff2') format('woff2');font-weight:100 900;font-display:swap}
+html.neo-app{color-scheme:light;--primary:#b7eb4a;--primary-hover:#c9f27b;--primary-soft:#effbd6;--bg:#fffef4;--card:#fff;--border:#17201c;--text:#17201c;--text-secondary:#535d57;--radius:4px;--radius-sm:3px;--shadow:4px 4px 0 #17201c;--header-bg:#fffef4;--danger:#ad2626;--danger-hover:#8b1919;--glow:none}
+html.neo-app body{background:var(--bg);font-family:MagpieGeist,MagpieSans,'PingFang SC',sans-serif;color:var(--text);transition:none}
+html.neo-app [hidden]{display:none!important}
+html.neo-app :is(button,input,select,textarea){font:inherit}
+html.neo-app :is(a,button,input,select,textarea,[tabindex]):focus-visible{outline:3px solid #176491;outline-offset:4px}
+html.neo-app .theme-toggle,html.neo-app #menu-theme-toggle{display:none!important}
+html.neo-app .btn{background:#fffef4;color:#17201c;border:2px solid #17201c;border-radius:3px;box-shadow:3px 3px 0 #17201c;font-weight:700;min-height:42px;padding:9px 18px;transition:transform .15s ease,box-shadow .15s ease,background-color .15s ease;backdrop-filter:none}
+html.neo-app .btn::before,html.neo-app .btn::after{display:none}
+html.neo-app .btn-small{min-height:36px;padding:6px 12px;font-size:14px}
+html.neo-app :is(.btn-primary,.btn.active,.btn-share-copy){background:#b7eb4a;color:#17201c;border-color:#17201c}
+html.neo-app .btn-danger,html.neo-app .btn-danger-soft{background:#fff0ee;color:#ad2626;border-color:#ad2626;box-shadow:2px 2px 0 #ad2626}
+html.neo-app .btn-text{border:0;box-shadow:none;background:transparent;text-decoration:underline;padding:4px;color:#17201c}
+html.neo-app button:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+html.neo-app :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea){background:#fff;color:#17201c;border:2px solid #17201c;border-radius:3px;box-shadow:none;min-width:0}
+html.neo-app input::placeholder,html.neo-app textarea::placeholder{color:#6b756e;opacity:1}
+html.neo-app input[readonly]{background:#f1f2ee!important;color:#59625b}
+html.neo-app input[type=checkbox]{accent-color:#79ab14}
+html.neo-app .login-error{background:#fff0ee;color:#9d2020;border:1px solid #b63333;border-radius:3px;line-height:1.6}
+html.neo-app .neo-brand-group{display:flex;align-items:center;gap:24px;min-width:0}
+html.neo-app .neo-brand{display:flex;align-items:center;flex-shrink:0}
+html.neo-app .neo-brand img{width:150px;height:64px;object-fit:contain}
+html.neo-app .neo-motto{font-size:15px;padding-left:24px;border-left:1px solid #17201c;white-space:nowrap}
+html.neo-app .neo-back-home{color:#17201c;font-size:14px;font-weight:650;white-space:nowrap;text-decoration:none}
+/* Account pages */
+html.neo-app .login-layout{display:block;padding:0 32px;background:#fffef4;overflow:visible}
+html.neo-app .login-layout::before,html.neo-app .login-story::before,html.neo-app .login-story::after{display:none}
+html.neo-app .neo-auth-header,html.neo-app .neo-auth-footer{max-width:1440px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:16px}
+html.neo-app .neo-auth-header{min-height:100px}
+html.neo-app .neo-auth-footer{padding:24px 0;font-size:13px}
+html.neo-app .login-main{max-width:1440px;min-height:720px;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:22px;border:0;background:transparent;border-radius:0;box-shadow:none;overflow:visible;margin:auto}
+html.neo-app .login-story{background:#b7eb4a;color:#17201c;border:2px solid #17201c;border-radius:4px;padding:46px 34px 30px;justify-content:space-between;gap:18px;min-width:0}
+html.neo-app .login-story-title{font-family:inherit;font-size:clamp(36px,4.8vw,70px);font-weight:900;line-height:1.2;letter-spacing:-.045em;color:#17201c;margin:0}
+html.neo-app .login-story-desc{font-size:clamp(16px,1.55vw,22px);font-weight:650;line-height:1.6;color:#17201c;max-width:none;margin:0}
+html.neo-app .neo-auth-art{position:relative;display:flex;align-items:center;min-height:260px;margin:10px -10px}
+html.neo-app .neo-auth-art>img{width:69%;height:auto;z-index:1;object-fit:contain}
+html.neo-app .neo-browser-art{width:40%;position:absolute;right:0;bottom:30px;background:#fffef4;border:3px solid #17201c;border-radius:4px;box-shadow:5px 5px 0 #17201c;display:flex;flex-direction:column;align-items:center;gap:8px;padding-bottom:20px;text-align:center}
+html.neo-app .neo-browser-dots{border-bottom:2px solid #17201c;width:100%;text-align:left;padding:3px 10px;font-size:13px;color:#485232;letter-spacing:3px}
+html.neo-app .neo-file-glyph{font-size:45px;color:#17201c;line-height:1.3}
+html.neo-app .neo-browser-art strong{font-size:14px}
+html.neo-app .neo-browser-art small{font-size:11px;color:#535d57}
+html.neo-app .login-flow{display:flex;gap:18px;padding:0;margin:8px 0;list-style:none;position:relative}
+html.neo-app .login-flow li{display:flex;flex:1;justify-content:center;align-items:center;gap:12px;background:#fffef4;border:2px solid #17201c;border-radius:4px;box-shadow:4px 4px 0 #17201c;padding:12px 8px}
+html.neo-app .login-flow li>span{border:0;background:none;color:#17201c;font-size:24px;width:auto;height:auto;box-shadow:none}
+html.neo-app .login-flow strong{color:#17201c;font-size:18px}
+html.neo-app .login-story-foot{display:block;position:static;color:#17201c;font-size:15px;text-align:center;letter-spacing:.08em;border:0;margin:20px 0 0;padding:0}
+html.neo-app .login-card{padding:36px 36px 28px;border:2px solid #17201c;border-radius:4px;box-shadow:6px 6px 0 #17201c;background:#fffef8;align-self:stretch;display:flex;flex-direction:column;justify-content:center;min-width:0}
+html.neo-app .login-hero{margin:0 0 24px}
+html.neo-app .login-eyebrow{display:block;color:#535d57;font-size:12px;font-weight:700;letter-spacing:.07em;margin:0 0 12px}
+html.neo-app .login-headline{font-size:clamp(27px,3.1vw,44px);font-weight:900;line-height:1.25;margin-bottom:12px}
+html.neo-app .login-tagline{font-size:14px;color:#535d57}
+html.neo-app .login-field span,html.neo-app .neo-field-label{font-size:14px;color:#17201c;font-weight:700}
+html.neo-app .login-field small{font-size:12px;color:#535d57}
+html.neo-app .login-field input{min-height:46px;padding:10px 12px;font-size:15px}
+html.neo-app .login-field.has-icon input{padding-left:40px}
+html.neo-app .login-field.has-icon .field-icon{top:38px}
+html.neo-app .login-form{gap:18px}
+html.neo-app .login-submit{min-height:50px;margin-top:6px;font-size:18px;justify-content:center}
+html.neo-app .neo-register-entry{font-size:13px;text-align:center;margin-top:18px;color:#535d57}
+html.neo-app .neo-register-entry a{color:#17201c;text-underline-offset:4px;font-weight:650}
+html.neo-app .auth-divider{margin:22px 0 16px;display:flex;align-items:center;gap:14px;color:#535d57;font-size:13px}
+html.neo-app .auth-divider:before,html.neo-app .auth-divider:after{content:'';height:1px;background:#879084;flex:1}
+html.neo-app .neo-wechat-content{display:flex;align-items:center;gap:22px}
+html.neo-app .neo-wechat-symbol{width:95px;height:95px;display:grid;place-items:center;border:2px solid #17201c;box-shadow:3px 3px 0 #17201c;background:white;flex-shrink:0}
+html.neo-app .neo-wechat-symbol svg{width:60px;height:60px;fill:#09aa52}
+html.neo-app .neo-wechat-content h3{font-size:18px;margin-bottom:6px}
+html.neo-app .neo-wechat-content p{font-size:13px;line-height:1.7;color:#535d57}
+html.neo-app .neo-wechat-content .btn{font-size:13px;margin-top:8px;min-height:36px;padding:5px 12px}
+html.neo-app .auth-terms{margin-top:24px;text-align:center;font-size:12px;color:#535d57;line-height:1.8}
+html.neo-app .auth-terms a{color:#17201c;text-decoration:underline;text-underline-offset:3px}
+html.neo-app .is-register .login-story{background:#d8efff}
+html.neo-app .is-register .neo-browser-art{display:none}
+html.neo-app .is-register .neo-auth-art>img{width:100%}
+html.neo-app .is-register .login-flow,html.neo-app .is-register #register-entry{display:none}
+html.neo-app .is-register .login-card{padding-top:28px;padding-bottom:24px}
+html.neo-app .is-register .login-form{gap:12px}
+html.neo-app .is-register .login-hero{margin-bottom:16px}
+html.neo-app .register-hint{padding:0;border:0;background:none;border-radius:0;font-size:13px}
+html.neo-app .register-code-row{display:flex;gap:12px}
+html.neo-app .register-code-row input{flex:1;min-width:0;padding:10px 12px}
+html.neo-app #btn-send-code{background:#ffd85b;white-space:nowrap}
+/* Workspace */
+html.neo-app .workspace-layout{background:#fffef4}
+html.neo-app .workspace-header{background:#fffef4;border-bottom:2px solid #17201c;box-shadow:none;backdrop-filter:none;padding:8px 4%;min-height:80px}
+html.neo-app .header-right{gap:16px}
+html.neo-app .header-user{font-size:14px;font-weight:700;color:#17201c;background:none}
+html.neo-app .workspace-header #market-link,html.neo-app #menu-item-market-admin,html.neo-app .btn-publish-market{display:none!important}
+html.neo-app .workspace-header .header-tool-link{color:#17201c;border:0;background:none}
+html.neo-app .workspace-header .btn{box-shadow:none;background:none;border-color:transparent;padding:8px}
+html.neo-app .workspace-main{max-width:1600px;width:100%;padding:32px 4% 70px;margin:auto}
+html.neo-app .workspace-top{display:flex;flex-direction:column;gap:24px;margin-bottom:40px}
+html.neo-app .workspace-intro{min-height:0;padding:0;border-radius:0;background:none;box-shadow:none;color:#17201c}
+html.neo-app .workspace-intro::after{display:none}
+html.neo-app .workspace-intro h2{font:850 30px/1.3 MagpieSans,sans-serif;letter-spacing:-.02em;margin:0 0 8px}
+html.neo-app .workspace-intro p{font-size:15px;color:#535d57}
+html.neo-app .workspace-main .toolbar{padding:22px 28px;background:#effbd6;border:2px solid #17201c;border-radius:4px;box-shadow:5px 5px 0 #17201c;gap:0}
+html.neo-app .workspace-main .upload-area{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:28px;padding:0;border:0;border-radius:0;background:none;min-height:135px;box-shadow:none}
+html.neo-app .upload-area .neo-upload-bird{width:150px;height:125px;object-fit:contain}
+html.neo-app .workspace-main .upload-title{font-size:clamp(18px,2vw,27px);font-weight:850;color:#17201c;margin-bottom:10px}
+html.neo-app .workspace-main .upload-hint{font-size:14px;color:#535d57;line-height:1.7}
+html.neo-app .workspace-main .upload-action{border:2px solid #17201c;border-radius:3px;box-shadow:4px 4px 0 #17201c;background:#fffef4;color:#17201c;padding:14px 24px;font-size:17px;font-weight:750;white-space:nowrap}
+html.neo-app .workspace-main .upload-privacy{margin:0 0 0 178px;padding:0;border:0;background:none;justify-content:flex-start;gap:10px}
+html.neo-app .upload-privacy-copy{display:flex;gap:16px;align-items:baseline}
+html.neo-app .upload-privacy-copy strong{font-size:14px;color:#17201c}
+html.neo-app .upload-privacy-copy small{font-size:13px;color:#535d57}
+html.neo-app .upload-area.dragover{outline:3px dashed #17201c;outline-offset:8px}
+html.neo-app .workspace-library{padding:0;border:0;background:none;box-shadow:none}
+html.neo-app .file-list-header{margin:0 0 22px;padding:0;border:0;gap:14px}
+html.neo-app .library-eyebrow{display:none}
+html.neo-app #library-heading{font-size:25px;font-weight:850}
+html.neo-app .file-count{font-size:14px;color:#535d57;background:none;padding:0;border:0}
+html.neo-app .file-filter-bar{gap:16px;display:flex;flex-wrap:wrap;margin-bottom:20px;padding:0}
+html.neo-app .search-input-wrap{flex:1 1 280px;min-width:180px;max-width:420px}
+html.neo-app #search-input{height:44px;font-size:14px;border:2px solid #17201c}
+html.neo-app .filter-chips{flex:1 1 auto;gap:4px;flex-wrap:wrap}
+html.neo-app .filter-chip{border:0;border-bottom:2px solid transparent;border-radius:2px;background:none;color:#17201c;font-size:14px;min-height:42px;padding:8px 12px;font-weight:650}
+html.neo-app .filter-chip.active{background:#b7eb4a;border-bottom-color:#17201c}
+html.neo-app .filter-divider{background:#879084}
+html.neo-app .view-toggle{background:none;border:0;gap:8px;box-shadow:none}
+html.neo-app .view-toggle-btn{border:2px solid #17201c;border-radius:3px;background:#fffef4;color:#17201c;width:40px;height:42px;font-size:24px}
+html.neo-app .view-toggle-btn.active{background:#b7eb4a;color:#17201c;box-shadow:2px 2px 0 #17201c}
+html.neo-app .neo-list-columns,html.neo-app .workspace-library .file-item{display:grid;grid-template-columns:26px minmax(180px,1fr) 75px 70px 115px 132px;gap:16px;align-items:center;padding:16px 20px}
+html.neo-app .neo-list-columns{background:#f1f2ee;border:2px solid #17201c;border-bottom:0;border-radius:4px 4px 0 0;font-size:13px;font-weight:750}
+html.neo-app .workspace-library:has(.view-card) .neo-list-columns{display:none}
+html.neo-app .file-list:not(.view-card){display:block;border:2px solid #17201c;border-radius:0 0 4px 4px;background:white;overflow:visible}
+html.neo-app .workspace-library .file-item{border:0;border-bottom:1px solid #bac1b7;border-radius:0;margin:0;box-shadow:none;background:#fff;transform:none;min-height:86px}
+html.neo-app .workspace-library .file-item:last-child{border-bottom:0}
+html.neo-app .workspace-library .file-item.selected{background:#effbd6}
+html.neo-app .file-info{min-width:0;gap:14px}
+html.neo-app .file-meta{min-width:0}
+html.neo-app .file-name{font-size:15px;font-weight:650;color:#17201c;overflow-wrap:anywhere}
+html.neo-app .file-subline{gap:6px;margin-top:5px}
+html.neo-app .file-item .file-subline>.file-badge-type,html.neo-app .file-item .file-subline>.file-badge-public,html.neo-app .file-item .file-subline>.file-badge-private{display:none}
+html.neo-app .file-icon{background:#d8efff;color:#17201c;border:1px solid #17201c;border-radius:3px;width:34px;height:40px;box-shadow:none;font-size:10px;flex-shrink:0}
+html.neo-app .file-icon.md{background:#fffef4}
+html.neo-app .file-icon.zip{background:#eae5ff}
+html.neo-app .file-badge{font-size:11px;border-radius:3px;box-shadow:none;color:#384536;background:#f1f2ee}
+html.neo-app .file-badge-type{background:#d8efff;color:#17201c}
+html.neo-app .file-badge-public{background:#effbd6;color:#34511b}
+html.neo-app .file-badge-private{background:#f1f2ee;color:#39423d}
+html.neo-app .neo-file-time{font-size:13px;color:#535d57}
+html.neo-app .file-actions{gap:6px;flex-wrap:nowrap}
+html.neo-app .file-actions>.btn,html.neo-app .file-more-trigger{border:1px solid transparent;box-shadow:none;background:none;color:#17201c;padding:5px;min-width:34px;min-height:36px}
+html.neo-app .btn-star.starred{color:#956400}
+html.neo-app .file-detail{font-size:12px;color:#535d57}
+html.neo-app .file-checkbox-visual{border:2px solid #17201c;border-radius:3px;width:18px;height:18px;background:#fff}
+html.neo-app .file-checkbox-wrap input:checked+.file-checkbox-visual{background:#b7eb4a;border-color:#17201c}
+html.neo-app .file-checkbox-wrap input:focus-visible+.file-checkbox-visual{outline:3px solid #176491;outline-offset:3px}
+html.neo-app .file-card{border:2px solid #17201c;border-radius:4px;background:#fff;box-shadow:3px 3px 0 #17201c}
+html.neo-app :is(.settings-menu,.file-more-menu,.filter-dropdown-menu,.preview-more-menu){background:#fffef8;border:2px solid #17201c;border-radius:3px;box-shadow:4px 4px 0 #17201c;backdrop-filter:none}
+html.neo-app :is(.settings-menu-item,.file-more-item){color:#17201c;min-height:38px;font-size:14px}
+html.neo-app :is(.settings-menu-item,.file-more-item):hover{background:#effbd6}
+html.neo-app .empty-state{color:#535d57;padding:40px 20px}
+html.neo-app .empty-state-cta{background:#b7eb4a;color:#17201c;border:2px solid #17201c;border-radius:3px;box-shadow:3px 3px 0 #17201c}
+html.neo-app .batch-toolbar{background:#fffef4;border:2px solid #17201c;border-radius:4px;box-shadow:4px 4px 0 #17201c}
+/* Preview shell never crosses into the uploaded content iframe. */
+html.neo-app .preview-layout{height:100dvh;overflow:hidden}
+html.neo-app .header.header-preview{padding:0 28px 14px;background:#fffef4;border-bottom:2px solid #17201c;box-shadow:none;backdrop-filter:none;max-height:none}
+html.neo-app .neo-preview-brand{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:4px 0;border-bottom:1px solid #bec4b7;margin-bottom:14px;width:100%}
+html.neo-app .header-preview{flex-direction:column}
+html.neo-app .preview-topbar{max-width:none;width:100%}
+html.neo-app .preview-expanded-left{flex:1;min-width:0}
+html.neo-app .preview-heading-truncate{font-size:18px;color:#17201c}
+html.neo-app .preview-expanded-right{gap:12px}
+html.neo-app .preview-container{display:flex;position:relative;min-height:0;flex:1;overflow:hidden;background:#fff}
+html.neo-app .version-panel{position:relative;top:auto;right:auto;width:285px;min-width:285px;height:100%;transform:none;box-shadow:none;background:#fffef4;border-left:0;border-right:2px solid #17201c;transition:none;display:none}
+html.neo-app .version-panel.open{display:flex;transform:none}
+html.neo-app .version-panel-header{padding:18px 16px}
+html.neo-app .version-panel-header h3{font-size:20px}
+html.neo-app .version-item{border-radius:3px;margin:10px 12px;padding:14px;background:transparent;border:0;border-left:2px solid #b8c3b2}
+html.neo-app .version-item-current{background:#effbd6;border-left-color:#17201c}
+html.neo-app .version-item-label{font-size:15px;color:#17201c}
+html.neo-app .version-item-meta{font-size:12px;color:#535d57}
+html.neo-app .version-item-actions{flex-wrap:wrap;gap:8px;margin-top:12px}
+html.neo-app #preview-iframe{flex:1;min-width:0;width:100%;height:100%;border:0;background:white}
+html.neo-app .source-wrap,html.neo-app .editor-container{min-width:0;flex:1}
+html.neo-app .source-view{background:#f9faf5;color:#17201c;font:14px/1.7 ui-monospace,SFMono-Regular,monospace}
+html.neo-app .bundle-tree{background:#fffef4;border-right:2px solid #17201c}
+html.neo-app .preview-header-collapsed .neo-preview-brand{display:none}
+html.neo-app .preview-header-collapsed .header.header-preview{padding:8px 16px}
+html.neo-app .preview-expand-floating{background:#b7eb4a;border:2px solid #17201c;box-shadow:3px 3px 0 #17201c;color:#17201c;border-radius:3px}
+/* Shared surface and interaction foundations for dialogs reached from this app. */
+html.neo-app .modal-backdrop{background:rgba(23,32,28,.48);backdrop-filter:none;padding:24px}
+html.neo-app .modal-panel{background:#fffef8;border:2px solid #17201c;border-radius:4px;box-shadow:6px 6px 0 #17201c;max-height:calc(100dvh - 48px)}
+html.neo-app .modal-header{padding:20px 24px;border-bottom:1px solid #17201c}
+html.neo-app .modal-header h2{font-size:24px;font-weight:800;color:#17201c}
+html.neo-app .modal-close{width:36px;height:36px;min-height:36px;padding:0;font-size:24px;box-shadow:none}
+html.neo-app .modal-body{padding:24px}
+html.neo-app .modal-footer{padding:18px 24px;border-top:1px solid #17201c;gap:12px;background:#fffef8}
+html.neo-app #profile-modal .modal-panel{max-width:560px}
+html.neo-app #profile-modal .modal-header{background:#effbd6}
+html.neo-app #profile-modal .modal-body{display:flex;flex-direction:column;gap:24px;padding:28px}
+html.neo-app #share-settings-modal .modal-panel{max-width:680px}
+html.neo-app #share-settings-modal .modal-body{padding:0 24px 20px}
+html.neo-app #share-settings-modal .modal-header{border-bottom:0}
+html.neo-app .neo-share-filename{font-weight:700;font-size:16px;margin:0 0 12px;overflow-wrap:anywhere}
+html.neo-app .share-status{padding:0 0 18px;border-bottom:1px solid #8f998a;margin-bottom:0;display:flex;gap:8px;flex-wrap:wrap}
+html.neo-app .share-link-card,html.neo-app .share-section{border:0;border-radius:0;box-shadow:none;background:none;padding:18px 0;margin:0}
+html.neo-app .share-section{border-top:1px solid #8f998a}
+html.neo-app .share-sections{display:block;gap:0}
+html.neo-app .share-section-icon{background:none;border:0;box-shadow:none;color:#17201c;padding:0;width:24px;height:24px}
+html.neo-app .share-section-icon svg{width:22px;height:22px}
+html.neo-app .share-section-title,html.neo-app .share-link-card-label{font-size:16px;color:#17201c;font-weight:750}
+html.neo-app .share-link-row,html.neo-app .share-input-group{display:flex;gap:12px;margin-top:10px;min-width:0}
+html.neo-app .share-link-row input,html.neo-app .share-input-group input{flex:1;min-width:0;padding:10px 12px;font-size:14px;min-height:42px}
+html.neo-app #share-expires-input{width:100%;min-height:44px;padding:10px}
+html.neo-app .share-section-body{padding:0;margin-top:8px}
+html.neo-app .share-section-footer{display:flex;align-items:center;gap:12px;margin:8px 0 0;padding:0;border:0;flex-wrap:wrap}
+html.neo-app .share-hint{font-size:12px;color:#535d57;margin-top:8px}
+html.neo-app .neo-share-warning{font-size:12px;color:#ad2626}
+html.neo-app #share-settings-done{background:#b7eb4a;min-width:100px}
+html.neo-app .share-password-toggle{padding:6px;box-shadow:none;min-width:36px}
+html.neo-app .share-password-toggle svg{width:20px;height:20px}
+html.neo-app .toast{background:#17201c;color:#fffef4;border:2px solid #17201c;border-radius:4px;box-shadow:3px 3px 0 #8a997c}
+@media(hover:hover){
+ html.neo-app .btn:not(:disabled):hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 #17201c;background:#effbd6}
+ html.neo-app .btn-text:hover,html.neo-app .file-actions .btn:hover{transform:none;box-shadow:none;background:#effbd6}
+ html.neo-app .workspace-library .file-item:hover{background:#f7fbeF;transform:none;box-shadow:none}
+}
+html.neo-app .btn:not(:disabled):active{transform:translate(2px,2px);box-shadow:1px 1px 0 #17201c}
+@media(max-width:1100px){
+ html.neo-app .neo-motto{display:none}
+ html.neo-app .login-main{gap:18px;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ html.neo-app .login-card{padding:28px 24px}
+ html.neo-app .login-story{padding:32px 24px}
+ html.neo-app .login-flow{gap:10px}
+ html.neo-app .login-flow li{gap:6px}
+ html.neo-app .workspace-main .upload-area{grid-template-columns:110px minmax(0,1fr) auto;gap:18px}
+ html.neo-app .upload-area .neo-upload-bird{width:110px;height:110px}
+ html.neo-app .workspace-main .upload-privacy{margin-left:128px}
+ html.neo-app .neo-list-columns,html.neo-app .workspace-library .file-item{grid-template-columns:24px minmax(160px,1fr) 62px 56px 95px 118px;gap:10px;padding:14px}
+}
+@media(max-width:800px){
+ html.neo-app .login-layout{padding:0 20px}
+ html.neo-app .login-main{display:flex;flex-direction:column;max-width:620px;min-height:0}
+ html.neo-app .login-story{min-height:0;padding:24px;gap:10px}
+ html.neo-app .login-story-title{font-size:36px}
+ html.neo-app .login-story-desc{font-size:16px}
+ html.neo-app .neo-auth-art,html.neo-app .login-flow,html.neo-app .login-story-foot{display:none}
+ html.neo-app .login-card{padding:30px 26px}
+ html.neo-app .login-headline{font-size:32px}
+ html.neo-app .neo-auth-header{min-height:85px}
+ html.neo-app .workspace-header{padding:8px 20px;flex-wrap:wrap}
+ html.neo-app .header-right{gap:8px}
+ html.neo-app .workspace-main{padding:24px 20px 70px}
+ html.neo-app .workspace-main .toolbar{padding:20px}
+ html.neo-app .workspace-main .upload-area{grid-template-columns:80px minmax(0,1fr);gap:16px}
+ html.neo-app .upload-area .neo-upload-bird{width:80px;height:80px}
+ html.neo-app .workspace-main .upload-action{grid-column:1/-1;justify-self:start;padding:10px 18px;font-size:15px}
+ html.neo-app .workspace-main .upload-privacy{margin:20px 0 0}
+ html.neo-app .upload-privacy-copy{flex-wrap:wrap;gap:4px 12px}
+ html.neo-app .neo-list-columns{display:none}
+ html.neo-app .file-list:not(.view-card){border-radius:4px}
+ html.neo-app .workspace-library .file-item{grid-template-columns:22px minmax(0,1fr) auto;gap:10px;padding:16px 12px}
+ html.neo-app .neo-file-type,html.neo-app .neo-file-privacy,html.neo-app .neo-file-time{display:none}
+ html.neo-app .file-item .file-subline>.file-badge-type,html.neo-app .file-item .file-subline>.file-badge-public,html.neo-app .file-item .file-subline>.file-badge-private{display:inline-flex}
+ html.neo-app .file-actions{gap:0;justify-content:flex-end}
+ html.neo-app .version-panel{position:absolute;left:0;right:auto;width:min(285px,85vw);min-width:0;box-shadow:4px 0 0 #17201c}
+ html.neo-app .header.header-preview{padding:0 16px 12px}
+ html.neo-app .preview-expanded-row{gap:12px}
+ html.neo-app .preview-expanded-right{width:100%;justify-content:flex-start;gap:10px;flex-wrap:wrap}
+ html.neo-app .preview-heading-truncate{font-size:16px}
+ html.neo-app .preview-expanded-left{width:100%;flex-basis:100%}
+}
+@media(max-width:430px){
+ html.neo-app .neo-brand img{width:120px;height:56px}
+ html.neo-app .neo-back-home{font-size:12px}
+ html.neo-app .login-layout{padding:0 14px}
+ html.neo-app .login-story-title{font-size:32px}
+ html.neo-app .login-card{padding:24px 18px}
+ html.neo-app .login-headline{font-size:27px}
+ html.neo-app .neo-wechat-content{gap:14px}
+ html.neo-app .neo-wechat-symbol{width:66px;height:66px}
+ html.neo-app .neo-wechat-symbol svg{width:44px;height:44px}
+ html.neo-app .neo-wechat-content h3{font-size:17px}
+ html.neo-app .workspace-header{gap:8px;padding:6px 14px}
+ html.neo-app .header-right{width:100%;justify-content:space-between;gap:4px}
+ html.neo-app .workspace-main{padding:24px 14px 80px}
+ html.neo-app .workspace-intro h2{font-size:26px}
+ html.neo-app .workspace-main .upload-area{grid-template-columns:60px minmax(0,1fr);gap:12px}
+ html.neo-app .upload-area .neo-upload-bird{width:60px;height:70px}
+ html.neo-app .workspace-main .upload-hint{font-size:12px}
+ html.neo-app .workspace-main .upload-title{font-size:18px}
+ html.neo-app .search-input-wrap{flex-basis:100%;max-width:none}
+ html.neo-app .filter-chip{padding:8px;font-size:13px}
+ html.neo-app .workspace-library .file-item{grid-template-columns:20px minmax(0,1fr);padding:14px 10px}
+ html.neo-app .file-actions{grid-column:2;justify-content:flex-start;margin-top:4px}
+ html.neo-app .modal-backdrop{padding:12px}
+ html.neo-app .modal-panel{max-height:calc(100dvh - 24px)}
+ html.neo-app .modal-header,html.neo-app .modal-footer{padding:16px}
+ html.neo-app .modal-header h2{font-size:21px}
+ html.neo-app .modal-body,html.neo-app #profile-modal .modal-body{padding:20px 16px}
+ html.neo-app #share-settings-modal .modal-body{padding:0 16px 16px}
+ html.neo-app .share-input-group,html.neo-app .share-link-row{flex-wrap:wrap;gap:8px}
+ html.neo-app .share-input-group input,html.neo-app .share-link-row input{flex-basis:calc(100% - 90px)}
+ html.neo-app .share-password-group input{flex-basis:calc(100% - 50px)}
+ html.neo-app .neo-auth-footer{font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){html.neo-app *,html.neo-app *:before,html.neo-app *:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}html.neo-app .btn:hover,html.neo-app .btn:active{transform:none!important}}
+html.neo-app .neo-auth-header,html.neo-app .neo-auth-footer{width:100%}
+html.neo-app .workspace-library .filter-chip.active{color:#17201c;border-bottom-color:#17201c}
+html.neo-app .workspace-library #search-input{border-radius:3px}
+html.neo-app .workspace-library .file-count{border:0;background:none;border-radius:0;font-size:14px;padding:0}
+html.neo-app .workspace-library .file-filter-bar{border-bottom:0;padding-bottom:0}
+html.neo-app .modal-header-title svg{color:#17201c}
+html.neo-app .neo-preview-link{font-size:13px;color:#17201c;text-decoration:underline;text-underline-offset:4px;padding:8px 2px;white-space:nowrap}
+html.neo-app .neo-list-columns,html.neo-app .workspace-library .file-item{grid-template-columns:26px minmax(180px,1fr) 75px 70px 115px 168px}
+html.neo-app .is-register .login-story-title{font-size:clamp(36px,4.5vw,64px)}
+@media(max-width:1100px){html.neo-app .neo-list-columns,html.neo-app .workspace-library .file-item{grid-template-columns:24px minmax(150px,1fr) 62px 56px 85px 158px}}
+@media(max-width:800px){html.neo-app .workspace-library .file-item{grid-template-columns:22px minmax(0,1fr) auto}html.neo-app .is-register .login-story-title{font-size:34px}}
+@media(max-width:430px){html.neo-app .workspace-library .file-item{grid-template-columns:20px minmax(0,1fr)}}
+html.neo-app .source-wrap:not(:has(.source-view.active)){display:none}
+html.neo-app .source-wrap:has(.source-view.active){height:100%;overflow:auto}
+html.neo-app .source-wrap.bundle-layout:has(.source-view.active){display:flex}
+html.neo-app .version-item-dot{background:#75846b}
+html.neo-app .version-item-current .version-item-dot{background:#79ab14}
+html.neo-app .share-password-group input{padding-right:12px}
+html.neo-app .share-password-toggle{position:static;transform:none;align-self:stretch;flex-shrink:0}
+html.neo-app .file-card-thumb,html.neo-app .file-card-thumb-loading{background:#e8f1ed}
+html.neo-app .file-card-icon-btn{border:2px solid #17201c;border-radius:3px;background:#fffef4;color:#17201c;box-shadow:2px 2px 0 #17201c}
+html.neo-app .file-card-icon-btn.starred{background:#ffe074}
+html.neo-app .file-card-more-menu{border:2px solid #17201c;border-radius:3px;box-shadow:4px 4px 0 #17201c}

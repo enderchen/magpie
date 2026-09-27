@@ -179,7 +179,7 @@ function closeVersionPanel(container) {
   const panel = container.querySelector('#version-panel');
   if (!panel) return;
   panel.classList.remove('open');
-  setTimeout(() => { panel.hidden = true; }, 260);
+  panel.hidden = true;
 }
 
 function setupVersionUpload(container, fileId) {
@@ -450,7 +450,7 @@ function renderPreview(container, hash) {
   }
 
   try {
-    layout.classList.add('preview-header-collapsed');
+    layout.classList.toggle('preview-header-collapsed', sessionStorage.getItem(PREVIEW_HEADER_COLLAPSED_KEY) === '1');
   } catch (_) {}
 
   syncPreviewHeaderState(layout, expandFloatingBtn, toggleHeaderBtn);
@@ -750,6 +750,11 @@ function renderPreview(container, hash) {
     if (menuShare && state.currentUser && (state.currentUser.role === 'admin' || state.currentUser.id == data.uploaded_by)) {
       menuShare.hidden = false;
       menuShare.addEventListener('click', () => { closeMoreDropdown(); openShareSettings(id, data); });
+      const directShare = container.querySelector('#btn-preview-share');
+      if (directShare) {
+        directShare.hidden = false;
+        directShare.addEventListener('click', () => openShareSettings(id, data));
+      }
     }
   }).catch(e => {
     toast(e.message, 'error');

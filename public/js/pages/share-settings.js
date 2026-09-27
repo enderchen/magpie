@@ -12,6 +12,13 @@ import { escapeHtml, openModal, closeModal, copyToClipboard } from '../utils.js'
 async function openShareSettings(fileId, current, onUpdated) {
   const modal = document.getElementById('share-settings-modal');
   if (!modal) return;
+  // 预览 content 接口不含短链状态；每次打开读取最新元数据，避免空链接或旧设置。
+  try {
+    current = await api(`/api/files/${fileId}`);
+  } catch (e) {
+    toast(e.message || '无法读取分享设置，请稍后重试', 'error');
+    return;
+  }
   // 本地快照：随操作实时更新，避免界面与后端不同步
   const snap = {
     share_key: current.share_key,
@@ -26,17 +33,19 @@ async function openShareSettings(fileId, current, onUpdated) {
   const expiresInput = el('share-expires-input');
   const passwordInput = el('share-password-input');
   const passwordToggle = el('share-password-toggle');
+  el('share-filename').textContent = current.original_name || '';
+
 
   // 密码显隐切换
   if (passwordToggle) {
-    passwordToggle.addEventListener('click', () => {
+    passwordToggle.onclick = () => {
       const isPassword = passwordInput.type === 'password';
       passwordInput.type = isPassword ? 'text' : 'password';
       passwordToggle.querySelector('.icon-eye').style.display = isPassword ? 'none' : '';
       passwordToggle.querySelector('.icon-eye-off').style.display = isPassword ? '' : 'none';
       passwordToggle.setAttribute('aria-label', isPassword ? '隐藏密码' : '显示密码');
       passwordToggle.title = isPassword ? '隐藏密码' : '显示密码';
-    });
+    };
   }
 
   // 把本地快照刷新到界面（链接、状态徽标、别名输入框回显、过期时间回显）
@@ -56,6 +65,7 @@ async function openShareSettings(fileId, current, onUpdated) {
     } else {
       expiresInput.value = '';
     }
+    el('share-password-clear').disabled = !snap.has_share_password;
     // 状态徽标：公开/私有 · 密码保护 · 过期时间
     const badges = [];
     badges.push(snap.is_public

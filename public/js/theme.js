@@ -35,10 +35,16 @@ function initTheme() {
   });
 }
 
+function applyPageTheme(isNeo) {
+  document.documentElement.classList.toggle('neo-app', isNeo);
+  applyTheme(isNeo ? 'light' : getCurrentTheme());
+}
+
 function setupThemeToggle(container) {
+  if (document.documentElement.classList.contains('neo-app')) return;
   container.querySelectorAll('.theme-toggle').forEach(btn => {
     btn.addEventListener('click', toggleTheme);
   });
 }
 
-export { initTheme, setupThemeToggle, toggleTheme };
+export { initTheme, setupThemeToggle, toggleTheme, applyPageTheme };

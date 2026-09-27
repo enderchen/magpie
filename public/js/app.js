@@ -1,6 +1,6 @@
 // 入口：路由初始化、全局状态、hash change 监听
 //
-// 路由级代码分割：各页面（landing/login/home/preview）用动态 import() 按需加载，
+// 路由级代码分割：各页面（login/home/preview）用动态 import() 按需加载，
 // 经 esbuild splitting 产出独立 chunk，首屏只下载当前路由所需代码。
 
 import { api } from './api.js';
@@ -36,12 +36,12 @@ function navigate(path) {
 // 绕过 immutable 长缓存。字面量（非模板）能被 esbuild 正确分割。
 async function loadHome() { const m = await import('./pages/home.js?v=1.6.7'); return m.renderHome; }
 async function loadLogin() { const m = await import('./pages/login.js?v=1.6.7'); return m.renderLogin; }
-async function loadLanding() { const m = await import('./pages/landing.js?v=1.6.7'); return m.renderLanding; }
 async function loadPreview() { const m = await import('./pages/preview.js?v=1.6.7'); return m.renderPreview; }
 async function loadMarket() { const m = await import('./pages/market.js?v=1.6.7'); return m.renderMarket; }
 
 function route() {
   const hash = location.hash.replace('#', '') || '/';
+  const routePath = hash.split('?')[0];
   const appEl = document.getElementById('app');
 
   // 邮箱验证结果页（纯静态，无需加载页面模块）
@@ -78,7 +78,7 @@ function route() {
   }
 
   if (state.currentUser) {
-    if (hash === '/login' || hash === '/register') { navigate('/'); return; }
+    if (routePath === '/login' || routePath === '/register') { navigate('/'); return; }
     loadHome().then((renderHome) => {
       renderHome(appEl);
       setupThemeToggle(appEl);
@@ -86,12 +86,12 @@ function route() {
     return;
   }
 
-  if (hash === '/login') {
+  if (routePath === '/login') {
     loadLogin().then((renderLogin) => { renderLogin(appEl, 'login'); setupThemeToggle(appEl); });
-  } else if (hash === '/register') {
+  } else if (routePath === '/register') {
     loadLogin().then((renderLogin) => { renderLogin(appEl, 'register'); setupThemeToggle(appEl); });
   } else {
-    loadLanding().then((renderLanding) => { renderLanding(appEl); setupThemeToggle(appEl); });
+    navigate('/login');
   }
 }
 

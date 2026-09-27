@@ -1,4 +1,4 @@
-/* 即页 uTools 插件 · 样式
+/* 纸鹊 Magpie uTools 插件 · 样式
    跟随系统深浅色；CSS 变量集中管理，深色模式自动覆盖 */
 
 :root {
@@ -389,7 +389,7 @@ select {
   background: var(--primary-soft);
 }
 .content.dragover::after {
-  content: "松开以上传到即页";
+  content: "松开以上传到纸鹊 Magpie";
   position: fixed;
   top: 50%;
   left: 50%;

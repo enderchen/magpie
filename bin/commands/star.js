@@ -6,7 +6,7 @@ const { out } = require('./_shared');
 async function run(client, args) {
   const id = args.sub;
   if (!id) {
-    const e = new Error('用法：jpage star <id>');
+    const e = new Error('用法：magpie star <id>');
     e.name = 'UsageError';
     throw e;
   }

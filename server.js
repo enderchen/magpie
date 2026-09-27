@@ -1,4 +1,4 @@
-// 即页 jpage 服务端入口。
+// 纸鹊 Magpie 服务端入口。
 // 仅负责：app 创建、中间件装配、路由挂载、MCP/静态/catch-all、全局错误处理、启动编排与关闭钩子。
 // 业务逻辑分布在 lib/（共享层）与 routes/（按域拆分的 Router）。
 
@@ -115,7 +115,7 @@ app.use(session({
   secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
-  name: 'jpage.sid',
+  name: 'magpie.sid',
   cookie: {
     httpOnly: true,
     sameSite: 'lax',
@@ -355,61 +355,53 @@ app.use('/vendor/katex', express.static(path.join(NODE_MODULES, 'katex', 'dist')
 app.use('/vendor/highlight.js', express.static(path.join(NODE_MODULES, 'highlight.js'), STATIC_OPTS));
 app.use('/vendor/mermaid', express.static(path.join(NODE_MODULES, 'mermaid', 'dist'), STATIC_OPTS));
 
-// index:false —— 不让 static 自动把 / 映射到 index.html（由下方 catch-all 注入哈希资源路径后返回）
+// index:false：官网与应用壳由下方各自入口提供，避免静态目录默认首页。
+// Canonical entrypoints must precede static HTML files. Fragments survive redirects.
+app.get(['/home-share', '/home-share/', '/home-share/index.html'], (req, res) => {
+  res.redirect(302, '/' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''));
+});
+app.get([/^\/app$/, '/index.html'], (req, res) => {
+  res.redirect(302, '/app/' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''));
+});
 app.use(express.static(path.join(__dirname, 'public'), { ...STATIC_OPTS, index: false }));
 app.get('/privacy', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'privacy.html')));
 app.get('/terms', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'terms.html')));
 
-// --- SPA 兜底：返回 index.html，注入打包后的带哈希资源路径（若已 build）---
+// --- 官网与应用壳：共享配置注入，应用壳优先使用构建后的哈希资源 ---
 const INDEX_HTML_PATH = path.join(__dirname, 'public', 'index.html');
 const DIST_MANIFEST_PATH = path.join(__dirname, 'public', 'dist', 'manifest.json');
 const ICP_BEIAN = process.env.ICP_BEIAN || '';
-let _indexHtmlCache = { html: null, manifestMtime: 0, manifest: null };
 function escapeHtml(text) {
-  return String(text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+  return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
-function getIndexHtml(nonce) {
-  let manifest = null, manifestMtime = 0;
-  try {
-    const st = fs.statSync(DIST_MANIFEST_PATH);
-    manifestMtime = st.mtimeMs;
-    if (_indexHtmlCache.html && _indexHtmlCache.manifestMtime === manifestMtime && _indexHtmlCache.nonce === nonce) {
-      return _indexHtmlCache.html; // manifest 与 nonce 均未变，用缓存
-    }
-    manifest = JSON.parse(fs.readFileSync(DIST_MANIFEST_PATH, 'utf8'));
-  } catch {
-    // 无构建产物 → 返回源 index.html（引用源文件 /css、/js）
-    if (_indexHtmlCache.html && !_indexHtmlCache.manifest && _indexHtmlCache.nonce === nonce) return _indexHtmlCache.html;
-    const html = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-    _indexHtmlCache = { html, manifestMtime: 0, manifest: null, nonce };
-    return html;
-  }
-  // 注入哈希路径
-  let html = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  if (manifest['style.css']) {
-    html = html.replace(/\/css\/style\.css\?v=[^"']+/g, '/dist/' + manifest['style.css']);
-  }
-  if (manifest['app.js']) {
-    html = html.replace(/\/js\/app\.js\?v=[^"']+/g, '/dist/' + manifest['app.js']);
-  }
-  // 备案号：服务端注入，未配置则不显示
+
+function injectSiteConfig(html, nonce) {
   const icpHtml = ICP_BEIAN
     ? `<p class="landing-icp"><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">${escapeHtml(ICP_BEIAN)}</a></p>`
     : '';
-  html = html.replace('<!-- {{ICP_BEIAN_PLACEHOLDER}} -->', icpHtml);
-  html = html.replace('</head>', `<script nonce="${nonce}">window.__JPAGE_ICP_BEIAN__ = ${JSON.stringify(ICP_BEIAN)};</script></head>`);
-  _indexHtmlCache = { html, manifestMtime, manifest, nonce };
-  return html;
+  const config = JSON.stringify(ICP_BEIAN).replace(/</g, '\\u003c');
+  return html.replace('<!-- {{ICP_BEIAN_PLACEHOLDER}} -->', icpHtml)
+    .replace('</head>', `<script nonce="${nonce}">window.__MAGPIE_ICP_BEIAN__ = ${config};</script></head>`);
 }
 
-app.get('*', (req, res) => {
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.send(getIndexHtml(req.cspNonce));
+function getIndexHtml(nonce) {
+  let html = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  try {
+    const manifest = JSON.parse(fs.readFileSync(DIST_MANIFEST_PATH, 'utf8'));
+    if (manifest['style.css']) html = html.replace(/\/css\/style\.css\?v=[^"']+/g, '/dist/' + manifest['style.css']);
+    if (manifest['app.js']) html = html.replace(/\/js\/app\.js\?v=[^"']+/g, '/dist/' + manifest['app.js']);
+  } catch { /* Development uses source files when no build manifest exists. */ }
+  return injectSiteConfig(html, nonce);
+}
+
+app.get('/', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache');
+  res.type('html').send(injectSiteConfig(fs.readFileSync(path.join(__dirname, 'public/home-share/index.html'), 'utf8'), req.cspNonce));
+});
+app.get(['/app/', '/app/*'], (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache');
+  res.type('html').send(getIndexHtml(req.cspNonce));
 });
 
 // --- 全局错误处理 ---
@@ -498,14 +490,14 @@ if (require.main === module) {
         cron.schedule(backupCron, () => {
           try {
             const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-            const fname = `jpage-backup-${ts}.zip`;
+            const fname = `magpie-backup-${ts}.zip`;
             const fpath = path.join(backupDir, fname);
             const output = fs.createWriteStream(fpath);
             const archive = createBackupArchive();
             output.on('close', () => {
               logger.info({ type: 'app', message: '自动备份完成', file: fpath });
               const backups = fs.readdirSync(backupDir)
-                .filter(f => f.startsWith('jpage-backup-') && f.endsWith('.zip'))
+                .filter(f => f.startsWith('magpie-backup-') && f.endsWith('.zip'))
                 .sort();
               while (backups.length > 7) {
                 fs.unlinkSync(path.join(backupDir, backups.shift()));

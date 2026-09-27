@@ -1,4 +1,4 @@
-// 即页 uTools 插件 · 主应用逻辑（列表/搜索/分页/筛选 + 入口编排）
+// 纸鹊 Magpie uTools 插件 · 主应用逻辑（列表/搜索/分页/筛选 + 入口编排）
 
 (function () {
   const state = {
@@ -35,14 +35,14 @@
   function renderUser(user) {
     if (!user) return;
     els.userName.textContent = user.username + (user.role === 'admin' ? ' · 管理员' : '');
-    els.userAvatar.textContent = JP.initialOf(user.username);
+    els.userAvatar.textContent = Magpie.initialOf(user.username);
   }
 
   // ---- 文件列表渲染 ----
   function renderFileItem(f) {
     const iconClass = f.is_bundle ? 'zip' : f.file_type;
     const tagsHtml = (f.tags || [])
-      .map((t) => `<span class="meta-tag">${JP.escapeHtml(t.name)}</span>`)
+      .map((t) => `<span class="meta-tag">${Magpie.escapeHtml(t.name)}</span>`)
       .join('');
     const bundleBadge = f.is_bundle
       ? '<span class="meta-tag">📦 bundle</span>'
@@ -54,16 +54,16 @@
 
     return `
       <div class="file-item" data-id="${f.id}">
-        <div class="file-icon ${iconClass}">${JP.fileTypeLabel(f.is_bundle ? 'zip' : f.file_type)}</div>
+        <div class="file-icon ${iconClass}">${Magpie.fileTypeLabel(f.is_bundle ? 'zip' : f.file_type)}</div>
         <div class="file-main">
           <div class="file-name">
-            <span class="name-text">${JP.escapeHtml(f.original_name)}</span>
+            <span class="name-text">${Magpie.escapeHtml(f.original_name)}</span>
             ${visBadge}
             ${star ? `<span class="star-on">${star}</span>` : ''}
           </div>
           <div class="file-meta">
-            <span>${JP.formatSize(f.size)}</span>
-            <span>更新于 ${JP.formatDate(f.updated_at)}</span>
+            <span>${Magpie.formatSize(f.size)}</span>
+            <span>更新于 ${Magpie.formatDate(f.updated_at)}</span>
             <span>👁 ${f.view_count || 0}</span>
             ${bundleBadge}
             ${versionBadge}
@@ -140,22 +140,22 @@
       if (!f) return;
       item.querySelector('.act-open').onclick = (e) => {
         e.stopPropagation();
-        window.jpage.openExternal(window.jpage.getShareUrl(f.share_key));
+        window.magpie.openExternal(window.magpie.getShareUrl(f.share_key));
       };
       item.querySelector('.act-copy').onclick = (e) => {
         e.stopPropagation();
-        window.jpage.copyText(window.jpage.getShareUrl(f.share_key));
-        JP.toast('✓ 已复制分享链接');
+        window.magpie.copyText(window.magpie.getShareUrl(f.share_key));
+        Magpie.toast('✓ 已复制分享链接');
       };
       item.querySelector('.act-star').onclick = async (e) => {
         e.stopPropagation();
         try {
-          if (f.starred) await window.jpage.unstarFile(id);
-          else await window.jpage.starFile(id);
+          if (f.starred) await window.magpie.unstarFile(id);
+          else await window.magpie.starFile(id);
           f.starred = !f.starred;
           load();
         } catch (err) {
-          JP.showError(err);
+          Magpie.showError(err);
         }
       };
     });
@@ -165,10 +165,10 @@
 
   async function openDetail(id) {
     try {
-      const [detail] = await Promise.all([window.jpage.getFile(id)]);
+      const [detail] = await Promise.all([window.magpie.getFile(id)]);
       await Detail.open(detail, state.allTags, state.allCategories);
     } catch (err) {
-      JP.showError(err);
+      Magpie.showError(err);
     }
   }
 
@@ -181,7 +181,7 @@
       // 搜索框有输入时，按文件名过滤（listFiles 的 keyword 走 LIKE 匹配文件名），
       // 不走全文搜索 searchFiles（后者会混入正文内容匹配，且中文分词不准）。
       // 这样还能保留排序/分类/标签筛选的联动。
-      const data = await window.jpage.listFiles({
+      const data = await window.magpie.listFiles({
         page: state.page,
         limit: state.limit,
         sort: state.sort,
@@ -210,8 +210,8 @@
   async function loadFilters() {
     try {
       const [tagRes, catRes] = await Promise.all([
-        window.jpage.listTags(),
-        window.jpage.listCategories(),
+        window.magpie.listTags(),
+        window.magpie.listCategories(),
       ]);
       state.allTags = tagRes.tags || [];
       state.allCategories = catRes.categories || [];
@@ -221,7 +221,7 @@
         state.allTags
           .map(
             (t) =>
-              `<option value="${t.id}" ${String(t.id) === state.tag ? 'selected' : ''}>${JP.escapeHtml(
+              `<option value="${t.id}" ${String(t.id) === state.tag ? 'selected' : ''}>${Magpie.escapeHtml(
                 t.name
               )} (${t.file_count || 0})</option>`
           )
@@ -231,7 +231,7 @@
         state.allCategories
           .map(
             (c) =>
-              `<option value="${c.id}" ${String(c.id) === state.category ? 'selected' : ''}>${JP.escapeHtml(
+              `<option value="${c.id}" ${String(c.id) === state.category ? 'selected' : ''}>${Magpie.escapeHtml(
                 c.name
               )} (${c.file_count || 0})</option>`
           )
@@ -249,17 +249,17 @@
     if (state.entering) return; // 防止重复进入（登录事件 + onPluginEnter 可能并发触发）
     state.entering = true;
     try {
-      renderUser(user || window.jpage.getConfig().user);
+      renderUser(user || window.magpie.getConfig().user);
       Login.hide();
       await loadFilters();
       await load();
     } catch (err) {
       // 任何加载错误都不应白屏：展示主界面骨架 + 错误提示 + 重试
-      console.error('[即页] enterMain 加载失败', err);
+      console.error('[纸鹊 Magpie] enterMain 加载失败', err);
       Login.hide();
       try {
         els.list.innerHTML =
-          '<div class="empty"><h3>加载失败</h3><p>' + JP.escapeHtml(err.message || err) +
+          '<div class="empty"><h3>加载失败</h3><p>' + Magpie.escapeHtml(err.message || err) +
           '</p><p style="margin-top:8px"><button class="btn" onclick="location.reload()">重试</button></p></div>';
       } catch {}
     } finally {
@@ -330,7 +330,7 @@
     setupInternalDrop();
 
     // 登录成功 → 进入主界面，若有拖拽暂存的待上传文件则随后弹上传框
-    document.addEventListener('jpage:logged-in', async (e) => {
+    document.addEventListener('magpie:logged-in', async (e) => {
       await enterMain(e.detail);
       if (state.pendingUploadFiles && state.pendingUploadFiles.length) {
         const files = state.pendingUploadFiles;
@@ -340,7 +340,7 @@
     });
 
     // 刷新
-    document.addEventListener('jpage:refresh', () => {
+    document.addEventListener('magpie:refresh', () => {
       loadFilters();
       load();
     });
@@ -357,10 +357,10 @@
         }
 
         // 尝试恢复会话
-        const cfg = window.jpage.getConfig();
+        const cfg = window.magpie.getConfig();
         if (cfg.base && cfg.hasSession) {
           try {
-            const user = await window.jpage.me();
+            const user = await window.magpie.me();
             await enterMain(user);
             // 若是拖拽进入且有待上传文件，进主界面后直接弹上传框
             if (state.pendingUploadFiles && state.pendingUploadFiles.length) {
@@ -421,18 +421,18 @@
       const files = Array.from(e.dataTransfer.files || []);
       const paths = files.map((f) => f.path).filter(Boolean);
       if (!paths.length) {
-        JP.toast('未获取到文件路径');
+        Magpie.toast('未获取到文件路径');
         return;
       }
-      // 校验扩展名（只接受即页支持的格式）
+      // 校验扩展名（只接受纸鹊 Magpie支持的格式）
       const allowed = /\.(html?|md|markdown|zip)$/i;
       const valid = paths.filter((p) => allowed.test(p));
       const skipped = paths.length - valid.length;
       if (skipped > 0) {
-        JP.toast(`已忽略 ${skipped} 个不支持的文件`);
+        Magpie.toast(`已忽略 ${skipped} 个不支持的文件`);
       }
       if (!valid.length) {
-        JP.toast('没有可上传的文件（仅支持 html/md/zip）');
+        Magpie.toast('没有可上传的文件（仅支持 html/md/zip）');
         return;
       }
       handleDraggedFiles(valid);
@@ -441,17 +441,17 @@
 
   // ---- 设置弹窗 ----
   function openSettings() {
-    const cfg = window.jpage.getConfig();
+    const cfg = window.magpie.getConfig();
     const theme = cfg.theme || 'auto';
     const themeLabel = { auto: '跟随系统', dark: '深色', light: '浅色' };
-    JP.modal({
+    Magpie.modal({
       title: '设置 / 账号',
       bodyHtml: `
         <div class="detail-grid">
           <div class="label">服务器</div>
-          <div class="value">${JP.escapeHtml(cfg.base || '未配置')}</div>
+          <div class="value">${Magpie.escapeHtml(cfg.base || '未配置')}</div>
           <div class="label">当前账户</div>
-          <div class="value">${cfg.user ? JP.escapeHtml(cfg.user.username) : '-'}</div>
+          <div class="value">${cfg.user ? Magpie.escapeHtml(cfg.user.username) : '-'}</div>
           <div class="label">外观</div>
           <div class="value">
             <select id="setting-theme" class="select" style="max-width:140px">
@@ -468,17 +468,17 @@
         </div>`,
       onMount: (mask, close) => {
         mask.querySelector('#setting-theme').onchange = (e) => {
-          window.jpage.setTheme(e.target.value);
-          JP.toast('主题已切换为 ' + themeLabel[e.target.value]);
+          window.magpie.setTheme(e.target.value);
+          Magpie.toast('主题已切换为 ' + themeLabel[e.target.value]);
         };
         mask.querySelector('.jp-switch').onclick = () => {
           close();
           Login.show();
         };
         mask.querySelector('.jp-logout').onclick = async () => {
-          await window.jpage.logout();
+          await window.magpie.logout();
           close();
-          JP.toast('已退出登录');
+          Magpie.toast('已退出登录');
           Login.show();
         };
         mask.querySelector('.jp-reload').onclick = () => {
@@ -492,34 +492,34 @@
 
   // ---- 启动 ----
   // 事件监听器必须在首屏就绑定好（无论当前在登录页还是主界面），
-  // 否则会出现「登录成功发出 jpage:logged-in 事件时，监听器还没注册」的死锁：
+  // 否则会出现「登录成功发出 magpie:logged-in 事件时，监听器还没注册」的死锁：
   //   首次进入无 session → 只显示登录页 → bindEvents 不会被调用 →
   //   登录事件无人接收 → 主界面永不启动。
   // 因此 bindEvents 在启动阶段立即执行，enterMain 只管数据和界面。
   function bootstrap() {
     // 防御：preload 未注入时不白屏，登录页会给出明确提示
-    if (!window.jpage) {
-      console.error('[即页] window.jpage 未注入，preload 可能未加载');
+    if (!window.magpie) {
+      console.error('[纸鹊 Magpie] window.magpie 未注入，preload 可能未加载');
       Login.init();
       return;
     }
     // 应用主题
     try {
-      window.jpage.setTheme(window.jpage.getTheme());
+      window.magpie.setTheme(window.magpie.getTheme());
     } catch (e) {
-      console.warn('[即页] 应用主题失败', e);
+      console.warn('[纸鹊 Magpie] 应用主题失败', e);
     }
     cacheEls();
-    bindEvents(); // ★ 立即绑定所有事件（含 jpage:logged-in 监听）
+    bindEvents(); // ★ 立即绑定所有事件（含 magpie:logged-in 监听）
     Login.init();
 
     // onPluginEnter 驱动首屏（uTools 环境）；无 onPluginEnter 时（浏览器调试）走兜底
     if (window.utools && window.utools.onPluginEnter) {
       // onPluginEnter 已在 bindEvents 中注册
     } else {
-      const cfg = window.jpage.getConfig();
+      const cfg = window.magpie.getConfig();
       if (cfg.base && cfg.hasSession) {
-        window.jpage
+        window.magpie
           .me()
           .then((u) => enterMain(u))
           .catch(() => Login.show());

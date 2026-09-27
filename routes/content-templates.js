@@ -568,7 +568,7 @@ router.post('/:id/use', (req, res) => {
 
 // 实例化模板 → 在用户文件列表创建一个新文件（基于模板内容），并记录追溯。
 // 语义：「使用模板」= 用户真正得到一个可编辑的文件，而非空计数。
-// 仅对 approved+visible 模板生效；必须通过 Token（MCP_TOKEN 或 jp_...）调用，禁止 Session Cookie。
+// 仅对 approved+visible 模板生效；必须通过 Token（MCP_TOKEN 或 mg_...）调用，禁止 Session Cookie。
 // 同用户对同模板可多次实例化（每次得到新文件）。
 router.post('/:shareKey/instantiate', uploadLimiter, requireAuth, requireTokenAuth, async (req, res) => {
   try {
@@ -681,13 +681,13 @@ router.get('/:shareKey/use-guide', loadSession, marketBotFilter, marketPreviewLi
       shareKey,
       title: t.title,
       fileType: t.file_type,
-      cli: `jpage template use ${shareKey}`,
-      cliWithName: `jpage template use ${shareKey} --name "${defaultName}"`,
+      cli: `magpie template use ${shareKey}`,
+      cliWithName: `magpie template use ${shareKey} --name "${defaultName}"`,
       mcp: {
         tool: 'instantiate_content_template',
         args: { shareKey },
       },
-      hint: '使用此模板需要有效的 API Token（jp_...）或 MCP_TOKEN，将在您的账户下创建一个新文件。',
+      hint: '使用此模板需要有效的 API Token（mg_...）或 MCP_TOKEN，将在您的账户下创建一个新文件。',
     });
   } catch (e) {
     logger.error({ type: 'app', msg: '获取模板使用引导失败', error: e.message });

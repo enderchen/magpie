@@ -45,9 +45,15 @@ body {
   text-decoration: none;
 }
 
-.legal-brand img {
+.legal-brand .legal-mark {
   width: 38px;
   height: 38px;
+}
+
+.magpie-icon {
+  display: inline-block;
+  flex-shrink: 0;
+  background: url('/magpie-logo.png') 20% 50% / 210% auto no-repeat;
 }
 
 .legal-back {

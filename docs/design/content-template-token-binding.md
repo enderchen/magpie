@@ -10,7 +10,7 @@
 这个流程存在三个问题：
 
 - **没有真正使用**：没有生成用户可编辑的文件，只是复制了一段提示词。
-- **没有 Token 绑定**：Session Cookie 不是系统级 Token（`jp_...` / `MCP_TOKEN`），无法与 MCP、CLI 的调用链关联。
+- **没有 Token 绑定**：Session Cookie 不是系统级 Token（`mg_...` / `MCP_TOKEN`），无法与 MCP、CLI 的调用链关联。
 - **MCP/CLI 不对称**：MCP 只能查看模板，CLI 完全没有内容模板命令，两者都无法把模板落地成用户文件。
 
 本方案把「使用模板」重新定义为：**通过已认证的 API Token 或 MCP_TOKEN，在调用者账户下实例化出一个可编辑文件**。Web UI 不再直接实例化，而是引导用户通过 MCP 或 CLI 完成绑定后的使用。
@@ -20,7 +20,7 @@
 ## 设计目标
 
 1. **无 Token 不可用**：未携带有效 Bearer token 时，不能将模板实例化为文件。
-2. **与现有 Token 体系绑定**：复用 `jp_...` 用户 API Token 与全局 `MCP_TOKEN`，不引入新 Token 类型。
+2. **与现有 Token 体系绑定**：复用 `mg_...` 用户 API Token 与全局 `MCP_TOKEN`，不引入新 Token 类型。
 3. **MCP / CLI 对称**：两端都支持「列出模板、查看模板、使用模板（实例化）」。
 4. **Web UI 转为引导入口**：市场页面仍允许匿名浏览/预览，但「使用」按钮改为复制 CLI/MCP 命令，不再直接创建文件。
 5. **可追溯**：记录每次实例化使用的 Token 前缀、来源（mcp/cli/web）、产生的文件 ID，便于审计与热度统计。
@@ -62,7 +62,7 @@ if (!colNames.has('token_hash_prefix')) {
 字段含义：
 
 - `source`：实例化来源，`'mcp'` / `'cli'` / `'web'`（预留）。
-- `token_prefix`：用户级 API Token 的明文前缀（如 `jp_a3f9...` 前 8 位）；`MCP_TOKEN` 时记 `'mcp'`。
+- `token_prefix`：用户级 API Token 的明文前缀（如 `mg_a3f9...` 前 8 位）；`MCP_TOKEN` 时记 `'mcp'`。
 - `token_hash_prefix`：用于匿名化审计，取 SHA-256(tokenValue) 前 16 位，既能追溯又避免暴露完整 token。
 
 > 原 `UNIQUE(template_id, user_id)` 保留，表示「同用户对同模板只保留最近一次实例化记录」。如果业务上需要保留历史多次实例化，应去掉该唯一约束；本方案按现有语义保留。
@@ -101,7 +101,7 @@ if (!colNames.has('token_hash_prefix')) {
 
 1. **Token 来源识别**：
    - 若认证走的是 `MCP_TOKEN`，`req.tokenSource = 'mcp'`。
-   - 若认证走的是用户级 `jp_...`，`req.tokenSource = 'cli'`（HTTP 调用时也按此标记，但 CLI 会显式带 `X-Upload-Source: cli`）。
+   - 若认证走的是用户级 `mg_...`，`req.tokenSource = 'cli'`（HTTP 调用时也按此标记，但 CLI 会显式带 `X-Upload-Source: cli`）。
    - 可通过新增中间件或直接在 `requireAuth` 中设置 `req.tokenPrefix` / `req.tokenHashPrefix`。
 
 2. **接收可选请求体**：
@@ -158,8 +158,8 @@ if (!colNames.has('token_hash_prefix')) {
   "templateId": 12,
   "title": "季度汇报 HTML-PPT",
   "fileType": "html",
-  "cli": "jpage template use 12",
-  "cliWithName": "jpage template use 12 --name 季度汇报.html --public",
+  "cli": "magpie template use 12",
+  "cliWithName": "magpie template use 12 --name 季度汇报.html --public",
   "mcp": {
     "tool": "instantiate_content_template",
     "args": { "id": 12 }
@@ -216,27 +216,27 @@ MCP server 注册工具数从 17 变为 18，需同步更新 `mcp/server.js` 注
 
 ## CLI 变更（`bin/commands/`）
 
-新增 `bin/commands/template.js`，并在 `bin/jpage.js` 的 `COMMANDS` 中注册 `template`。
+新增 `bin/commands/template.js`，并在 `bin/magpie.js` 的 `COMMANDS` 中注册 `template`。
 
 ### 命令设计
 
 ```text
-jpage template ls [--category <slug>] [--file-type html|markdown] [--kw <词>] [--limit N]
+magpie template ls [--category <slug>] [--file-type html|markdown] [--kw <词>] [--limit N]
   列出市场模板（公开端点，不需要 token）。
 
-jpage template get <id>
+magpie template get <id>
   查看模板完整内容（公开端点）。
 
-jpage template use <id> [--name <文件名>] [--public]
+magpie template use <id> [--name <文件名>] [--public]
   使用模板创建文件（需要 token）。
 ```
 
-### `jpage template use` 实现要点
+### `magpie template use` 实现要点
 
 ```js
 async function run(client, parsed) {
   const id = parsed.positional[1];
-  if (!id) throw new UsageError('用法：jpage template use <id> [--name <文件名>] [--public]');
+  if (!id) throw new UsageError('用法：magpie template use <id> [--name <文件名>] [--public]');
 
   const body = {};
   if (parsed.opts.name) body.originalName = parsed.opts.name;
@@ -271,7 +271,7 @@ CLI 客户端 `createClient` 的 `source` 默认为 `'cli'`，因此 `files.uplo
 使用此模板（将在您的账户下创建文件）
 
 CLI:
-  jpage template use 12 --name 季度汇报.html
+  magpie template use 12 --name 季度汇报.html
 
 MCP:
   调用工具 instantiate_content_template，参数 { "id": 12 }
@@ -357,7 +357,7 @@ function hashPrefix(tokenValue, len = 16) {
    - 移除或弃用 `/use`。
    - 新增 `/use-guide`。
 4. **MCP**：改造 `mcp/tools-content-templates.js`，新增 `instantiate_content_template`。
-5. **CLI**：新增 `bin/commands/template.js`，注册到 `bin/jpage.js`。
+5. **CLI**：新增 `bin/commands/template.js`，注册到 `bin/magpie.js`。
 6. **前端**：改造 `public/js/pages/market.js` 的按钮行为与弹窗。
 7. **测试**：补充集成测试覆盖：
    - 匿名用户不能实例化。
@@ -372,7 +372,7 @@ function hashPrefix(tokenValue, len = 16) {
 
 - 未登录用户访问 `/market` 仍可浏览、预览，但「使用」只能复制命令，无法直接创建文件。
 - 已登录的 Web 用户同样只能复制命令，无法绕过 Token 机制。
-- CLI 用户执行 `jpage template use 12` 后，账户下出现新文件，且系统能追溯到具体 Token。
+- CLI 用户执行 `magpie template use 12` 后，账户下出现新文件，且系统能追溯到具体 Token。
 - MCP 用户在对话中调用 `instantiate_content_template`，直接生成文件并可继续编辑。
 - 热度统计更准确：`instantiation_count` 只统计真正创建文件的调用。
 

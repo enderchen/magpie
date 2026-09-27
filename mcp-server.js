@@ -11,7 +11,7 @@
 //   tools-tags.js             list_tags / add_tags_to_file
 //   tools-categories.js       list_categories / create_category / set_file_category
 //   tools-content-templates.js list_content_templates / get_content_template
-//   resources.js              jpage://files / jpage://file/{id}
+//   resources.js              magpie://files / magpie://file/{id}
 //   server.js                 createMcpServer 工厂（装配 17 tools + 2 resources）
 //   transport.js              mountMcpServer / closeMcpTransports（会话生命周期）
 //

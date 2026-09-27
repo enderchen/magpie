@@ -10,7 +10,7 @@ import { openShareSettings } from './share-settings.js';
 
 // ---------- Preview Header State ----------
 let previewAbortController = null;
-const PREVIEW_HEADER_COLLAPSED_KEY = 'jpage_preview_header_collapsed';
+const PREVIEW_HEADER_COLLAPSED_KEY = 'magpie_preview_header_collapsed';
 
 function syncPreviewHeaderState(layout, expandFloatingBtn, toggleHeaderBtn) {
   const collapsed = layout.classList.contains('preview-header-collapsed');

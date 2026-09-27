@@ -3,15 +3,15 @@
 // 不引入 dotenv。.env 文件按 KEY=VALUE 简单行解析（兼容带引号、注释、空行）。
 //
 // 优先级（高 → 低）：
-//   --token  >  JPAGE_TOKEN env  >  MCP_TOKEN env（环境 + .env 文件）
-//   --base   >  JPAGE_BASE  env  >  默认 https://jpage.cn
+//   --token  >  MAGPIE_TOKEN env  >  MCP_TOKEN env（环境 + .env 文件）
+//   --base   >  MAGPIE_BASE  env  >  默认 http://localhost:8858
 //
-// 设计：让 jpage 默认连接线上实例 https://jpage.cn，同时支持本地开发/远程/CI 场景显式指定。
+// 设计：让 magpie 默认连接本地实例 http://localhost:8858，同时支持本地开发/远程/CI 场景显式指定。
 
 const fs = require('fs');
 const path = require('path');
 
-const DEFAULT_BASE = 'https://jpage.cn';
+const DEFAULT_BASE = 'http://localhost:8858';
 
 // 解析 .env 文件为对象。仅支持最简语法：KEY=VALUE，值可带引号，# 开头为注释。
 // 失败（文件不存在/读错）返回空对象，由调用方决定是否报错。
@@ -70,13 +70,13 @@ function resolveConfig(opts, env = process.env, cwd = process.cwd()) {
 
   const token =
     opts.token ||
-    env.JPAGE_TOKEN ||
-    dotEnv.JPAGE_TOKEN ||
+    env.MAGPIE_TOKEN ||
+    dotEnv.MAGPIE_TOKEN ||
     env.MCP_TOKEN ||
     dotEnv.MCP_TOKEN ||
     null;
 
-  const base = (opts.base || env.JPAGE_BASE || dotEnv.JPAGE_BASE || DEFAULT_BASE)
+  const base = (opts.base || env.MAGPIE_BASE || dotEnv.MAGPIE_BASE || DEFAULT_BASE)
     .replace(/\/+$/, ''); // 去尾部斜杠，避免拼接出 //
 
   return { token, base };

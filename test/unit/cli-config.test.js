@@ -8,10 +8,10 @@ const { resolveConfig, parseEnvFile, loadEnvUp, DEFAULT_BASE } = require('../../
 
 test('parseEnvFile: 基本 KEY=VALUE', () => {
   const tmp = path.join(os.tmpdir(), '.env-test-' + process.pid);
-  fs.writeFileSync(tmp, 'MCP_TOKEN=abc123\nJPAGE_BASE=http://1.2.3.4:8858\n');
+  fs.writeFileSync(tmp, 'MCP_TOKEN=abc123\nMAGPIE_BASE=http://1.2.3.4:8858\n');
   const parsed = parseEnvFile(tmp);
   assert.strictEqual(parsed.MCP_TOKEN, 'abc123');
-  assert.strictEqual(parsed.JPAGE_BASE, 'http://1.2.3.4:8858');
+  assert.strictEqual(parsed.MAGPIE_BASE, 'http://1.2.3.4:8858');
   fs.unlinkSync(tmp);
 });
 
@@ -29,12 +29,12 @@ test('parseEnvFile: 不存在返回空对象', () => {
 });
 
 test('resolveConfig: --token 最高优先级', () => {
-  const r = resolveConfig({ token: 'cli' }, { JPAGE_TOKEN: 'env', MCP_TOKEN: 'global' });
+  const r = resolveConfig({ token: 'cli' }, { MAGPIE_TOKEN: 'env', MCP_TOKEN: 'global' });
   assert.strictEqual(r.token, 'cli');
 });
 
-test('resolveConfig: JPAGE_TOKEN 高于 MCP_TOKEN', () => {
-  const r = resolveConfig({}, { JPAGE_TOKEN: 'jp', MCP_TOKEN: 'mc' });
+test('resolveConfig: MAGPIE_TOKEN 高于 MCP_TOKEN', () => {
+  const r = resolveConfig({}, { MAGPIE_TOKEN: 'jp', MCP_TOKEN: 'mc' });
   assert.strictEqual(r.token, 'jp');
 });
 
@@ -45,7 +45,7 @@ test('resolveConfig: 回退 MCP_TOKEN', () => {
 
 test('resolveConfig: 无 token 返回 null', () => {
   // 用临时 cwd，避免读到项目根的 .env（其中有 MCP_TOKEN）造成泄漏
-  const cleanCwd = fs.mkdtempSync(path.join(os.tmpdir(), 'jpage-clean-'));
+  const cleanCwd = fs.mkdtempSync(path.join(os.tmpdir(), 'magpie-clean-'));
   try {
     const r = resolveConfig({}, {}, cleanCwd);
     assert.strictEqual(r.token, null);
@@ -55,7 +55,7 @@ test('resolveConfig: 无 token 返回 null', () => {
 });
 
 test('resolveConfig: --base 优先于环境变量', () => {
-  const r = resolveConfig({ base: 'http://cli:9' }, { JPAGE_BASE: 'http://env:9' });
+  const r = resolveConfig({ base: 'http://cli:9' }, { MAGPIE_BASE: 'http://env:9' });
   assert.strictEqual(r.base, 'http://cli:9');
 });
 
@@ -65,23 +65,24 @@ test('resolveConfig: base 去尾部斜杠', () => {
 });
 
 test('resolveConfig: 默认 base', () => {
+  assert.strictEqual(DEFAULT_BASE, 'http://localhost:8858', 'Magpie must default to its local service');
   assert.strictEqual(resolveConfig({}, {}).base, DEFAULT_BASE);
 });
 
 test('loadEnvUp: 向上查找 .env 并合并', () => {
   // 在临时目录树里放 .env，验证向上查找
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'jpage-env-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'magpie-env-'));
   const sub = path.join(root, 'a', 'b');
   fs.mkdirSync(sub, { recursive: true });
-  fs.writeFileSync(path.join(root, '.env'), 'MCP_TOKEN=root-token\nJPAGE_BASE=http://root:9\n');
+  fs.writeFileSync(path.join(root, '.env'), 'MCP_TOKEN=root-token\nMAGPIE_BASE=http://root:9\n');
   const loaded = loadEnvUp(sub);
   assert.strictEqual(loaded.MCP_TOKEN, 'root-token');
-  assert.strictEqual(loaded.JPAGE_BASE, 'http://root:9');
+  assert.strictEqual(loaded.MAGPIE_BASE, 'http://root:9');
   fs.rmSync(root, { recursive: true, force: true });
 });
 
 test('resolveConfig: .env 里的 MCP_TOKEN 被用作回退', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'jpage-env2-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'magpie-env2-'));
   fs.writeFileSync(path.join(root, '.env'), 'MCP_TOKEN=from-file\n');
   const r = resolveConfig({}, {}, root);
   assert.strictEqual(r.token, 'from-file');

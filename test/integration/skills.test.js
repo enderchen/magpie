@@ -1,6 +1,6 @@
 // Skills 集成测试：列表 / 详情 / 下载 zip / mcp/config 结构 / cli 指南。全部 requireAuth。
 // 挂载点 /api（/skills、/skills/:name、/skills/:name/download、/mcp/config、/cli/guide）。
-// 依赖仓库内 skills/jpage/SKILL.md（内置 skill）。
+// 依赖仓库内 skills/magpie/SKILL.md（内置 skill）。
 const test = require('node:test');
 const assert = require('node:assert');
 const request = require('supertest');
@@ -34,19 +34,21 @@ test('未登录 GET /api/skills → 401', async () => {
 });
 
 // --- 列表 ---
-test('GET /api/skills → 200，含内置 jpage skill', async () => {
+test('GET /api/skills → 200，含内置 magpie skill', async () => {
   const res = await agent.get('/api/skills');
   assert.strictEqual(res.status, 200);
   assert.ok(Array.isArray(res.body.skills));
-  // 仓库内置 jpage skill 应被发现
-  assert.ok(res.body.skills.some(s => s.name === 'jpage'), '应含 jpage skill');
+  // 仓库内置 magpie skill 应被发现
+  assert.ok(res.body.skills.some(s => s.name === 'magpie'), '应含 magpie skill');
 });
 
 // --- 详情 ---
-test('GET /api/skills/jpage → 200', async () => {
-  const res = await agent.get('/api/skills/jpage');
+test('GET /api/skills/magpie → 200', async () => {
+  const res = await agent.get('/api/skills/magpie');
   assert.strictEqual(res.status, 200);
-  assert.strictEqual(res.body.name, 'jpage');
+  assert.strictEqual(res.body.name, 'magpie');
+  assert.strictEqual(res.body.version, require('../../package.json').version);
+  assert.strictEqual(res.body.author, 'enderchen');
 });
 
 test('GET /api/skills/不存在 → 404', async () => {
@@ -55,8 +57,8 @@ test('GET /api/skills/不存在 → 404', async () => {
 });
 
 // --- 下载 ---
-test('GET /api/skills/jpage/download → 200，application/zip', async () => {
-  const res = await agent.get('/api/skills/jpage/download').buffer(true).parse(binaryParser);
+test('GET /api/skills/magpie/download → 200，application/zip', async () => {
+  const res = await agent.get('/api/skills/magpie/download').buffer(true).parse(binaryParser);
   assert.strictEqual(res.status, 200);
   assert.match(res.headers['content-type'] || '', /application\/zip/);
   // Content-Disposition 是附件
@@ -73,14 +75,14 @@ test('GET /api/skills/不存在/download → 404', async () => {
 });
 
 // --- mcp/config ---
-test('GET /api/mcp/config → 200，含 config.mcpServers.jpage', async () => {
+test('GET /api/mcp/config → 200，含 config.mcpServers.magpie', async () => {
   const res = await agent.get('/api/mcp/config');
   assert.strictEqual(res.status, 200);
   assert.ok(res.body.config);
   assert.ok(res.body.config.mcpServers);
-  assert.ok(res.body.config.mcpServers.jpage);
-  assert.ok(res.body.config.mcpServers.jpage.url);
-  assert.strictEqual(res.body.config.mcpServers.jpage.type, 'http');
+  assert.ok(res.body.config.mcpServers.magpie);
+  assert.ok(res.body.config.mcpServers.magpie.url);
+  assert.strictEqual(res.body.config.mcpServers.magpie.type, 'http');
   // tokens 是当前用户的 token 列表
   assert.ok(Array.isArray(res.body.tokens));
 });
@@ -102,9 +104,9 @@ test('GET /api/mcp/config → 200，含多客户端 configs 数组（仅 MCP 客
     assert.ok(c.label, `${c.id} 应有 label`);
     assert.ok('path' in c, `${c.id} 应有 path`);
   });
-  // 每项都是 MCP 客户端，config.mcpServers.jpage 必有
+  // 每项都是 MCP 客户端，config.mcpServers.magpie 必有
   res.body.configs.forEach(c => {
-    assert.ok(c.config && c.config.mcpServers && c.config.mcpServers.jpage, `${c.id} config 应含 mcpServers.jpage`);
+    assert.ok(c.config && c.config.mcpServers && c.config.mcpServers.magpie, `${c.id} config 应含 mcpServers.magpie`);
   });
 });
 
@@ -114,7 +116,7 @@ test('GET /api/cli/guide → 200，返回 CLI 用法指南（与 MCP 并列的�
   assert.strictEqual(res.body.enabled, true);
   assert.ok(typeof res.body.baseUrl === 'string' && res.body.baseUrl.length > 0, 'baseUrl 应为非空');
   assert.ok(typeof res.body.guideHtml === 'string' && res.body.guideHtml.length > 0, 'guideHtml 应为非空 HTML');
-  assert.ok(res.body.guideHtml.includes('jpage'), 'guideHtml 应含 jpage 说明');
+  assert.ok(res.body.guideHtml.includes('magpie'), 'guideHtml 应含 magpie 说明');
   assert.ok(typeof res.body.guideText === 'string' && res.body.guideText.length > 0, 'guideText 应为非空文档');
   // guideText 里 baseUrl 应已被替换为实际服务地址（不含 <baseUrl> 占位）
   assert.ok(!res.body.guideText.includes('<baseUrl>'), 'guideText 不应残留 baseUrl 占位符');

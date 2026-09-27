@@ -1,25 +1,25 @@
-// skill 命令：将本 npm 包内置的 jpage Skill 安装到 Claude / 类似客户端的 skills 目录。
+// skill 命令：将本 npm 包内置的 magpie Skill 安装到 Claude / 类似客户端的 skills 目录。
 //
-//   jpage skill install [--dir <路径>]
-//   jpage skill update                    （install 的别名）
-//   jpage skill uninstall [--dir <路径>]
+//   magpie skill install [--dir <路径>]
+//   magpie skill update                    （install 的别名）
+//   magpie skill uninstall [--dir <路径>]
 
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { out } = require('./_shared');
 
-// Skill 源目录：npm 包内的 skills/jpage/
-const SOURCE_SKILL_DIR = path.resolve(__dirname, '..', '..', 'skills', 'jpage');
+// Skill 源目录：npm 包内的 skills/magpie/
+const SOURCE_SKILL_DIR = path.resolve(__dirname, '..', '..', 'skills', 'magpie');
 
 // 常见 skills 目录候选（按优先级）
 function candidateDirs() {
   const home = os.homedir();
   return [
-    process.env.JPAGE_SKILL_DIR,
-    path.join(home, '.claude', 'skills', 'jpage'),
-    path.join(home, '.claude-code', 'skills', 'jpage'),
-    path.join(home, '.agents', 'skills', 'jpage'),
+    process.env.MAGPIE_SKILL_DIR,
+    path.join(home, '.claude', 'skills', 'magpie'),
+    path.join(home, '.claude-code', 'skills', 'magpie'),
+    path.join(home, '.agents', 'skills', 'magpie'),
   ].filter(Boolean);
 }
 
@@ -31,13 +31,13 @@ function detectTargetDir(explicitDir) {
   for (const c of candidates) {
     if (fs.existsSync(path.dirname(c))) return c;
   }
-  // 都没有则默认 ~/.claude/skills/jpage
+  // 都没有则默认 ~/.claude/skills/magpie
   return candidates[0];
 }
 
 function ensureSource() {
   if (!fs.existsSync(SOURCE_SKILL_DIR)) {
-    throw new Error(`未找到内置 Skill 目录：${SOURCE_SKILL_DIR}。请确认 jpage 安装完整。`);
+    throw new Error(`未找到内置 Skill 目录：${SOURCE_SKILL_DIR}。请确认 magpie 安装完整。`);
   }
 }
 
@@ -55,9 +55,9 @@ async function installSkill(explicitDir) {
   fs.cpSync(SOURCE_SKILL_DIR, target, { recursive: true, preserveTimestamps: true });
 
   const pkg = require('../../package.json');
-  out(`✓ 已安装 jpage Skill v${pkg.version} → ${target}\n`);
-  out(`  使用方式：在 Claude Code / Desktop 的 skills 设置中确认已加载「jpage」\n`);
-  out(`  如需指定目录：jpage skill install --dir /path/to/skills/jpage\n`);
+  out(`✓ 已安装 magpie Skill v${pkg.version} → ${target}\n`);
+  out(`  使用方式：在 Claude Code / Desktop 的 skills 设置中确认已加载「magpie」\n`);
+  out(`  如需指定目录：magpie skill install --dir /path/to/skills/magpie\n`);
 }
 
 async function uninstallSkill(explicitDir) {
@@ -67,7 +67,7 @@ async function uninstallSkill(explicitDir) {
     return;
   }
   fs.rmSync(target, { recursive: true, force: true });
-  out(`✓ 已移除 jpage Skill：${target}\n`);
+  out(`✓ 已移除 magpie Skill：${target}\n`);
 }
 
 async function run(client, args) {

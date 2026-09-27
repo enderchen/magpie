@@ -2,7 +2,7 @@
 // 直接对比两种调用 /api/files 的方式：进程内 dispatcher vs TCP fetch 自调用
 // 在真实 server 进程内运行（require server.js 的 app），避免 SSE 噪声。
 process.env.PORT = process.env.PORT || '8895';
-process.env.JPAGE_DATA_DIR = require('path').join(__dirname, '..', 'data-bench-tmp');
+process.env.MAGPIE_DATA_DIR = require('path').join(__dirname, '..', 'data-bench-tmp');
 process.env.NODE_ENV = 'development';
 process.env.ADMIN_USER = 'admin';
 process.env.ADMIN_PASSWORD = 'testpassword123';
@@ -10,8 +10,8 @@ process.env.MCP_TOKEN = 'bench-mcp-token';
 
 const fs = require('fs');
 // 清理临时目录
-fs.rmSync(process.env.JPAGE_DATA_DIR, { recursive: true, force: true });
-fs.mkdirSync(process.env.JPAGE_DATA_DIR, { recursive: true });
+fs.rmSync(process.env.MAGPIE_DATA_DIR, { recursive: true, force: true });
+fs.mkdirSync(process.env.MAGPIE_DATA_DIR, { recursive: true });
 
 const http = require('http');
 const express = require('express');
@@ -65,7 +65,7 @@ async function main() {
   console.log(`  → dispatcher 比 fetch 快 ${((fm - dm) / fm * 100).toFixed(1)}% (每次省 ${(fm - dm).toFixed(3)}ms)`);
 
   server.close();
-  fs.rmSync(process.env.JPAGE_DATA_DIR, { recursive: true, force: true });
+  fs.rmSync(process.env.MAGPIE_DATA_DIR, { recursive: true, force: true });
   process.exit(0);
 }
 main().catch(e => { console.error(e); process.exit(1); });

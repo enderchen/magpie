@@ -165,12 +165,12 @@ sqlite3 data/database.sqlite "EXPLAIN QUERY PLAN SELECT * FROM files ORDER BY cr
 docker-compose up -d --build
 
 # 查看健康状态（等待 30 秒后）
-docker inspect --format='{{.State.Health.Status}}' jpage
+docker inspect --format='{{.State.Health.Status}}' magpie
 # 预期输出：healthy
 
 # 模拟服务异常，观察状态变化
-docker exec jpage sh -c 'mv server.js server.js.bak && kill 1'
+docker exec magpie sh -c 'mv server.js server.js.bak && kill 1'
 # 等待约 90 秒（3 × 30s retries）后再次查看
-docker inspect --format='{{.State.Health.Status}}' jpage
+docker inspect --format='{{.State.Health.Status}}' magpie
 # 预期输出：unhealthy
 ```

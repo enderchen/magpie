@@ -7,7 +7,8 @@
 // 依赖：playwright-core（通过 NODE_PATH 指向 npx 缓存）+ 系统 Chromium
 const PORT = parseInt(process.argv[2] || '8890', 10);
 const BASE = `http://127.0.0.1:${PORT}`;
-const CHROMIUM = '/Users/code2rich/Library/Caches/ms-playwright/chromium-1223/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing';
+const CHROMIUM = process.env.CHROMIUM_PATH;
+if (!CHROMIUM) throw new Error('Set CHROMIUM_PATH to an isolated test browser executable');
 
 let pass = 0, fail = 0;
 const failures = [];
@@ -53,7 +54,7 @@ async function main() {
 
   // 落地页应含标题/hero
   const bodyText = await page.textContent('body');
-  check('落地页渲染内容（含"即页"或 hero）', /即页|jpage|开始使用/i.test(bodyText || ''), (bodyText || '').slice(0, 100));
+  check('落地页渲染内容（含"纸鹊 Magpie"或 hero）', /纸鹊 Magpie|magpie|开始使用/i.test(bodyText || ''), (bodyText || '').slice(0, 100));
 
   // 2) 代码分割验证：落地页加载了 app + 共享 chunk + landing，但不应加载 home/preview chunk
   const distReqs = requested.filter(r => r.url.includes('/dist/')).map(r => r.url);

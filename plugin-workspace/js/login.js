@@ -1,4 +1,4 @@
-// 即页 uTools 插件 · 登录/设置逻辑
+// 纸鹊 Magpie uTools 插件 · 登录/设置逻辑
 
 window.Login = (function () {
   const els = {};
@@ -26,14 +26,14 @@ window.Login = (function () {
 
   /** 回填已保存的服务器地址与账号 */
   function prefill() {
-    if (!window.jpage) {
+    if (!window.magpie) {
       // preload 未注入：不白屏，给出明确提示
       showError('插件初始化失败：preload 未加载。请重启插件或在开发者工具中检查 preload.js。');
       els.btnLogin.disabled = true;
       return;
     }
-    const cfg = window.jpage.getConfig();
-    els.serverUrl.value = cfg.base || 'https://jpage.cn';
+    const cfg = window.magpie.getConfig();
+    els.serverUrl.value = cfg.base || 'http://localhost:8858';
     if (cfg.account) els.account.value = cfg.account;
     if (cfg.user) {
       els.subtitle.textContent = `当前账户：${cfg.user.username}（会话已保存，直接登录或重连）`;
@@ -55,22 +55,22 @@ window.Login = (function () {
 
     try {
       // 1. 保存并校验服务器地址
-      window.jpage.setBase(url);
+      window.magpie.setBase(url);
 
-      // 2. ping 一下，确认地址可达且是即页
+      // 2. ping 一下，确认地址可达且是纸鹊 Magpie
       try {
-        await window.jpage.ping();
+        await window.magpie.ping();
       } catch (e) {
         // ping 失败仍尝试登录，有些部署可能关了 /health，但给出提示
         console.warn('ping 失败：', e.message);
       }
 
       // 3. 登录
-      const user = await window.jpage.login({ account, password });
-      JP.toast('✅ 登录成功，欢迎 ' + user.username);
+      const user = await window.magpie.login({ account, password });
+      Magpie.toast('✅ 登录成功，欢迎 ' + user.username);
       els.password.value = '';
       // 触发主界面加载
-      document.dispatchEvent(new CustomEvent('jpage:logged-in', { detail: user }));
+      document.dispatchEvent(new CustomEvent('magpie:logged-in', { detail: user }));
     } catch (err) {
       showError(err.message || '登录失败');
     } finally {
@@ -85,8 +85,8 @@ window.Login = (function () {
     if (!url) return showError('请先填写服务器地址');
     els.linkTest.textContent = '测试中…';
     try {
-      const health = await window.jpage.ping(url);
-      JP.toast('✅ 连接成功 · 即页 v' + (health.version || '?'));
+      const health = await window.magpie.ping(url);
+      Magpie.toast('✅ 连接成功 · 纸鹊 Magpie v' + (health.version || '?'));
     } catch (err) {
       showError('连接失败：' + err.message);
     } finally {
@@ -98,12 +98,12 @@ window.Login = (function () {
     clearError();
     if (!confirm('确定要清空本地缓存吗？\n将清除服务器地址、账号和登录状态。')) return;
     try {
-      window.jpage.clearCache();
-      els.serverUrl.value = 'https://jpage.cn';
+      window.magpie.clearCache();
+      els.serverUrl.value = 'http://localhost:8858';
       els.account.value = '';
       els.password.value = '';
-      els.subtitle.textContent = '登录你的即页账户';
-      JP.toast('✅ 已清空本地缓存');
+      els.subtitle.textContent = '登录你的纸鹊 Magpie账户';
+      Magpie.toast('✅ 已清空本地缓存');
     } catch (err) {
       showError(err.message || '清空失败');
     }

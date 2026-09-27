@@ -17,7 +17,7 @@ async function run(client, _args, { base, token, exit }) {
   } catch (e) {
     if (e.status === 401) {
       err(
-        '✗ token 无效或未设置。用 --token <TOKEN>、JPAGE_TOKEN 环境变量、或 .env 的 MCP_TOKEN 提供。\n'
+        '✗ token 无效或未设置。用 --token <TOKEN>、MAGPIE_TOKEN 环境变量、或 .env 的 MCP_TOKEN 提供。\n'
       );
       (exit || ((c) => { process.exitCode = c; }))(1);
       return;

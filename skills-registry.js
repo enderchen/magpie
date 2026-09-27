@@ -50,6 +50,14 @@ function parseFrontmatter(text) {
       meta[kv[1]] = v;
     }
   }
+  // Skill metadata follows the standard nested metadata block.
+  const metadata = m[1].match(/^metadata:\s*\n((?:[ \t]+[^\n]*(?:\n|$))*)/m);
+  if (metadata) {
+    for (const line of metadata[1].split(/\r?\n/)) {
+      const kv = line.match(/^[ ]{2}(version|author):\s*["']?([^"'\n]+?)["']?\s*$/);
+      if (kv) meta[kv[1]] = kv[2];
+    }
+  }
   return { meta, body: m[2] };
 }
 

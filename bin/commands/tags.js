@@ -3,10 +3,10 @@
 // 后端语义：PUT /api/files/:id/tags { tagIds:[] } 是「全量替换」，且只收 tag id（数字），
 // 没有「按名字追加」端点。CLI 在客户端封装出更友好的命令：
 //
-//   jpage tags <id>               列出当前标签
-//   jpage tags <id> add a,b,c     把这些标签追加到现有标签（缺失的标签自动创建）
-//   jpage tags <id> set a,b       全量替换为这些标签（缺失的自动创建）
-//   jpage tags <id> clear         清空标签
+//   magpie tags <id>               列出当前标签
+//   magpie tags <id> add a,b,c     把这些标签追加到现有标签（缺失的标签自动创建）
+//   magpie tags <id> set a,b       全量替换为这些标签（缺失的自动创建）
+//   magpie tags <id> clear         清空标签
 //
 // 标签名 → id：GET /api/tags 拿全表按 name 精确匹配；缺失的 POST /api/tags {name} 建。
 
@@ -15,7 +15,7 @@ const { out } = require('./_shared');
 async function run(client, args) {
   const id = args.sub;
   if (!id) {
-    const e = new Error('用法：jpage tags <id> [add|set|clear] [标签名,标签名,...]');
+    const e = new Error('用法：magpie tags <id> [add|set|clear] [标签名,标签名,...]');
     e.name = 'UsageError';
     throw e;
   }
@@ -41,7 +41,7 @@ async function run(client, args) {
   }
 
   if (!namesArg) {
-    const e = new Error(`用法：jpage tags ${id} ${action} <标签名,标签名,...>`);
+    const e = new Error(`用法：magpie tags ${id} ${action} <标签名,标签名,...>`);
     e.name = 'UsageError';
     throw e;
   }

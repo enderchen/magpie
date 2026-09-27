@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project: 即页 (jpage)
+## Project: 纸鹊 Magpie (magpie)
 
 零配置 HTML / Markdown 即时预览与分享工具。Express 服务（`server.js`）+ MCP server 模块（`mcp-server.js`）+ Skills 注册模块（`skills-registry.js`）。SQLite 存元数据与用户表，磁盘 `data/uploads/` 存原始文件，session 存 `data/sessions.sqlite`。多用户 + 角色体系（admin / 普通用户），bcrypt 密码哈希，可选开放注册（邮箱验证）。支持 Markdown 增强渲染（代码高亮、KaTeX 公式、Mermaid 图表）。
 
@@ -68,7 +68,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **REST API**:
 - `GET /api/auth/me` — 当前用户（返回 `{id, username, email, emailVerified, role}`）
-- `POST /api/auth/login` — `{account, password}` 或 `{username, password}`（统一入口，自动识别用户名或邮箱），设置 `jpage.sid` cookie，限流 10/15min
+- `POST /api/auth/login` — `{account, password}` 或 `{username, password}`（统一入口，自动识别用户名或邮箱），设置 `magpie.sid` cookie，限流 10/15min
 - `POST /api/auth/register` — `{email?, username?, password, confirmPassword}`（至少提供 email 或 username，邮箱注册自动生成用户名）
 - `POST /api/auth/logout` — 销毁 session
 - `POST /api/auth/change-password` — `{currentPassword, newPassword}`，所有用户可用
@@ -137,7 +137,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `GET /api/skills/:name` — skill 详情（含 SKILL.md 内容、文件列表、INSTALL.md 渲染）
 - `GET /api/skills/:name/download` — ZIP 下载整个 skill 目录
 - `GET /api/mcp/config` — 返回 MCP 连接配置（URL、Token 列表、多客户端 mcpServers JSON 片段；仅 MCP 客户端）
-- `GET /api/cli/guide` — 返回 `jpage` CLI 用法指南（baseUrl、渲染后的 guideHtml、纯文本 guideText）；CLI 与 MCP 是并列的两个客户端入口，各自独立端点
+- `GET /api/cli/guide` — 返回 `magpie` CLI 用法指南（baseUrl、渲染后的 guideHtml、纯文本 guideText）；CLI 与 MCP 是并列的两个客户端入口，各自独立端点
 
 **Skills registry** — `skills-registry.js` 自动发现 `skills/*/SKILL.md`，解析 YAML frontmatter（`name`, `description`, `version`, `author`）。Web UI 首页展示 Skills 区块，管理员可查看详情（弹窗）和下载 ZIP。ZIP 包与磁盘目录结构一致，可直接解压到 `~/.claude/skills/`。
 
@@ -150,7 +150,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 标签管理：`list_tags`, `add_tags_to_file`
   - 收藏管理：`star_file`, `unstar_file`
   - 分类管理：`list_categories`, `create_category`, `set_file_category`
-- Resources（2 个）：`jpage://files`（列表）, `jpage://file/{id}`（内容，≤ 256KB）
+- Resources（2 个）：`magpie://files`（列表）, `magpie://file/{id}`（内容，≤ 256KB）
 
 **Static + SPA fallback** — `public/` served by `express.static`; `/s/:key` short link route renders files directly; catch-all `app.get('*')` returns `public/index.html` for client-side routing between home and preview views.
 
@@ -164,7 +164,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **SPA 兜底 + 构建产物注入** — `public/` 的 `express.static` 设 `index:false`（不让 static 自动把 `/` 映射到 index.html），由 `app.get('*')` 的 `getIndexHtml()` 返回 index.html 并按 `public/dist/manifest.json` 把 `/css/style.css?v=` 与 `/js/app.js?v=` 替换为 `/dist/<hash>.css|.js`。无 dist 时回退源文件路径。新增 SPA 路由 hash 时，注意它在 catch-all 之前由前端 `route()` 处理。
 - **数据库共享** — 单个 `db` 连接复用于所有请求。Promise 封装 `dbRun`/`dbGet`/`dbAll` 保持调用简洁。
 - **SQLite 性能 PRAGMA** — `configureDatabase()` 在 `app.listen` 内、migration 之前执行：`journal_mode=WAL`（读写不互斥）、`synchronous=NORMAL`、`busy_timeout=5000`、`cache_size=-20000`、`temp_store=MEMORY`、`mmap_size`。WAL 会生成 `database.sqlite-wal` / `-shm` 文件，属正常。`admin/import` 替换连接后会重新调用 `configureDatabase()`。
-- **数据目录可配置** — `JPAGE_DATA_DIR` 环境变量（可选，默认 `./data`）。docker-compose 已把 `./data` 挂载到 `/app/data`，通常无需设置。
+- **数据目录可配置** — `MAGPIE_DATA_DIR` 环境变量（可选，默认 `./data`）。docker-compose 已把 `./data` 挂载到 `/app/data`，通常无需设置。
 - **时间统一存 UTC** — `now()` 返回 UTC `YYYY-MM-DD HH:MM:SS`，与 SQLite 的 `CURRENT_TIMESTAMP` / `datetime('now')` 一致。展示层负责转本地时区。不要再改回北京时区字符串。
 - **Markdown 渲染缓存** — `RENDER_CACHE` 以 `${fileId}:${stored_name}:${updated_at}:...` 为 key 缓存渲染结果（LRU，上限 256）。覆盖上传/恢复版本会改 `updated_at`/`stored_name` 自动失效；删除文件调 `invalidateRenderCache(id)`。历史版本渲染传入 `{ ...file, stored_name: ver.stored_name }`，故 key 必须含 `stored_name`。
 - **分类名称内存缓存** — `categoryNameCache`（id→name）在启动时 `reloadCategoryNameCache()` 加载，分类增/删/改名/import 后失效重建。`/api/files` 与搜索经 `getCategoryName(id)` 取名，不再每次扫 `categories` 表。
@@ -189,7 +189,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **鉴权模型** — `requireAuth` 是异步中间件，接受三种认证方式：(1) session cookie，(2) 旧 `MCP_TOKEN` 环境变量（向后兼容），(3) 用户级 API Token（`tokens` 表）。中间件设置 `req.userId` 和 `req.userRole` 供下游使用。`requireAdmin` 检查 `req.userRole === 'admin'`。`loadFileWithPrivacy` 强制文件所有权：admin 可访问一切，普通用户仅可访问自己的文件和公开文件。
 - **角色系统** — `users.role` 列，值为 `admin` 或 `user`。admin 可管理用户、查看所有文件。普通用户只能操作自己的文件。`bootstrapAdmin()` 创建时显式设置 `role='admin'`。
 - **开放注册** — `ALLOW_REGISTRATION=true` 时允许用户自助注册，默认关闭。注册端点 `POST /api/auth/register`，支持邮箱或用户名注册。配合 SMTP 配置实现邮箱验证。环境变量必须在 `.env`、`docker-compose.yml`、`server.js` 三处同步。
-- **API Token** — 每用户最多 10 个，格式 `jp_` + 32 位 base62。DB 存 SHA-256 哈希（鉴权用，不可逆）+ 前 8 位前缀 + AES-256-GCM 密文（`token_enc`，使明文可后续查看/复制，旧令牌为 NULL）。加密密钥来自环境变量 `TOKEN_ENCRYPTION_KEY`，未设置时自动在数据目录生成 `token-key.key` 文件（持久化）。鉴权链路仅用哈希，与密文相互独立。
+- **API Token** — 每用户最多 10 个，格式 `mg_` + 32 位 base62。DB 存 SHA-256 哈希（鉴权用，不可逆）+ 前 8 位前缀 + AES-256-GCM 密文（`token_enc`，使明文可后续查看/复制，旧令牌为 NULL）。加密密钥来自环境变量 `TOKEN_ENCRYPTION_KEY`，未设置时自动在数据目录生成 `token-key.key` 文件（持久化）。鉴权链路仅用哈希，与密文相互独立。
 - **`MCP_TOKEN` 是可选的** — 未设置时仍可通过用户级 Token 访问 MCP。`mountMcpServer` 接受 `authenticateRequest` 函数验证 Token。
 - **`uploaded_by` 从 `req.userId` 设置** — 文件归属隔离：admin 看全部文件，普通用户看自己的 + 公开的。`PUT`/`DELETE` 增加所有权检查（`checkFileOwnership`）。
 - **Markdown 渲染增强** — marked + highlight.js（代码高亮）+ KaTeX（数学公式 `$...$` / `$$...$$`）+ Mermaid（图表，支持深色/浅色主题）。渲染代码在 `server.js` 的 `renderMarkdown` 函数。
@@ -280,7 +280,7 @@ docker-compose.yml       # port 8858, ./data:/app/data volume
 .env.example             # 环境变量模板
 .mcp.json                # Claude Code / Desktop MCP 客户端配置示例
 docs/api.md              # REST API 完整参考
-skills/jpage/            # Claude Code / Desktop 统一技能
+skills/magpie/            # Claude Code / Desktop 统一技能
   SKILL.md
 public/
   index.html             # 两个 <template>: home + preview

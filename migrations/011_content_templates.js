@@ -198,7 +198,7 @@ const BUILTIN_TEMPLATES = [
       </div>
     </div>
   </section>
-  <footer>© 2026 即页 — 让创作回归简单</footer>
+  <footer>© 2026 纸鹊 Magpie — 让创作回归简单</footer>
 </body>
 </html>`
   }

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# jpage 一键升级脚本
+# magpie 一键升级脚本
 #
 # 功能：拉取最新代码 → 安装依赖 → 构建前端 → 重启 systemd 服务。
 # 用法：
@@ -10,14 +10,14 @@
 
 set -euo pipefail
 
-PROJECT_DIR="/home/jpage/jpage"
-SERVICE="jpage"
-USER="jpage"
+PROJECT_DIR="${MAGPIE_PROJECT_DIR:-$(cd "$(dirname "$0")" && pwd)}"
+SERVICE="${MAGPIE_SERVICE:-magpie}"
+SERVICE_USER="${MAGPIE_SERVICE_USER:-magpie}"
 BRANCH=""
 DO_PULL=true
 
 print_help() {
-  sed -n '/^# jpage 一键升级脚本/,/^$/p' "$0" | sed 's/^# //'
+  sed -n '/^# magpie 一键升级脚本/,/^$/p' "$0" | sed 's/^# //'
   exit 0
 }
 
@@ -39,7 +39,7 @@ fi
 cd "$PROJECT_DIR"
 
 run_as_user() {
-  sudo -u "$USER" -H "$@"
+  sudo -u "$SERVICE_USER" -H "$@"
 }
 
 if [ "$DO_PULL" = true ]; then

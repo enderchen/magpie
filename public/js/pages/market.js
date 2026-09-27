@@ -148,8 +148,8 @@ function renderMarketShell(container, { active, navigate }) {
     <div class="market-page mw-market-page">
       <aside class="mw-sidebar">
         <a href="#/" class="mw-brand" aria-label="返回首页">
-          <img class="mw-brand-mark" src="/jpage_logo/jpage-app-icon.svg" alt="即页">
-          <span class="mw-brand-text">JPage<br><strong>Market</strong></span>
+          <span class="mw-brand-mark magpie-icon" aria-hidden="true"></span>
+          <span class="mw-brand-text">Magpie<br><strong>Market</strong></span>
         </a>
         <nav class="mw-side-nav">
           <a href="#/market" class="${active === 'home' ? 'active' : ''}">首页</a>
@@ -164,7 +164,7 @@ function renderMarketShell(container, { active, navigate }) {
         </div>` : ''}
         <div class="mw-side-footer">
           <a href="#/">${isLoggedIn ? '返回我的页面' : '返回首页'}</a>
-          ${window.__JPAGE_ICP_BEIAN__ ? `<p class="mw-icp"><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">${window.__JPAGE_ICP_BEIAN__}</a></p>` : ''}
+          ${window.__MAGPIE_ICP_BEIAN__ ? `<p class="mw-icp"><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">${window.__MAGPIE_ICP_BEIAN__}</a></p>` : ''}
         </div>
       </aside>
       <main class="mw-main" id="market-body"></main>
@@ -252,7 +252,7 @@ function renderHome(container, navigate) {
   body.innerHTML = `
     <header class="mw-page-intro">
       <div>
-        <span class="mw-page-kicker">JPage Market</span>
+        <span class="mw-page-kicker">Magpie Market</span>
         <h1>创作市场</h1>
         <p>精选高质量模板，激发灵感，助你高效创作。</p>
       </div>
@@ -571,7 +571,7 @@ function createCurationCard(t, index) {
       <span class="mw-curation-format">${typeLabel}</span>
       <h3>${escapeHtml(t.title)}</h3>
       <p>${escapeHtml(description)}</p>
-      <span class="mw-curation-author">by ${escapeHtml(t.uploader_name || 'JPage 创作者')}</span>
+      <span class="mw-curation-author">by ${escapeHtml(t.uploader_name || 'Magpie 创作者')}</span>
     </div>
   </article>`;
 }
@@ -654,13 +654,13 @@ async function showTemplateUseGuide({ shareKey, title }) {
             <div class="use-template-option">
               <div class="option-icon" aria-hidden="true">📥</div>
               <div class="option-title">方式一：下载源文件</div>
-              <div class="option-desc">适合大部分用户。下载后在本地用任意编辑器修改，再上传到即页即可预览分享。</div>
+              <div class="option-desc">适合大部分用户。下载后在本地用任意编辑器修改，再上传到纸鹊 Magpie即可预览分享。</div>
               ${downloadLink}
             </div>
             <div class="use-template-option">
               <div class="option-icon" aria-hidden="true">⌨️</div>
               <div class="option-title">方式二：CLI 命令行</div>
-              <div class="option-desc">已安装 jpage CLI 并配置 Token 的用户，复制后在终端执行。</div>
+              <div class="option-desc">已安装 magpie CLI 并配置 Token 的用户，复制后在终端执行。</div>
               <div class="use-template-field">
                 <div class="use-template-field-header">
                   <label>CLI 命令</label>

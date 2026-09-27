@@ -33,7 +33,7 @@ router.get('/skills/:name', requireAuth, async (req, res) => {
 function buildServerConfig(url, token) {
   return {
     mcpServers: {
-      jpage: {
+      magpie: {
         type: 'http',
         url,
         headers: { Authorization: `Bearer ${token || '<YOUR_TOKEN>'}` }
@@ -45,14 +45,18 @@ function buildServerConfig(url, token) {
 // 生成 CLI 用法文档 Markdown。
 // baseUrl 预填进示例，方便用户复制即用；真实 token 用 <YOUR_TOKEN> 占位，不在弹窗中泄露。
 function buildCliGuide(baseUrl) {
-  return `# jpage CLI
+  return `# magpie CLI
 
-\`jpage\` 是即页的命令行工具，与 MCP 并列、基于同一套 REST API。适合 Bash/脚本/CI/Agent 场景，multipart 上传大文件更省流。
+\`magpie\` 是纸鹊 Magpie 的命令行工具，与 MCP 并列、基于同一套 REST API。适合 Bash/脚本/CI/Agent 场景，multipart 上传大文件更省流。
 
-## 安装
+## 安装（尚未发布 npm 包，从源码安装）
 
 \`\`\`bash
-npm install -g @code2rich/jpage
+git clone https://github.com/enderchen/magpie.git magpie
+cd magpie
+npm install
+npm link
+export MAGPIE_BASE=${baseUrl}
 \`\`\`
 
 ## 认证
@@ -60,13 +64,13 @@ npm install -g @code2rich/jpage
 在「API 令牌」页创建 token 后，任选一种方式注入：
 
 \`\`\`bash
-export JPAGE_TOKEN=<YOUR_TOKEN>   # 推荐
-jpage <命令> --token <YOUR_TOKEN> # 单条命令
+export MAGPIE_TOKEN=<YOUR_TOKEN>   # 推荐
+magpie <命令> --token <YOUR_TOKEN> # 单条命令
 \`\`\`
 
-token 优先级：\`--token\` > \`JPAGE_TOKEN\` > \`MCP_TOKEN\`。  
-服务地址优先级：\`--base\` > \`JPAGE_BASE\` > 默认 \`https://jpage.cn\`。  
-以下示例默认使用 \`${baseUrl}\`。
+token 优先级：\`--token\` > \`MAGPIE_TOKEN\` > \`MCP_TOKEN\`。
+服务地址优先级：\`--base\` > \`MAGPIE_BASE\` > 默认 \`http://localhost:8858\`。
+MAGPIE_BASE 应指向你自己的服务。以下示例使用 \`${baseUrl}\`。
 
 ## 命令速查
 
@@ -82,20 +86,20 @@ token 优先级：\`--token\` > \`JPAGE_TOKEN\` > \`MCP_TOKEN\`。
 | \`tags <id> [add|set|clear] [名,名,...]\` | 标签管理 |
 | \`skills ls | get <名> | download <名>\` | Skill 包 |
 | \`whoami\` | 校验 token |
-| \`update [--check] [--registry <url>]\` | 自更新（**不需 token**） |
+| \`update [--check] [--registry <url>]\` | 源码更新说明（**不需 token**；npm 尚未发布） |
 
 ## 常用示例
 
 \`\`\`bash
-jpage upload ./report.html --public --base ${baseUrl}
-jpage ls --kw 季度
-jpage cat 8
-jpage tags 8 add Q3,财报
-jpage url 8
-jpage update
+magpie upload ./report.html --public --base ${baseUrl}
+magpie ls --kw 季度
+magpie cat 8
+magpie tags 8 add Q3,财报
+magpie url 8
+magpie update
 \`\`\`
 
-完整说明请运行 \`jpage --help\`。
+完整说明请运行 \`magpie --help\`。
 `;
 }
 

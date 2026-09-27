@@ -145,7 +145,7 @@ test('validateZipEntries：文件数超上限 → 拒绝', async () => {
 
 test('extractEntries：条目逃逸 targetDir → 拒绝（path.resolve 兜底）', async () => {
   // 即便上游漏过了校验，extractEntries 的 resolve().startsWith() 仍拦截越界写入
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'jpage-zip-'));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'magpie-zip-'));
   try {
     const zip = fakeExtractableZip([{ name: '../escape.txt', content: 'evil' }]);
     const entries = [{ name: '../escape.txt', originalName: '../escape.txt' }];
@@ -159,7 +159,7 @@ test('extractEntries：条目逃逸 targetDir → 拒绝（path.resolve 兜底�
 });
 
 test('extractEntries：正常条目写入 targetDir 内', async () => {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'jpage-zip-'));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'magpie-zip-'));
   try {
     const zip = fakeExtractableZip([{ name: 'index.html', content: '<p>ok</p>' }]);
     const entries = [{ name: 'index.html', originalName: 'index.html' }];
@@ -202,7 +202,7 @@ test('validateZipEntries：符号链接错误标记为用户错误 400', async (
 });
 
 test('extractEntries：超单文件限制错误标记为用户错误 400', async () => {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'jpage-zip-'));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'magpie-zip-'));
   try {
     const tooBig = Buffer.alloc(ZIP_MAX_SINGLE_FILE_SIZE + 1, 'x');
     const zip = fakeExtractableZip([{ name: 'big.html', content: tooBig }]);

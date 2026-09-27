@@ -18,10 +18,10 @@ test.after(() => {
   env.cleanup();
 });
 
-test('创建令牌 → 返回明文且带 jp_ 前缀', async () => {
+test('创建令牌 → 返回明文且带 mg_ 前缀', async () => {
   const res = await agent.post('/api/tokens').send({ name: 'CI Token' });
   assert.strictEqual(res.status, 200);
-  assert.ok(res.body.token.startsWith('jp_'));
+  assert.ok(res.body.token.startsWith('mg_'));
   assert.strictEqual(res.body.name, 'CI Token');
   assert.ok(res.body.token_prefix);
 });

@@ -82,6 +82,7 @@ const browserGlobals = {
   XMLHttpRequest: 'readonly',
   IntersectionObserver: 'readonly',
   requestAnimationFrame: 'readonly',
+  cancelAnimationFrame: 'readonly',
   CSS: 'readonly', // CSS.escape 用于 bundle 文件树选择器转义
 };
 
@@ -132,6 +133,8 @@ export default [
       'skills/*/assets/',
       // uTools 插件构建产物，每次 pack 重新生成，无需 lint
       'plugin-workspace/dist/',
+      'backups/',
+      '**/*.min.js',
     ],
   },
 
@@ -169,6 +172,18 @@ export default [
   },
 
   {
+    // 独立首页和历史视觉预览也运行在浏览器中。
+    files: ['public/home-share/**/*.js', 'public/home-brainfish/**/*.js', 'public/home-concept/**/*.js', 'public/logo-exploration/**/*.js'],
+    languageOptions: {
+      globals: { ...nodeGlobals, ...browserGlobals },
+    },
+    rules: {
+      // 这些旧稿已在文件头用 /* global */ 显式声明浏览器对象。
+      'no-redeclare': 'off',
+    },
+  },
+
+  {
     // 测试文件：node:test 的 test/describe/it 等 globals
     // + browser-harness.js 注入的 puppeteer 浏览器上下文 globals
     files: ['test/**/*.js'],
@@ -195,7 +210,7 @@ export default [
         ...nodeGlobals,
         ...browserGlobals,
         utools: 'readonly',
-        PS: 'writable',
+        Magpie: 'writable',
         Login: 'readonly',
         Upload: 'readonly',
         Detail: 'readonly',

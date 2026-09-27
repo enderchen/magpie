@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'pagesail-theme';
+const STORAGE_KEY = 'magpie-theme';
 
 function getSystemPreference() {
   return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';

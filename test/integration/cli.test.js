@@ -14,7 +14,7 @@ const path = require('path');
 const os = require('os');
 const request = require('supertest');
 const { createTestEnv } = require('../helpers/setup');
-const { run } = require('../../bin/pagesail');
+const { run } = require('../../bin/magpie');
 const { resetIo } = require('../../bin/commands/_shared');
 
 // fetch → supertest 桥。
@@ -115,7 +115,7 @@ test.before(async () => {
   await env.ready();
   agent = request.agent(env.app);
   await agent.post('/api/auth/login').send({ username: 'admin', password: 'testpassword123' });
-  // 建一个 ps_ token 供 CLI 用
+  // 建一个 mg_ token 供 CLI 用
   const created = await agent.post('/api/tokens').send({ name: 'CLI Test' });
   token = created.body.token;
 });
@@ -255,17 +255,17 @@ test('CLI skills: ls / get / download', async () => {
   const lsS = makeSinks();
   await run(['skills', 'ls', '--token', token], ctx(lsS));
   assert.strictEqual(lsS.code(), 0);
-  assert.match(lsS.out(), /pagesail/);
+  assert.match(lsS.out(), /magpie/);
 
   const getS = makeSinks();
-  await run(['skills', 'get', 'pagesail', '--token', token], ctx(getS));
+  await run(['skills', 'get', 'magpie', '--token', token], ctx(getS));
   assert.strictEqual(getS.code(), 0);
-  assert.match(getS.out(), /pagesail/);
+  assert.match(getS.out(), /magpie/);
 
   // download：写到 env.dataDir，避免污染仓库
   const outFile = path.join(env.dataDir, 'skill.zip');
   const dlS = makeSinks();
-  await run(['skills', 'download', 'pagesail', '--out', outFile, '--token', token], ctx(dlS));
+  await run(['skills', 'download', 'magpie', '--out', outFile, '--token', token], ctx(dlS));
   assert.strictEqual(dlS.code(), 0);
   assert.match(dlS.out(), /已下载/);
   assert.ok(fs.existsSync(outFile));
@@ -283,7 +283,7 @@ test('CLI whoami: 有效 token', async () => {
 
 test('CLI whoami: 无效 token → 退出 1', async () => {
   const s = makeSinks();
-  await run(['whoami', '--token', 'ps_invalid_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'], ctx(s));
+  await run(['whoami', '--token', 'mg_invalid_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'], ctx(s));
   assert.strictEqual(s.code(), 1);
   assert.match(s.err(), /无效|未设置|token/);
 });
@@ -309,13 +309,13 @@ test('CLI: 未知命令 → 退出 2', async () => {
 test('CLI: --help 打印帮助', async () => {
   const s = makeSinks();
   await run(['--help'], ctx(s));
-  assert.match(s.out(), /pagesail —— 页舟PageSail 命令行/);
+  assert.match(s.out(), /magpie —— 纸鹊 Magpie 命令行/);
   assert.match(s.out(), /upload/);
 });
 
-// --- PageSail fork updates ---
+// --- Magpie fork updates ---
 for (const argv of [['update'], ['update', '--check'], ['update', '--registry', 'https://registry.npmjs.org']]) {
-  test(`PageSail ${argv.join(' ')} never queries or installs the upstream package`, async () => {
+  test(`Magpie ${argv.join(' ')} never queries or installs the upstream package`, async () => {
     const s = makeSinks();
     const calls = [];
     await run(argv, ctx(s, {
@@ -323,7 +323,8 @@ for (const argv of [['update'], ['update', '--check'], ['update', '--registry', 
     }));
     assert.strictEqual(s.code(), 0);
     assert.deepStrictEqual(calls, [], 'must not call npm for an unpublished fork');
-    assert.match(s.out(), /github\.com\/enderchen\/pagesail/);
+    // The repository URL remains reachable under its current name until GitHub is renamed.
+    assert.match(s.out(), /github\.com\/enderchen\/magpie/);
   });
 }
 
@@ -334,16 +335,16 @@ test('CLI update: missing registry still reports usage error', async () => {
 });
 
 // --- skill install/update/uninstall（纯本地，不依赖后端）---
-const skillTestDir = path.join(os.tmpdir(), `pagesail-cli-skill-test-${process.pid}`);
+const skillTestDir = path.join(os.tmpdir(), `magpie-cli-skill-test-${process.pid}`);
 
-test('CLI skill install: 安装内置 pagesail Skill 到指定目录', async () => {
+test('CLI skill install: 安装内置 magpie Skill 到指定目录', async () => {
   const target = path.join(skillTestDir, 'install');
   const s = makeSinks();
   await run(['skill', 'install', '--dir', target], ctx(s));
   assert.strictEqual(s.code(), 0, s.err());
   assert.ok(fs.existsSync(path.join(target, 'SKILL.md')), '应复制 SKILL.md');
   assert.ok(fs.existsSync(path.join(target, 'assets', 'reveal.js')), '应复制 assets');
-  assert.match(s.out(), /已安装 pagesail Skill v\d+\.\d+\.\d+/);
+  assert.match(s.out(), /已安装 magpie Skill v\d+\.\d+\.\d+/);
 });
 
 test('CLI skill update: install 别名，覆盖旧版本', async () => {

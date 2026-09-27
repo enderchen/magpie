@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>纸鹊 · 小楼派送动作预览</title><link rel="stylesheet" href="animation.css?v=4"><script defer src="../magpie-upload-motion/gsap.min.js"></script><script defer src="animation-v4.js?v=3"></script></head>
+<body><main>
+<header><a class="brand" href="../../home-share/index.html">纸鹊 <span>Magpie</span></a><span class="draft">小楼派送 · 完整循环 · 修订 04</span></header>
+<div class="intro"><h1>一纸，寄万千。</h1><p>从一份 HTML，到别人眼前的网页。</p></div>
+<section class="theatre" aria-label="纸鹊接件、生成网页、上楼派送的动画">
+<svg id="scene" viewBox="0 0 1536 1024" role="img" aria-labelledby="scene-title scene-desc">
+<title id="scene-title">纸鹊的小楼派送</title><desc id="scene-desc">客户递交 HTML 文件。喜鹊把它变成网页和链接，走上左侧楼梯，将链接送至三个房间。客户收手等待。喜鹊依次派送三个房间，沿原路返回，再接下一份文件。</desc>
+<defs>
+<clipPath id="rail-mask"><path d="M266 370H1421V388H266ZM390 382H404V451H390ZM557 382H572V451H557ZM749 382H764V451H749ZM902 382H916V451H902ZM1060 382H1074V451H1060ZM1221 382H1235V451H1221ZM1401 382H1417V451H1401ZM266 447H1424V488H266Z"/></clipPath>
+<g id="chain" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"><path d="M-8 8L8-8M-4-14L3-21C20-37 39-17 23-1L16 6M4 14L-3 21C-20 37-39 17-23 1L-16-6"/></g>
+<clipPath id="worker-clip-0"><rect x="421" y="130" width="185" height="222"/></clipPath><clipPath id="worker-clip-1"><rect x="714" y="130" width="200" height="222"/></clipPath><clipPath id="worker-clip-2"><rect x="1138" y="130" width="145" height="222"/></clipPath></defs>
+<image href="house-clean-v3.png" width="1536" height="1024"/><image id="worker-0" href="residents-work-v1.png" width="1536" height="1024" clip-path="url(#worker-clip-0)" opacity="0"/><image id="worker-1" href="residents-work-v1.png" width="1536" height="1024" clip-path="url(#worker-clip-1)" opacity="0"/><image id="worker-2" href="residents-work-v1.png" width="1536" height="1024" clip-path="url(#worker-clip-2)" opacity="0"/>
+
+<g id="wall-story" opacity=".68" transform="translate(920 610)" class="line"><path d="M-23-33H12L29-16V34H-23Z" fill="var(--paper)"/><path d="M12-33V-16H29M-11 0H15M-11 13H15" fill="none"/><path d="M52 0H84M73-10L84 0 73 10" fill="none"/><rect x="115" y="-30" width="62" height="60" rx="6" fill="var(--paper)"/><path d="M125-13H164M125 1H159M125 15H149M200 0H232M221-10L232 0 221 10" fill="none"/><use href="#chain" x="274"/></g>
+<ellipse id="bird-shadow" cx="0" cy="0" rx="77" ry="10" fill="var(--shadow)"/>
+<g id="bird-position"><g id="bird-scale"><g id="bird-facing"><g id="bird-body" class="bird-line">
+<g id="tail"><g transform="translate(110 -90) scale(.6 1) translate(-110 90)"><path d="M109-111Q46-86-84-74Q-111-70-90-52Q-61-37 123-66Z" fill="var(--green)"/><path d="M-74-62Q25-63 106-92" fill="none" stroke="var(--green-dark)" stroke-width="9"/></g></g>
+<g id="far-wing"><path d="M111-165Q86-162 85-139Q84-117 96-116Q105-115 111-139L120-158Z" fill="var(--green)"/><path d="M98-150Q91-136 97-126" fill="none" stroke="var(--paper)" stroke-width="6"/></g>
+<path id="leg-far" d="M158-37V-8" fill="none" stroke="var(--green-dark)" stroke-width="9"/><path id="leg-near" d="M117-37V-8" fill="none" stroke="var(--green-dark)" stroke-width="9"/><g id="foot-far"><path d="M157-29L158-8Q177-15 182-6Q184 1 170 2H148Q136 4 137-2L143-27" fill="var(--green)"/></g>
+<g id="foot-near"><path d="M121-31L119-10Q145-17 150-6Q151 1 131 1H108Q96 6 97-2L106-32" fill="var(--green)"/></g>
+<path d="M110-171Q84-119 91-75Q94-28 143-26Q185-27 201-71Q219-110 194-159Z" fill="var(--green)"/>
+<path d="M135-156Q125-126 111-104Q99-67 121-47Q149-24 177-56Q199-83 180-137Z" fill="var(--paper)" stroke="none"/>
+<g id="head"><path d="M116-156Q97-186 110-217Q126-245 158-243Q195-243 208-213Q218-185 200-168Q183-153 163-154" fill="var(--green)"/>
+<path d="M181-181Q199-182 204-195Q208-174 193-162Q176-151 161-160" fill="var(--paper)" stroke="none"/>
+<g id="eye"><ellipse cx="177" cy="-207" rx="19" ry="23" fill="var(--paper)" stroke="none"/><ellipse cx="183" cy="-207" rx="11" ry="16" fill="var(--ink)" stroke="none"/><circle cx="187" cy="-214" r="4" fill="var(--paper)" stroke="none"/></g>
+<path d="M207-202L230-193L209-185Z" fill="var(--green-dark)"/>
+<g id="cap"><path d="M104-239Q105-264 137-268Q166-270 180-244L174-234Z" fill="var(--blue)"/><path d="M103-242Q146-235 180-248Q205-255 209-248Q200-232 167-228L111-231Z" fill="var(--blue)"/><path d="M112-239Q141-232 168-237" fill="none" stroke="var(--ink)" stroke-width="7"/><ellipse cx="126" cy="-253" rx="7" ry="5" fill="var(--paper)" stroke="none"/></g></g>
+<path d="M116-169L174-97L163-87L107-160Z" fill="var(--blue)" stroke-width="4"/>
+<g id="bag"><path d="M99-107L169-103L165-43Q165-33 155-33L102-39Q95-40 94-51Z" fill="var(--blue)"/><path d="M100-106L169-103L161-82L106-85Z" fill="var(--blue-light)" stroke-width="4"/><use href="#chain" transform="translate(133 -63) scale(.42)"/></g>
+<g id="near-wing"><path id="wing-shape" fill="var(--green)"/><path id="wing-inset" fill="var(--paper)" stroke="none"/></g>
+</g></g></g></g>
+<g id="customer"><svg id="customer-waiting" x="478.6" y="576" width="170" height="348.16" viewBox="230 0 500 1024"><image href="customer-cartoon-ender-v2.png" width="1536" height="1024"/></svg><svg id="customer-offering" x="478.6" y="576" width="221" height="348.16" viewBox="838 0 650 1024"><image href="customer-cartoon-ender-v2.png" width="1536" height="1024"/></svg></g>
+<g id="parcel" class="line"><path d="M-38-47H21L40-28V47H-38Z" fill="var(--paper)"/><path d="M21-47V-28H40" fill="var(--green)"/><g id="html-face"><text y="1" text-anchor="middle" class="file-label">HTML</text><path d="M-22 18H24M-22 29H13" stroke="var(--muted)" stroke-width="4"/></g><g id="web-face"><rect x="-23" y="-24" width="47" height="25" rx="3" fill="var(--green)" stroke="none"/><path d="M-23 14H24M-23 26H13" stroke-width="4"/></g><g id="link-face"><use href="#chain" transform="scale(.65)"/></g></g>
+<g id="grip" class="bird-line"><ellipse rx="8" ry="5" fill="var(--green)"/></g><g id="foreground" pointer-events="none"><image href="house-clean-v3.png" width="1536" height="1024" clip-path="url(#rail-mask)"/></g>
+<g id="conversion" class="line" transform="translate(820 635)"><rect x="-142" y="-80" width="284" height="116" rx="18" fill="var(--paper)"/><path d="M-68 36L-83 55L-34 36" fill="var(--paper)"/><text x="0" y="-40" text-anchor="middle" class="bubble-title">网页已生成</text><use href="#chain" transform="translate(-91 1) scale(.4)"/><text x="-61" y="8" class="bubble-detail">一个链接，即可分享</text></g>
+<g id="delivered" class="line" transform="translate(516 145)"><rect x="-96" y="-35" width="192" height="60" rx="16" fill="var(--paper)"/><circle cx="-63" cy="-5" r="15" fill="var(--green)" stroke="none"/><path d="M-71-5L-65 1L-55-12" stroke-width="4" fill="none"/><text x="18" y="4" text-anchor="middle" class="bubble-detail">链接已送达</text></g>
+<g id="receipt-0" class="line" transform="translate(505 125)"><rect x="-74" y="-26" width="148" height="44" rx="12" fill="var(--paper)"/><text text-anchor="middle" y="3" class="bubble-detail">✓ 网页已打开</text></g><g id="receipt-1" class="line" transform="translate(852 125)"><rect x="-74" y="-26" width="148" height="44" rx="12" fill="var(--paper)"/><text text-anchor="middle" y="3" class="bubble-detail">✓ 网页已打开</text></g><g id="receipt-2" class="line" transform="translate(1200 125)"><rect x="-74" y="-26" width="148" height="44" rx="12" fill="var(--paper)"/><text text-anchor="middle" y="3" class="bubble-detail">✓ 网页已打开</text></g></svg>
+<div id="loading" role="status">正在准备纸鹊的小楼…</div>
+</section>
+<div class="playback"><div class="status"><span id="phase-number">01</span><div><h2 id="phase-title">接过你的创作</h2><p id="phase-copy">把 HTML 文件交给纸鹊。</p></div></div><div class="buttons"><button id="toggle" type="button" disabled>暂停</button><button id="replay" type="button" disabled>重播</button><label class="loop"><input id="loop" type="checkbox" checked>循环预览</label></div></div>
+<div class="scrubber"><label for="seek">动画进度</label><input id="seek" type="range" min="0" max="50" step="0.01" value="0" disabled><output id="time" for="seek">0.0 / 50.0 秒</output></div>
+<p class="footnote">完整循环预览 · 交件、等待、三房间派送、原路返回。<span id="motion-note">可暂停或拖动进度逐帧查看。</span></p>
+<noscript><p>请启用 JavaScript 查看动画。静态场景仍可浏览。</p></noscript>
+</main></body></html>

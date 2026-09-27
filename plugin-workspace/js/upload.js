@@ -1,8 +1,8 @@
-// 页舟PageSail uTools 插件 · 上传模块（弹窗：本地文件 / 粘贴文本）
+// 纸鹊 Magpie uTools 插件 · 上传模块（弹窗：本地文件 / 粘贴文本）
 
 window.Upload = (function () {
   function openFilePicker() {
-    const result = window.pagesail.selectFile('选择要上传到页舟PageSail的文件');
+    const result = window.magpie.selectFile('选择要上传到纸鹊 Magpie的文件');
     if (result && result[0]) {
       openModal('file', result[0]);
     }
@@ -22,14 +22,14 @@ window.Upload = (function () {
   function openBatch(filePaths) {
     if (!filePaths || !filePaths.length) return;
     const names = filePaths.map((p) => p.split(/[\\/]/).pop()).join('、');
-    PS.modal({
-      title: '批量上传到页舟PageSail',
+    Magpie.modal({
+      title: '批量上传到纸鹊 Magpie',
       bodyHtml: `
         <p style="font-size:14px;line-height:1.7;margin-bottom:14px">
           将上传 <strong>${filePaths.length}</strong> 个文件：
         </p>
         <div style="background:var(--bg-hover);padding:12px;border-radius:6px;font-size:13px;color:var(--text-soft);max-height:160px;overflow:auto;margin-bottom:16px;word-break:break-all">
-          ${PS.escapeHtml(names)}
+          ${Magpie.escapeHtml(names)}
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <input id="up-public" type="checkbox" checked />
@@ -48,33 +48,33 @@ window.Upload = (function () {
           for (let i = 0; i < filePaths.length; i++) {
             submitBtn.textContent = `上传中 ${i + 1}/${filePaths.length}…`;
             try {
-              const result = await window.pagesail.uploadFile({ filePath: filePaths[i], isPublic });
+              const result = await window.magpie.uploadFile({ filePath: filePaths[i], isPublic });
               ok.push(result);
             } catch (err) {
               fail.push({ name: filePaths[i].split(/[\\/]/).pop(), error: err.message });
             }
           }
           close();
-          PS.toast(`✅ 上传完成：成功 ${ok.length} 个${fail.length ? '，失败 ' + fail.length + ' 个' : ''}`);
+          Magpie.toast(`✅ 上传完成：成功 ${ok.length} 个${fail.length ? '，失败 ' + fail.length + ' 个' : ''}`);
           if (fail.length) {
-            PS.modal({
+            Magpie.modal({
               title: '部分文件上传失败',
               bodyHtml:
                 '<div style="font-size:13px;line-height:1.8">' +
-                fail.map((f) => `<div>${PS.escapeHtml(f.name)}：<span style="color:var(--danger)">${PS.escapeHtml(f.error)}</span></div>`).join('') +
+                fail.map((f) => `<div>${Magpie.escapeHtml(f.name)}：<span style="color:var(--danger)">${Magpie.escapeHtml(f.error)}</span></div>`).join('') +
                 '</div>',
             });
           } else if (ok.length === 1) {
             // 单个成功直接问是否预览
-            const shareUrl = window.pagesail.getShareUrl(ok[0].share_key);
-            const open = await PS.confirm({
+            const shareUrl = window.magpie.getShareUrl(ok[0].share_key);
+            const open = await Magpie.confirm({
               title: '上传成功',
               message: `文件「${ok[0].original_name}」已上传。\n\n分享链接：${shareUrl}`,
               confirmText: '打开预览',
             });
-            if (open) window.pagesail.openExternal(shareUrl);
+            if (open) window.magpie.openExternal(shareUrl);
           }
-          document.dispatchEvent(new CustomEvent('pagesail:refresh'));
+          document.dispatchEvent(new CustomEvent('magpie:refresh'));
         };
       },
     });
@@ -86,7 +86,7 @@ window.Upload = (function () {
       filePath && !isText
         ? `<div class="detail-grid" style="margin-bottom:16px">
              <div class="label">已选文件</div>
-             <div class="value">${PS.escapeHtml(filePath)}</div>
+             <div class="value">${Magpie.escapeHtml(filePath)}</div>
            </div>`
         : '';
 
@@ -94,13 +94,13 @@ window.Upload = (function () {
       ? `
         <div style="margin-bottom:16px">
           <label class="field-label">文件名</label>
-          <input id="up-name" class="input" value="${PS.escapeHtml(
+          <input id="up-name" class="input" value="${Magpie.escapeHtml(
         prefillName || ''
       )}" placeholder="my-note.md" />
         </div>
         <div style="margin-bottom:16px">
           <label class="field-label">内容（HTML 或 Markdown）</label>
-          <textarea id="up-content" class="textarea" style="min-height:240px" placeholder="在此粘贴 HTML / Markdown 内容…">${PS.escapeHtml(
+          <textarea id="up-content" class="textarea" style="min-height:240px" placeholder="在此粘贴 HTML / Markdown 内容…">${Magpie.escapeHtml(
         prefillContent || ''
       )}</textarea>
         </div>
@@ -118,8 +118,8 @@ window.Upload = (function () {
         </div>`
       : '';
 
-    PS.modal({
-      title: isText ? '新建文本文件' : '上传文件到页舟PageSail',
+    Magpie.modal({
+      title: isText ? '新建文本文件' : '上传文件到纸鹊 Magpie',
       bodyHtml: fileLine + textForm + fileForm,
       footerHtml: `
         <button class="btn jp-close">取消</button>
@@ -142,14 +142,14 @@ window.Upload = (function () {
               if (!/\.(html?|md|markdown)$/i.test(name)) {
                 throw new Error('文件名需以 .html / .htm / .md / .markdown 结尾');
               }
-              result = await window.pagesail.uploadText({ name, content, isPublic });
+              result = await window.magpie.uploadText({ name, content, isPublic });
             } else {
               if (!filePath) throw new Error('未选择文件');
-              result = await window.pagesail.uploadFile({ filePath, isPublic });
+              result = await window.magpie.uploadFile({ filePath, isPublic });
             }
-            const shareUrl = window.pagesail.getShareUrl(result.share_key);
+            const shareUrl = window.magpie.getShareUrl(result.share_key);
             const isOverwrite = result.overwritten === true;
-            PS.toast(
+            Magpie.toast(
               isOverwrite
                 ? '✅ 已覆盖更新（v' + result.version + '）'
                 : '✅ 上传成功（新建）'
@@ -158,12 +158,12 @@ window.Upload = (function () {
             if (!isOverwrite) {
               try {
                 const lower = result.original_name.toLowerCase();
-                const list = await window.pagesail.listFiles({ limit: 200 });
+                const list = await window.magpie.listFiles({ limit: 200 });
                 const dup = (list.files || []).find(
                   (f) => f.id !== result.id && f.original_name.toLowerCase() === lower
                 );
                 if (dup) {
-                  PS.toast(
+                  Magpie.toast(
                     '⚠ 发现同名文件「' + dup.original_name + '」(id:' + dup.id +
                     ')，文件名可能大小写/空格不同，未覆盖',
                     5000
@@ -173,16 +173,16 @@ window.Upload = (function () {
             }
             close();
             // 询问是否打开预览
-            const open = await PS.confirm({
+            const open = await Magpie.confirm({
               title: '上传成功',
               message: `文件「${result.original_name}」已上传。\n是否立即在浏览器打开预览？\n\n分享链接：${shareUrl}`,
               confirmText: '打开预览',
             });
-            if (open) window.pagesail.openExternal(shareUrl);
+            if (open) window.magpie.openExternal(shareUrl);
             // 刷新列表
-            document.dispatchEvent(new CustomEvent('pagesail:refresh'));
+            document.dispatchEvent(new CustomEvent('magpie:refresh'));
           } catch (err) {
-            PS.showError(err);
+            Magpie.showError(err);
             submitBtn.disabled = false;
             submitBtn.textContent = isText ? '上传文本' : '上传文件';
           }

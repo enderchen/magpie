@@ -65,7 +65,7 @@ function buildFeedbackHtml({ name, contact, category, content, userId, ip }) {
     </table>
     <p style="margin:0 0 8px;color:#555;font-size:14px">反馈内容：</p>
     <pre style="background:#f6f8fa;border-radius:6px;padding:14px 16px;font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-word;color:#24292f;margin:0">${escapeHtmlText(content)}</pre>
-    <p style="margin:16px 0 0;color:#888;font-size:12px">来自页舟PageSail ${appUrl}</p>
+    <p style="margin:16px 0 0;color:#888;font-size:12px">来自纸鹊 Magpie ${appUrl}</p>
   </div>`;
 }
 
@@ -105,7 +105,7 @@ router.post('/', feedbackLimiter, loadSession, async (req, res) => {
     // 发信：后台异步，不阻塞请求。成功后回填 email_sent。
     const to = await resolveFeedbackEmail();
     if (to && isMailerConfigured()) {
-      sendMailBackground(to, `[页舟PageSail反馈] ${CATEGORY_LABELS[cat]}`, buildFeedbackHtml({
+      sendMailBackground(to, `[纸鹊 Magpie反馈] ${CATEGORY_LABELS[cat]}`, buildFeedbackHtml({
         name: trimmedName, contact: trimmedContact, category: cat, content: content.trim(), userId, ip
       })).then(() => {
         dbRun('UPDATE feedback SET email_sent = 1 WHERE id = ?', [feedbackId]).catch(e => {

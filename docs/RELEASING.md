@@ -1,6 +1,6 @@
-# 页舟PageSail：npm 打包与后续发布
+# 纸鹊 Magpie：npm 打包与后续发布
 
-当前包名 `pagesail`，命令 `pagesail`，版本由 package.json 管理。npm 包尚未发布。`private: true` 阻止误发布，不影响本地打包安装，也不改变 GitHub 可见性。
+当前包名 `magpie`，命令 `magpie`，版本由 package.json 管理。npm 包尚未发布。`private: true` 阻止误发布，不影响本地打包安装，也不改变 GitHub 可见性。
 
 ## 本地制作
 
@@ -18,17 +18,17 @@ npm pack
 安装已审核的本地压缩包：
 
 ```bash
-npm install -g ./pagesail-1.6.7.tgz
-pagesail --help
+npm install -g ./magpie-1.6.7.tgz
+magpie --help
 ```
 
-配置 `PAGESAIL_BASE` 和 `PAGESAIL_TOKEN`，或使用 `--base` / `--token`。默认地址为 `http://localhost:8858`。也可在源码目录用 `npm link` 注册命令。
+配置 `MAGPIE_BASE` 和 `MAGPIE_TOKEN`，或使用 `--base` / `--token`。默认地址为 `http://localhost:8858`。也可在源码目录用 `npm link` 注册命令。
 
-运行网页服务请在源码目录设置环境变量并执行 `npm start`；或设置 `PAGESAIL_DATA_DIR` 指向可写的持久数据目录后运行包内 server.js。配置必须与实际部署一致。
+运行网页服务请在源码目录设置环境变量并执行 `npm start`；或设置 `MAGPIE_DATA_DIR` 指向可写的持久数据目录后运行包内 server.js。配置必须与实际部署一致。
 
 ## 发布前需要完成
 
-1. 确认 npm 账号及 `pagesail` 名称的实际发布权限。未找到公开包不等于已取得名称所有权。
+1. 确认 npm 账号及 `magpie` 名称的实际发布权限。未找到公开包不等于已取得名称所有权。
 2. 确认版本号、公开范围及发布内容，复核包中没有账号、Token、数据库或上传文件。
 3. 在获得正式发布授权后移除 `private: true`，重新通过检查并审核 tarball，再手动发布该 tarball。
 4. 发布成功后验证 registry 元信息及全新安装，再把用户安装说明改为 registry 命令。

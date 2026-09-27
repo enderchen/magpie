@@ -1,7 +1,7 @@
 services:
   app:
     build: .
-    container_name: pagesail
+    container_name: magpie
     ports:
       - "8858:8858"
     volumes:
@@ -9,7 +9,7 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-production}
       - PORT=${PORT:-8858}
-      - PAGESAIL_DATA_DIR=${PAGESAIL_DATA_DIR:-/app/data}
+      - MAGPIE_DATA_DIR=${MAGPIE_DATA_DIR:-/app/data}
       - ADMIN_USER=${ADMIN_USER:-admin}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
       - SESSION_SECRET=${SESSION_SECRET:-}

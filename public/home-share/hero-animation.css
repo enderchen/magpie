@@ -1,0 +1,9 @@
+.hero-animation{--rail:#a7abad;--paper:#fff;--page:#f5f6f0;--ink:#17201c;--green:#a7e600;--green-dark:#7bb528;--blue:#9fcef0;--blue-light:#cbe8fa;--muted:#69736c;--shadow:#26332924;--border:#dde1d4;--font:"PingFang SC","Microsoft YaHei",sans-serif;--ease-out:cubic-bezier(.23,1,.32,1)}
+.hero-animation .line{stroke:var(--ink);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;color:var(--ink)}
+.hero-animation .bird-line{stroke:var(--ink);stroke-width:5.6;stroke-linecap:round;stroke-linejoin:round;color:var(--ink)}
+.hero-animation svg text{stroke:none;fill:var(--ink);font-family:var(--font)}
+.hero-animation .file-label{font-size:22px;font-weight:800}
+.hero-animation .bubble-title{font-size:27px;font-weight:800}
+.hero-animation .bubble-detail{font-size:22px;font-weight:650}
+.hero-animation #conversion,.hero-animation #delivered,.hero-animation #web-face,.hero-animation #link-face{opacity:0}
+.hero-animation #scene{display:block;width:100%;height:auto}.hero-animation [hidden]{display:none!important}

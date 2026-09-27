@@ -23,7 +23,7 @@ let homeAbortController = null;
 let versionUploadTarget = null;
 
 // ---------- 视图模式（列表 / 卡片） ----------
-const FILE_VIEW_KEY = 'pagesail-file-view';
+const FILE_VIEW_KEY = 'magpie-file-view';
 let viewMode = (() => { try { return localStorage.getItem(FILE_VIEW_KEY) === 'card' ? 'card' : 'list'; } catch { return 'list'; } })();
 function setViewMode(mode) {
   viewMode = mode;

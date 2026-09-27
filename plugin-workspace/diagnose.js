@@ -1,4 +1,4 @@
-// 页舟PageSail「无权操作」诊断脚本
+// 纸鹊 Magpie「无权操作」诊断脚本
 // 用法：node diagnose.js <服务器地址> <账号> <密码> [文件ID]
 // 例：  node diagnose.js http://localhost:8858 admin 你的密码 22
 const store = {};
@@ -8,7 +8,7 @@ global.utools = {
 };
 global.window = {};
 require('./preload.js');
-const pagesail = global.window.pagesail;
+const magpie = global.window.magpie;
 
 (async () => {
   const [,, base, account, password, fileIdArg] = process.argv;
@@ -16,16 +16,16 @@ const pagesail = global.window.pagesail;
     console.log('用法: node diagnose.js <服务器地址> <账号> <密码> [文件ID]');
     process.exit(1);
   }
-  pagesail.setBase(base);
+  magpie.setBase(base);
 
   console.log('=== 1. 登录 ===');
   let user;
-  try { user = await pagesail.login({ account, password }); }
+  try { user = await magpie.login({ account, password }); }
   catch (e) { console.log('✗ 登录失败:', e.message); process.exit(1); }
   console.log('登录用户:', JSON.stringify({ id: user.id, username: user.username, role: user.role }));
 
   console.log('\n=== 2. 文件列表（看 uploaded_by）===');
-  const list = await pagesail.listFiles({ limit: 5 });
+  const list = await magpie.listFiles({ limit: 5 });
   console.log('前5个文件:');
   list.files.forEach(f => {
     const mine = Number(f.uploaded_by) === Number(user.id) ? '✓我的' : '✗非我';
@@ -44,17 +44,17 @@ const pagesail = global.window.pagesail;
   // 先建一个标签
   let tagId;
   try {
-    const tag = await pagesail.createTag('诊断测试标签');
+    const tag = await magpie.createTag('诊断测试标签');
     tagId = tag.id;
     console.log('  建标签成功, id:', tagId);
   } catch (e) {
     console.log('  建标签失败:', e.message, '（用已有标签重试）');
-    const tags = await pagesail.listTags();
+    const tags = await magpie.listTags();
     tagId = tags.tags[0] && tags.tags[0].id;
   }
   if (tagId) {
     try {
-      await pagesail.setFileTags(targetId, [tagId]);
+      await magpie.setFileTags(targetId, [tagId]);
       console.log('  ✓ 打标签成功！');
     } catch (e) {
       console.log('  ✗ 打标签失败:', e.message, '| status:', e.status);
@@ -64,7 +64,7 @@ const pagesail = global.window.pagesail;
 
   console.log('\n=== 5. 尝试设分类（复现 403）===');
   try {
-    await pagesail.setFileCategory(targetId, null);
+    await magpie.setFileCategory(targetId, null);
     console.log('  ✓ 设分类成功（设为空）！');
   } catch (e) {
     console.log('  ✗ 设分类失败:', e.message, '| status:', e.status);
@@ -73,7 +73,7 @@ const pagesail = global.window.pagesail;
   console.log('\n=== 6. 尝试改文件名（同一套 ownership 校验）===');
   if (target) {
     try {
-      await pagesail.updateFile(targetId, { name: target.original_name }); // 改成原名，不应有变化
+      await magpie.updateFile(targetId, { name: target.original_name }); // 改成原名，不应有变化
       console.log('  ✓ 改名成功！');
     } catch (e) {
       console.log('  ✗ 改名失败:', e.message, '| status:', e.status);

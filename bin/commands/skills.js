@@ -12,7 +12,7 @@ async function run(client, args, { base }) {
   }
   const name = args.positional[2];
   if (!name) {
-    const e = new Error('用法：pagesail skills get <name> | pagesail skills download <name>');
+    const e = new Error('用法：magpie skills get <name> | magpie skills download <name>');
     e.name = 'UsageError';
     throw e;
   }

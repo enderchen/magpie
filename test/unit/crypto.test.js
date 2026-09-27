@@ -9,7 +9,7 @@ const crypto = require('crypto');
 const TMP_DATA = path.join(__dirname, '..', `data-crypto-${process.pid}-${Date.now()}`);
 
 function freshCrypto() {
-  // 清除缓存，让 lib/crypto.js 重新读取 PAGESAIL_DATA_DIR / 环境变量
+  // 清除缓存，让 lib/crypto.js 重新读取 MAGPIE_DATA_DIR / 环境变量
   delete require.cache[require.resolve('../../lib/paths')];
   delete require.cache[require.resolve('../../lib/crypto')];
   return require('../../lib/crypto');
@@ -19,7 +19,7 @@ test.beforeEach(() => {
   fs.rmSync(TMP_DATA, { recursive: true, force: true });
   fs.mkdirSync(TMP_DATA, { recursive: true });
   delete process.env.TOKEN_ENCRYPTION_KEY;
-  process.env.PAGESAIL_DATA_DIR = TMP_DATA;
+  process.env.MAGPIE_DATA_DIR = TMP_DATA;
 });
 
 test.afterEach(() => {
@@ -29,7 +29,7 @@ test.afterEach(() => {
 
 test('加密后解密能还原原文', () => {
   const { encryptToken, decryptToken } = freshCrypto();
-  const plain = 'ps_abcdefghijklmnopqrstuvwxyz123456';
+  const plain = 'mg_abcdefghijklmnopqrstuvwxyz123456';
   const enc = encryptToken(plain);
   assert.notStrictEqual(enc, plain, '密文不应等于明文');
   assert.strictEqual(decryptToken(enc), plain);
@@ -37,7 +37,7 @@ test('加密后解密能还原原文', () => {
 
 test('同一明文每次加密结果不同（随机 IV）', () => {
   const { encryptToken } = freshCrypto();
-  const plain = 'ps_sametokenvalue';
+  const plain = 'mg_sametokenvalue';
   const a = encryptToken(plain);
   const b = encryptToken(plain);
   assert.notStrictEqual(a, b, '不同次加密应产生不同密文');
@@ -45,7 +45,7 @@ test('同一明文每次加密结果不同（随机 IV）', () => {
 
 test('密文格式为 iv : ciphertext : authTag 三段 base64', () => {
   const { encryptToken } = freshCrypto();
-  const enc = encryptToken('ps_test');
+  const enc = encryptToken('mg_test');
   const parts = enc.split(':');
   assert.strictEqual(parts.length, 3);
   // 每段都是合法 base64
@@ -54,7 +54,7 @@ test('密文格式为 iv : ciphertext : authTag 三段 base64', () => {
 
 test('密钥文件自动生成在数据目录并持久化', () => {
   const { encryptToken } = freshCrypto();
-  const enc = encryptToken('ps_persist');
+  const enc = encryptToken('mg_persist');
   const keyFile = path.join(TMP_DATA, 'token-key.key');
   assert.ok(fs.existsSync(keyFile), '应生成 token-key.key 文件');
   const hex = fs.readFileSync(keyFile, 'utf8').trim();
@@ -62,12 +62,12 @@ test('密钥文件自动生成在数据目录并持久化', () => {
 
   // 再次 require（重新读文件）应能解密旧密文
   const { decryptToken: decryptAgain } = freshCrypto();
-  assert.strictEqual(decryptAgain(enc), 'ps_persist');
+  assert.strictEqual(decryptAgain(enc), 'mg_persist');
 });
 
 test('密文被篡改 → 解密抛错（GCM 完整性校验）', () => {
   const { encryptToken, decryptToken } = freshCrypto();
-  const enc = encryptToken('ps_tamper');
+  const enc = encryptToken('mg_tamper');
   const parts = enc.split(':');
   // 篡改 ciphertext 段的第一个字符
   const tamperedData = Buffer.from(parts[1], 'base64');
@@ -85,14 +85,14 @@ test('格式错误的密文 → 解密抛错', () => {
 test('环境变量 TOKEN_ENCRYPTION_KEY 优先于密钥文件（合法 hex）', () => {
   process.env.TOKEN_ENCRYPTION_KEY = crypto.randomBytes(32).toString('hex');
   const { encryptToken, decryptToken } = freshCrypto();
-  const enc = encryptToken('ps_env_key');
-  assert.strictEqual(decryptToken(enc), 'ps_env_key');
+  const enc = encryptToken('mg_env_key');
+  assert.strictEqual(decryptToken(enc), 'mg_env_key');
   assert.ok(!fs.existsSync(path.join(TMP_DATA, 'token-key.key')), '用环境变量时不应生成密钥文件');
 });
 
 test('reloadKey() 切换密钥后旧密文无法解密', () => {
   const mod = freshCrypto();
-  const enc = mod.encryptToken('ps_rotate');
+  const enc = mod.encryptToken('mg_rotate');
   // 换一个新环境变量密钥并 reload
   process.env.TOKEN_ENCRYPTION_KEY = crypto.randomBytes(32).toString('hex');
   mod.reloadKey();

@@ -6,7 +6,7 @@ async function run(client, args) {
   const id = args.sub;
   const newName = args.positional[2];
   if (!id || !newName) {
-    const e = new Error('用法：pagesail mv <id> <新文件名>');
+    const e = new Error('用法：magpie mv <id> <新文件名>');
     e.name = 'UsageError';
     throw e;
   }

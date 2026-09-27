@@ -102,9 +102,9 @@ test('正确登录 → 200，返回用户信息', async () => {
   assert.strictEqual(res.body.username, 'admin');
   assert.strictEqual(res.body.role, 'admin');
   assert.ok(res.body.id);
-  // Set-Cookie 带 pagesail.sid
+  // Set-Cookie 带 magpie.sid
   assert.ok(res.headers['set-cookie']);
-  assert.ok(res.headers['set-cookie'].some(c => c.startsWith('pagesail.sid=')));
+  assert.ok(res.headers['set-cookie'].some(c => c.startsWith('magpie.sid=')));
 });
 
 test('带 cookie 访问 /api/auth/me → 200', async () => {

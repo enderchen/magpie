@@ -1,10 +1,10 @@
 {
-  "name": "pagesail",
+  "name": "magpie",
   "version": "1.6.7",
-  "description": "页舟PageSail — 一页，载万千。HTML / Markdown 预览与分享",
+  "description": "纸鹊 Magpie — 一纸，寄万千。HTML / Markdown 预览与分享",
   "main": "server.js",
   "bin": {
-    "pagesail": "bin/pagesail.js"
+    "magpie": "bin/magpie.js"
   },
   "engines": {
     "node": ">=20"
@@ -63,9 +63,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/enderchen/pagesail.git"
+    "url": "https://github.com/enderchen/magpie.git"
   },
-  "homepage": "https://github.com/enderchen/pagesail",
+  "homepage": "https://github.com/enderchen/magpie",
   "files": [
     "*.js",
     "bin/",

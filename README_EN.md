@@ -1,16 +1,16 @@
-# 页舟PageSail
+# 纸鹊 Magpie
 
 > A page carries a world.
 
-PageSail provides HTML, Markdown and ZIP preview and sharing under the MIT license.
+Magpie provides HTML, Markdown and ZIP preview and sharing under the MIT license.
 
-The npm package is prepared locally and has not been published. Install the CLI from source using the instructions below. It defaults to localhost:8858; set PAGESAIL_BASE or --base for another server. Plugin source remains available for development, without a website entrypoint.
+The npm package is prepared locally and has not been published. Install the CLI from source using the instructions below. It defaults to localhost:8858; set MAGPIE_BASE or --base for another server. Plugin source remains available for development, without a website entrypoint.
 
-[![CI](https://github.com/enderchen/pagesail/actions/workflows/ci.yml/badge.svg)](https://github.com/enderchen/pagesail/actions/workflows/ci.yml)
+[![CI](https://github.com/enderchen/magpie/actions/workflows/ci.yml/badge.svg)](https://github.com/enderchen/magpie/actions/workflows/ci.yml)
 
 [中文](README.md) | English
 
-**PageSail** is a zero-config HTML / Markdown instant preview and sharing tool. Drop in a document and instantly get a clean online page — no deployment pipeline, no server knowledge required. Especially great for one-click sharing of AI-generated content.
+**Magpie** is a zero-config HTML / Markdown instant preview and sharing tool. Drop in a document and instantly get a clean online page — no deployment pipeline, no server knowledge required. Especially great for one-click sharing of AI-generated content.
 
 ---
 
@@ -24,7 +24,7 @@ The npm package is prepared locally and has not been published. Install the CLI 
 - [REST API](#rest-api)
 - [MCP / AI Integration](#mcp--ai-integration)
 - [Use Cases](#use-cases)
-- [Why pagesail](#why-pagesail)
+- [Why magpie](#why-magpie)
 - [License](#license)
 
 ---
@@ -91,8 +91,8 @@ The npm package is prepared locally and has not been published. Install the CLI 
 ### Docker Deploy (Recommended)
 
 ```bash
-git clone https://github.com/enderchen/pagesail.git
-cd pagesail
+git clone https://github.com/enderchen/magpie.git magpie
+cd magpie
 cp .env.example .env       # Edit .env with ADMIN_PASSWORD and SESSION_SECRET
 docker-compose up -d
 ```
@@ -130,21 +130,21 @@ node test/perf-bench.js 8858     # Render/list/cache latency benchmarks
 
 ### CLI Tool (Install from source)
 
-pagesail ships with a `pagesail` CLI for uploading, listing, and managing files via the REST API. For large files and ZIPs it uses multipart binary streaming, which is faster and cheaper than MCP's base64-in-token flow:
+magpie ships with a `magpie` CLI for uploading, listing, and managing files via the REST API. For large files and ZIPs it uses multipart binary streaming, which is faster and cheaper than MCP's base64-in-token flow:
 
 ```bash
 npm install
 npm link  # Run in this source checkout
-export PAGESAIL_BASE=http://localhost:8858  # Your own PageSail server
-pagesail upload ./report.html --public --token <your-token>
-pagesail ls --kw quarterly
-pagesail cat 8
-pagesail --help
+export MAGPIE_BASE=http://localhost:8858  # Your own Magpie server
+magpie upload ./report.html --public --token <your-token>
+magpie ls --kw quarterly
+magpie cat 8
+magpie --help
 ```
 
-`pagesail` and MCP are symmetric client entry points over the same REST API. See `pagesail --help` for details.
+`magpie` and MCP are symmetric client entry points over the same REST API. See `magpie --help` for details.
 
-Until the npm release is enabled, `pagesail update` only prints source update instructions and does not call npm.
+Until the npm release is enabled, `magpie update` only prints source update instructions and does not call npm.
 
 ### Release Process
 
@@ -154,7 +154,7 @@ Maintainer release guide (GitHub Actions automated release, token rotation, trou
 
 ## Auth & Security
 
-pagesail supports a multi-user system. The admin manages all users and files; regular users can only access their own files and public files.
+magpie supports a multi-user system. The admin manages all users and files; regular users can only access their own files and public files.
 
 Share links (`/api/files/:id/render`, `/s/:key`, download, source) are anonymously accessible when the file is marked public. Uncheck **Public access** on upload to make the file visible only to the owner and admin.
 
@@ -164,8 +164,8 @@ Share links (`/api/files/:id/render`, `/s/:key`, download, source) are anonymous
 
 API and MCP endpoints support three authentication methods:
 
-1. **Session Cookie** — `pagesail.sid` cookie after login, for browser access.
-2. **API Token** — User-created `ps_` prefixed tokens, for script and AI integration.
+1. **Session Cookie** — `magpie.sid` cookie after login, for browser access.
+2. **API Token** — User-created `mg_` prefixed tokens, for script and AI integration.
 3. **MCP Token** — `MCP_TOKEN` environment variable, for AI tool connections (backward compatible).
 
 ### Environment Variables
@@ -177,34 +177,34 @@ API and MCP endpoints support three authentication methods:
 | `SESSION_SECRET` | Production | Encrypts session cookies; in dev mode a temporary key is auto-generated (lost on restart). Missing in production refuses startup. |
 | `NODE_ENV` | No | When `production`, cookies are sent only over HTTPS. |
 | `PORT` | No | Default `8858`. |
-| `MCP_TOKEN` | No | Global Bearer token for the `/mcp` endpoint (backward compatible); when unset, `/mcp` is still accessible via a user-level API token (`ps_` prefix). |
+| `MCP_TOKEN` | No | Global Bearer token for the `/mcp` endpoint (backward compatible); when unset, `/mcp` is still accessible via a user-level API token (`mg_` prefix). |
 | `ALLOW_REGISTRATION` | No | Set to `true` to enable self-service registration; defaults to off (admin-only user creation). |
 | `SMTP_HOST` | No | SMTP server address (e.g. `smtp.qq.com`); enables email verification when configured. |
 | `SMTP_PORT` | No | SMTP port (e.g. `465`). |
 | `SMTP_SECURE` | No | Use SSL (`true`/`false`). |
 | `SMTP_USER` | No | SMTP login username. |
 | `SMTP_PASS` | No | SMTP login password or authorization code. |
-| `SMTP_FROM` | No | Sender address (e.g. `"pagesail <user@example.com>"`). |
+| `SMTP_FROM` | No | Sender address (e.g. `"magpie <user@example.com>"`). |
 | `APP_URL` | No | External app URL used to build verification links (e.g. `http://localhost:8858`). |
 | `GOOGLE_CLIENT_ID` | No | Google Web application OAuth Client ID; enables Google sign-in together with `GOOGLE_CLIENT_SECRET`. |
 | `GOOGLE_CLIENT_SECRET` | No | Google Web application OAuth Client Secret; keep it only in the server-side environment. |
 | `GOOGLE_HTTP_TIMEOUT_MS` | No | Timeout for Google token and OIDC certificate requests, clamped to 1000-60000 ms; defaults to 10000. |
 | `GOOGLE_HTTPS_PROXY` | No | Trusted HTTP CONNECT proxy used only for Google OAuth egress; supports `http://` or `https://`. |
-| `PAGESAIL_DATA_DIR` | No | Data directory, defaults to `./data`. |
+| `MAGPIE_DATA_DIR` | No | Data directory, defaults to `./data`. |
 | `COOKIE_SECURE` | No | When `true`, cookies are sent only over HTTPS (recommended for production). |
 | `MCP_IP` | No | Hostname shown in MCP endpoint logs, defaults to `localhost`. |
 | `MCP_PROTOCOL` | No | MCP endpoint protocol, defaults to `http`. |
 | `TOKEN_ENCRYPTION_KEY` | No | API token encryption key (hex 32 bytes); if unset, a `token-key.key` is auto-generated in the data directory. |
 | `MAX_FILE_VERSIONS` | No | Maximum number of versions kept per file, defaults to `20`. |
 | `BACKUP_CRON` | No | Automatic backup cron expression (e.g. `0 3 * * *`). |
-| `BACKUP_DIR` | No | Automatic backup directory, defaults to `<PAGESAIL_DATA_DIR>/backups`. |
+| `BACKUP_DIR` | No | Automatic backup directory, defaults to `<MAGPIE_DATA_DIR>/backups`. |
 
 If both `ADMIN_USER` and `ADMIN_PASSWORD` are left empty, the startup log will output:
 
 ```
-[pagesail] Created initial admin: admin
-[pagesail] Initial password (save this): 7Hk2mN9pq4rTv8wX
-[pagesail] ⚠️  Please change the password after first login
+[magpie] Created initial admin: admin
+[magpie] Initial password (save this): 7Hk2mN9pq4rTv8wX
+[magpie] ⚠️  Please change the password after first login
 ```
 
 Copy the password from the log to log in.
@@ -231,7 +231,7 @@ sqlite3 data/database.sqlite "UPDATE users SET password_hash='<hash-from-above>'
 ## Project Structure
 
 ```
-pagesail/
+magpie/
 ├── server.js           # Entry: app assembly + middleware + startup orchestration (logic split out)
 ├── routes/             # Domain-split Express Routers
 │   ├── auth.js         # Login/register/email verification
@@ -277,7 +277,7 @@ pagesail/
 │   ├── api.md          # Complete REST API reference
 │   └── design/         # Design documents
 ├── skills/
-│   └── pagesail/          # Claude Code / Desktop unified skill: upload, generate content, presentations, templates
+│   └── magpie/          # Claude Code / Desktop unified skill: upload, generate content, presentations, templates
 ├── test/               # Unit + integration tests (node:test + supertest) + e2e harness
 ├── data/               # SQLite databases, uploaded files & sessions (auto-created)
 └── public/             # Frontend static assets
@@ -405,11 +405,11 @@ Port `8858` (overridable via `PORT`). All write endpoints require login or Beare
 
 ## MCP / AI Integration
 
-pagesail includes a built-in [MCP Streamable HTTP](https://modelcontextprotocol.io) endpoint, enabling AI tools like Claude Code and Claude Desktop to directly upload and manage files.
+magpie includes a built-in [MCP Streamable HTTP](https://modelcontextprotocol.io) endpoint, enabling AI tools like Claude Code and Claude Desktop to directly upload and manage files.
 
 ### Enable
 
-Set the `MCP_TOKEN` environment variable, or use any user-level API Token (`ps_` prefix). Both work:
+Set the `MCP_TOKEN` environment variable, or use any user-level API Token (`mg_` prefix). Both work:
 
 ```bash
 MCP_TOKEN=your-secret-token
@@ -422,7 +422,7 @@ MCP_TOKEN=your-secret-token
 ```json
 {
   "mcpServers": {
-    "pagesail": {
+    "magpie": {
       "type": "http",
       "url": "http://localhost:8858/mcp",
       "headers": {
@@ -463,21 +463,21 @@ MCP_TOKEN=your-secret-token
 
 | URI | Description |
 |---|---|
-| `pagesail://files` | All file metadata (JSON list). |
-| `pagesail://file/{id}` | Single file content (≤ 256KB). |
+| `magpie://files` | All file metadata (JSON list). |
+| `magpie://file/{id}` | Single file content (≤ 256KB). |
 
 ### Companion Skill
 
-The repo includes `skills/pagesail/SKILL.md`, a ready-to-use skill for Claude Code / Desktop. Once installed, AI-generated HTML, Markdown, reports, visualizations, presentations, and template-market-styled content are automatically uploaded to pagesail with a preview link.
+The repo includes `skills/magpie/SKILL.md`, a ready-to-use skill for Claude Code / Desktop. Once installed, AI-generated HTML, Markdown, reports, visualizations, presentations, and template-market-styled content are automatically uploaded to magpie with a preview link.
 
 ```bash
-ln -s "$(pwd)/skills/pagesail" ~/.claude/skills/pagesail
+ln -s "$(pwd)/skills/magpie" ~/.claude/skills/magpie
 ```
 
 Or install via CLI:
 
 ```bash
-pagesail skill install
+magpie skill install
 ```
 
 ### Web Management
@@ -503,11 +503,11 @@ npx -y @modelcontextprotocol/inspector http://localhost:8858/mcp
 
 ---
 
-## Why pagesail
+## Why magpie
 
 Existing solutions are either too heavy (requiring server setup, domains, CI) or too closed (locked to specific platforms).
 
-pagesail does one thing: make static content sharing simple again. Drop a file, get a link. An optional multi-user system exists, but the default is zero-friction — drop a file to get a link, share public files anonymously without registering.
+magpie does one thing: make static content sharing simple again. Drop a file, get a link. An optional multi-user system exists, but the default is zero-friction — drop a file to get a link, share public files anonymously without registering.
 
 ---
 

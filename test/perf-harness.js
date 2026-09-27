@@ -40,7 +40,7 @@ function req(method, path, { body, headers = {}, raw, formData } = {}) {
 
 // 多部分表单：单字段 file
 async function run() {
-  console.log(`\n=== pagesail 验证套件 (port ${PORT}) ===\n`);
+  console.log(`\n=== magpie 验证套件 (port ${PORT}) ===\n`);
 
   // 1. 健康检查
   let r = await req('GET', '/health');
@@ -66,7 +66,7 @@ async function run() {
   check('GET /api/auth/me → 200 (带 cookie)', r.status === 200, `status=${r.status}`);
 
   // 5. 上传 Markdown (JSON)
-  const mdContent = '# 标题\n\n```js\nconsole.log("hi");\n```\n\n行内公式 $a^2+b^2=c^2$\n\n搜索关键词 pagesail_unique_token_alpha';
+  const mdContent = '# 标题\n\n```js\nconsole.log("hi");\n```\n\n行内公式 $a^2+b^2=c^2$\n\n搜索关键词 magpie_unique_token_alpha';
   r = await req('POST', '/api/files/upload-json', { headers: auth, body: { name: 'perf-test.md', content: mdContent, isPublic: true } });
   check('upload-json markdown → 200', r.status === 200, `status=${r.status} ${r.text}`);
   let upload = {};
@@ -99,7 +99,7 @@ async function run() {
 
   // 10. 搜索（FTS）
   await new Promise(res => setTimeout(res, 400)); // 等 FTS 异步索引
-  r = await req('GET', `/api/files/search?q=${encodeURIComponent('pagesail_unique_token_alpha')}`, { headers: auth });
+  r = await req('GET', `/api/files/search?q=${encodeURIComponent('magpie_unique_token_alpha')}`, { headers: auth });
   check('FTS 搜索 → 200', r.status === 200, `status=${r.status}`);
   let search = {};
   try { search = JSON.parse(r.text); } catch {}

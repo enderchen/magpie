@@ -1,6 +1,6 @@
 // version 命令：交互式升级项目版本号，自动同步所有相关文件并打 tag。
 //
-//   pagesail version bump [--type patch|minor|major] [--target x.y.z] [--yes] [--dry-run]
+//   magpie version bump [--type patch|minor|major] [--target x.y.z] [--yes] [--dry-run]
 //
 // --type 与 --target 二选一；默认会询问确认；--yes 用于脚本/CI 场景。
 
@@ -14,7 +14,7 @@ const REPO_ROOT = path.resolve(__dirname, '..', '..');
 
 // 除 package.json / package-lock.json 外，需要手动同步版本的文件
 const SYNC_FILES = [
-  { path: 'skills/pagesail/SKILL.md', pattern: (v) => new RegExp(`^  version: "${escapeRegex(v)}"$`, 'm'), replacement: (v) => `  version: "${v}"` },
+  { path: 'skills/magpie/SKILL.md', pattern: (v) => new RegExp(`^  version: "${escapeRegex(v)}"$`, 'm'), replacement: (v) => `  version: "${v}"` },
   { path: 'docs/skill-integration-design.md', pattern: (v) => new RegExp(`^  version: "${escapeRegex(v)}"$`, 'm'), replacement: (v) => `  version: "${v}"` },
   { path: 'plugin-workspace/plugin.json', pattern: (v) => new RegExp(`"version": "${escapeRegex(v)}"`, 'g'), replacement: (v) => `"version": "${v}"` },
   { path: 'public/index.html', pattern: (v) => new RegExp(`\\?v=${escapeRegex(v)}`, 'g'), replacement: (v) => `?v=${v}` },
@@ -57,7 +57,7 @@ async function prompt(q) {
 }
 
 function usageError(msg) {
-  const e = new Error(msg || '用法：pagesail version bump [--type patch|minor|major] [--target x.y.z] [--yes] [--dry-run]');
+  const e = new Error(msg || '用法：magpie version bump [--type patch|minor|major] [--target x.y.z] [--yes] [--dry-run]');
   e.name = 'UsageError';
   return e;
 }

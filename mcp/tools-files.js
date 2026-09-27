@@ -15,7 +15,7 @@ function registerFileTools(server, { api, port, mcpIp, protocol }) {
     'list_files',
     {
       title: 'List Files',
-      description: '列出 pagesail 中存储的所有 HTML/Markdown 文件元数据。适用于查看已上传文件列表、确认上传结果、或决定后续操作目标。支持分页和排序。',
+      description: '列出 magpie 中存储的所有 HTML/Markdown 文件元数据。适用于查看已上传文件列表、确认上传结果、或决定后续操作目标。支持分页和排序。',
       inputSchema: {
         page: z.number().optional().describe('页码（默认 1）'),
         limit: z.number().optional().describe('每页数量（默认 20，最大 100）'),
@@ -51,7 +51,7 @@ function registerFileTools(server, { api, port, mcpIp, protocol }) {
     {
       title: 'Upload File',
       description:
-        '上传 HTML、Markdown 或 ZIP 文件到 pagesail。【生成原则·重要】默认产出**单个自包含 HTML 文件**：CSS 用 `<style>` 内联、JS 用 `<script>` 内联、图片用 data URI 或在线 URL，全部塞进一个 .html，不要拆成 index.html + style.css + app.js 多文件再打包。单文件在页舟PageSail预览最稳、分享最简单。仅生成幻灯片/演示文稿（reveal.js）或确有大量本地二进制资源时才用 ZIP 网站包。' +
+        '上传 HTML、Markdown 或 ZIP 文件到 magpie。【生成原则·重要】默认产出**单个自包含 HTML 文件**：CSS 用 `<style>` 内联、JS 用 `<script>` 内联、图片用 data URI 或在线 URL，全部塞进一个 .html，不要拆成 index.html + style.css + app.js 多文件再打包。单文件在纸鹊 Magpie预览最稳、分享最简单。仅生成幻灯片/演示文稿（reveal.js）或确有大量本地二进制资源时才用 ZIP 网站包。' +
         'ZIP 支持两种模式：网站包（含 index.html + 资源，作为整体预览）和批量上传（多个独立 HTML/MD，各自创建记录）。' +
         '非 ZIP 文件类型按扩展名自动识别。返回的 url 字段是可公开访问的预览地址。适用于将生成的报告、笔记、可视化页面等内容上传分享。',
       inputSchema: {

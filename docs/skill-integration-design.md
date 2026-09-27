@@ -1,6 +1,6 @@
-# 页舟PageSail内容生产能力扩展 —— Skill 集成设计方案
+# 纸鹊 Magpie内容生产能力扩展 —— Skill 集成设计方案
 
-> 基于调研报告《开源 Skill 项目探索与页舟PageSail集成方案》审阅后制定。
+> 基于调研报告《开源 Skill 项目探索与纸鹊 Magpie集成方案》审阅后制定。
 > 本文档是**设计稿**，不含实现代码；审阅通过后再分阶段落地。
 > 评审焦点：**可实现、易扩展、好落地**。
 
@@ -8,7 +8,7 @@
 
 ## 0. TL;DR（一句话方案）
 
-在页舟PageSail现有的「**Skill 编排 → MCP 工具 → REST/DB 沉淀**」三层插件位上，**以 Skill（SKILL.md）为主载体扩展内容生产纵深**。当前已将 `pagesail-upload`、`pagesail-presentation`、`pagesail-content-template` 合并为统一 `pagesail` Skill；后续新增能力（editorial / clone-ui）作为该 Skill 的章节或模板双轨增量。`pagesail-chart`（与 Mermaid 重叠）和 Phase 3 的外部市场对接列为「暂缓」。
+在纸鹊 Magpie现有的「**Skill 编排 → MCP 工具 → REST/DB 沉淀**」三层插件位上，**以 Skill（SKILL.md）为主载体扩展内容生产纵深**。当前已将 `magpie-upload`、`magpie-presentation`、`magpie-content-template` 合并为统一 `magpie` Skill；后续新增能力（editorial / clone-ui）作为该 Skill 的章节或模板双轨增量。`magpie-chart`（与 Mermaid 重叠）和 Phase 3 的外部市场对接列为「暂缓」。
 
 报告整体方向正确，但有三处技术判断需修正，本方案已据此调整。
 
@@ -21,7 +21,7 @@
 | 结论 | 评价 |
 |---|---|
 | 三条路径（Fork&Adapt / Inspire&Build / Market&Extend） | ✅ 准确，优先级合理 |
-| revealjs-skill 位于第一象限（高价值 × 低难度） | ✅ 正确，与页舟PageSail定位契合 |
+| revealjs-skill 位于第一象限（高价值 × 低难度） | ✅ 正确，与纸鹊 Magpie定位契合 |
 | 现有基础设施够用（自动发现/YAML 解析/ZIP 打包/Web UI） | ✅ 属实，加 Skill 几乎零代码 |
 | Phase 3 外部市场对接（Composio/agentskills.so）投入大、收益远 | ✅ 同意，列为暂缓 |
 
@@ -31,26 +31,26 @@
 
 报告说「sandbox 已允许 JS 执行，键盘事件可在 iframe 内处理」。现实是：
 
-- reveal.js 依赖 `keydown`，但页舟PageSail预览页是 SPA，父页面有全局键盘监听（方向键翻历史等），会和 iframe 抢键。
+- reveal.js 依赖 `keydown`，但纸鹊 Magpie预览页是 SPA，父页面有全局键盘监听（方向键翻历史等），会和 iframe 抢键。
 - 方向键/空格在父页面被消费时，iframe 内的 reveal.js 收不到，表现为「按键没反应」。
 
 **正解**：reveal.js 配置 `embedded: true`（依赖容器内点击聚焦）+ 预览页提供「在新窗口打开 / 全屏」兜底按钮。不假设键盘事件能自动透传。
 
 **② 「自包含化」被低估，且漏了现成的 Bundle 机制（报告 6.2）**
 
-报告在「reveal.js 库内联 / 通过 CDN」二选一里纠结，但**页舟PageSail已有 `is_bundle` 机制**（ZIP 解压成目录 + `<base>` 注入相对路径）。这是第三条、也是最优解：
+报告在「reveal.js 库内联 / 通过 CDN」二选一里纠结，但**纸鹊 Magpie已有 `is_bundle` 机制**（ZIP 解压成目录 + `<base>` 注入相对路径）。这是第三条、也是最优解：
 
 | 策略 | 体积 | 离线可预览 | 实现成本 | 缺点 |
 |---|---|---|---|---|
-| CDN | 小 | ❌ 断网/内网看不到 | 最低 | 破坏页舟PageSail核心卖点 |
+| CDN | 小 | ❌ 断网/内网看不到 | 最低 | 破坏纸鹊 Magpie核心卖点 |
 | 全内联 | 每文件 200KB+ | ✅ | 中 | 生成 10 个 PPT 就 2MB+ |
 | **Bundle**（本方案采用） | reveal.js 一份共用 | ✅ | 中 | 必须走 ZIP 上传 |
 
-**③ `pagesail-chart` 是伪需求，建议砍掉**
+**③ `magpie-chart` 是伪需求，建议砍掉**
 
-页舟PageSail Markdown 渲染**已支持 Mermaid**（流程图/时序图/甘特图），内容模板市场已有 `dashboard` 场景（内含 Chart.js 模板）。单独的 chart Skill 与现有能力重叠，且静态 HTML 写死数据不如让 AI 直接写 Mermaid。
+纸鹊 Magpie Markdown 渲染**已支持 Mermaid**（流程图/时序图/甘特图），内容模板市场已有 `dashboard` 场景（内含 Chart.js 模板）。单独的 chart Skill 与现有能力重叠，且静态 HTML 写死数据不如让 AI 直接写 Mermaid。
 
-**建议**：砍掉 `pagesail-chart` Skill；若要增强图表能力，扩 `dashboard`/`report` 场景模板即可，零新代码。
+**建议**：砍掉 `magpie-chart` Skill；若要增强图表能力，扩 `dashboard`/`report` 场景模板即可，零新代码。
 
 ### 1.3 报告工作量需如实标注
 
@@ -62,7 +62,7 @@ Phase 1「1-2 周」含 3-5 套 reveal.js 主题——reveal.js 主题是 **30+ 
 
 ### 2.1 扩展位分层与职责边界
 
-页舟PageSail已经为内容生产预留了清晰的三层插件位。本方案严格沿用，**不新增框架**：
+纸鹊 Magpie已经为内容生产预留了清晰的三层插件位。本方案严格沿用，**不新增框架**：
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -86,13 +86,13 @@ Phase 1「1-2 周」含 3-5 套 reveal.js 主题——reveal.js 主题是 **30+ 
 
 ### 2.2 Skill 间协作：单一上传中枢
 
-所有生产型能力**统一复用 `pagesail` Skill 中的上传中枢**，不各自实现：
+所有生产型能力**统一复用 `magpie` Skill 中的上传中枢**，不各自实现：
 
 ```
 用户："做个 Q3 汇报 PPT"
   │
   ▼
-pagesail Skill（编排：规划结构 → 生成 reveal.js HTML → 组装 ZIP）
+magpie Skill（编排：规划结构 → 生成 reveal.js HTML → 组装 ZIP）
   │  复用
   ▼
 upload_file（上传 ZIP → 自动判 bundle → 返回 /s/:key）
@@ -119,26 +119,26 @@ Skill 之间不直接调用，而是**通过共同的工具层间接协作**。�
 
 ```
 skills/
-└── pagesail/                      # 统一技能：上传中枢 + 内容生成 + 幻灯片 + 模板市场
+└── magpie/                      # 统一技能：上传中枢 + 内容生成 + 幻灯片 + 模板市场
     ├── SKILL.md                # 主技能文档
     └── assets/                 # reveal.js 引擎、主题、插件
 ```
 
-**砍掉 `pagesail-chart`**（与 Mermaid + dashboard 模板重叠）。
+**砍掉 `magpie-chart`**（与 Mermaid + dashboard 模板重叠）。
 
 ### 3.1 各 Skill 职责与触发词
 
 | 能力 | 职责 | 触发词 | 落地阶段 |
 |---|---|---|---|
-| **pagesail（统一 Skill）** | 上传、生成 HTML/Markdown、reveal.js 幻灯片、查模板市场仿风格 | "上传到页舟PageSail""生成链接""生成 PPT""参照模板" | 已完成 |
+| **magpie（统一 Skill）** | 上传、生成 HTML/Markdown、reveal.js 幻灯片、查模板市场仿风格 | "上传到纸鹊 Magpie""生成链接""生成 PPT""参照模板" | 已完成 |
 | editorial（Skill 章节或独立指令） | 编辑/杂志风格排版 | "编辑风格""杂志排版""新闻稿" | Phase 2 |
 | clone-ui（Skill 章节或独立指令） | 克隆网站/UI 风格 | "克隆这个网站""参考这个风格" | Phase 2 |
 
 ---
 
-## 4. Phase 1 详细设计：pagesail Skill 中的幻灯片能力
+## 4. Phase 1 详细设计：magpie Skill 中的幻灯片能力
 
-这是本轮最高优先级，设计要落到可执行颗粒度。该能力已并入统一 `pagesail` Skill。
+这是本轮最高优先级，设计要落到可执行颗粒度。该能力已并入统一 `magpie` Skill。
 
 ### 4.1 工作流（Bundle 模式）
 
@@ -166,7 +166,7 @@ skills/
   ▼
 4. 关键配置：
    - Reveal.initialize({ embedded: true, hash: true, controls: true, ... })
-   - <base> 由页舟PageSail bundle 渲染自动注入，资源相对路径指向 /api/files/:id/asset/
+   - <base> 由纸鹊 Magpie bundle 渲染自动注入，资源相对路径指向 /api/files/:id/asset/
   │
   ▼
 5. 上传（二选一，按客户端能力）：
@@ -182,7 +182,7 @@ skills/
 
 ### 4.2 与现有 Bundle 机制的契合点（无需改后端）
 
-页舟PageSail已有能力，**Phase 1 后端零改动**：
+纸鹊 Magpie已有能力，**Phase 1 后端零改动**：
 
 - `POST /api/files/upload`（multipart）和 `POST /api/files/upload-zip-base64`（MCP）都已支持 ZIP。
 - 服务端按 ZIP 内容**自动判定**：含 `index.html` + 资源目录 → `is_bundle=1`，解压成目录存储。
@@ -223,13 +223,13 @@ reveal.js 主题 = 30+ CSS 变量。四套主题的差异化全靠调这些变�
 
 **工时如实标注**：每套主题（调色 + 排版 + 至少 3 种版式验证）≈ 1 天，四套 ≈ 4 天纯设计。
 
-### 4.4 pagesail Skill 中幻灯片章节骨架
+### 4.4 magpie Skill 中幻灯片章节骨架
 
 ```markdown
 ---
-name: pagesail
-description: 页舟PageSail统一技能：生成 HTML/Markdown 内容、制作 reveal.js 幻灯片、
-  使用内容模板市场风格、上传到页舟PageSail并管理文件。
+name: magpie
+description: 纸鹊 Magpie统一技能：生成 HTML/Markdown 内容、制作 reveal.js 幻灯片、
+  使用内容模板市场风格、上传到纸鹊 Magpie并管理文件。
 metadata:
   version: "1.6.7"
   author: enderchen
@@ -267,16 +267,16 @@ metadata:
 - 纯 MCP：upload_file(name="deck.zip", content=<base64>)（体积大时慢）
 
 # 复用
-- 上传环节统一走 pagesail Skill 中的 upload_file 工具，不另造
+- 上传环节统一走 magpie Skill 中的 upload_file 工具，不另造
 ```
 
 ### 4.5 Phase 1 改动清单（审阅用）
 
 | 文件 | 改动 | 类型 |
 |---|---|---|
-| `skills/pagesail/SKILL.md` | 新增 / 合并 | Skill |
-| `skills/pagesail/assets/themes/*.css` | 新增 4 套主题 | 资源（随 Skill ZIP 下发） |
-| `skills/pagesail/assets/reveal.js` | reveal.js 引擎 | 资源 |
+| `skills/magpie/SKILL.md` | 新增 / 合并 | Skill |
+| `skills/magpie/assets/themes/*.css` | 新增 4 套主题 | 资源（随 Skill ZIP 下发） |
+| `skills/magpie/assets/reveal.js` | reveal.js 引擎 | 资源 |
 | `migrations/013_add_presentation_scene.js` | content_templates 的 scene 预置 'presentation' 样例 | migration（可选） |
 | 预览页前端 | 加「新窗口打开」按钮（iframe 键盘兜底） | 小改（可选，Phase 1.5） |
 | 后端 routes/lib | **零改动** | — |
@@ -287,26 +287,26 @@ metadata:
 
 ## 5. Skill 分发与更新机制
 
-为避免用户每次手动复制 SKILL.md，统一通过 **pagesail CLI** 分发和更新：
+为避免用户每次手动复制 SKILL.md，统一通过 **magpie CLI** 分发和更新：
 
 ```bash
-# 安装 pagesail CLI 后，一键把内置 pagesail Skill 同步到 Claude 的 skills 目录
-pagesail skill install
+# 安装 magpie CLI 后，一键把内置 magpie Skill 同步到 Claude 的 skills 目录
+magpie skill install
 
 # 升级 CLI 后，用同一条命令覆盖更新本地 Skill
-pagesail skill update
+magpie skill update
 
 # 指定目录（例如 Claude Code 的自定义 skills 路径）
-pagesail skill install --dir ~/.claude/skills/pagesail
+magpie skill install --dir ~/.claude/skills/magpie
 ```
 
 实现：
 - `bin/commands/skill.js` 纯本地命令，不依赖后端 token。
-- 源目录为 npm 包内的 `skills/pagesail/`（含 SKILL.md + assets/）。
+- 源目录为 npm 包内的 `skills/magpie/`（含 SKILL.md + assets/）。
 - 目标目录按 `~/.claude/skills` → `~/.claude-code/skills` → `~/.agents/skills` 顺序自动检测，也可通过 `--dir` 显式指定。
 - 每次安装先清空旧目录再复制，避免残留文件导致版本混乱。
 
-这样 Skill 版本与 npm 包版本保持一致：升级 `npm install && npm link  # 在 PageSail 源码目录执行，npm 包尚未发布` 后执行 `pagesail skill update` 即可。
+这样 Skill 版本与 npm 包版本保持一致：升级 `npm install && npm link  # 在 Magpie 源码目录执行，npm 包尚未发布` 后执行 `magpie skill update` 即可。
 
 ---
 
@@ -320,12 +320,12 @@ Phase 1 验证「Bundle Skill + 模板双轨」模式跑通后，Phase 2 按同�
 
 **落地选择**：**双轨**——
 - 渲染模板 `templates/editorial.html`（第 5 套 Markdown 渲染模板，用户上传 MD 时可选）
-- `pagesail` Skill 新增「编辑风格」章节（编排：任意输入 → 编辑风格 HTML → 上传）
+- `magpie` Skill 新增「编辑风格」章节（编排：任意输入 → 编辑风格 HTML → 上传）
 
 **改动**：
 - `templates/editorial.html` 新增（注意：当前 `lib/templates.js` 的 `loadTemplates()` 自动扫描 `templates/*.html`，加文件即生效）
 - `BUILTIN_TEMPLATE_THEMES` 加一行映射
-- `skills/pagesail/SKILL.md` 新增 editorial 章节
+- `skills/magpie/SKILL.md` 新增 editorial 章节
 - 字体策略：Google Fonts CDN（编辑风格强依赖特定字体），或降级系统字体栈。**注意**：这破坏离线自包含，需在 SKILL.md 注明权衡。
 
 ### 5.2 clone-ui（UI 风格克隆）
@@ -333,11 +333,11 @@ Phase 1 验证「Bundle Skill + 模板双轨」模式跑通后，Phase 2 按同�
 **启发**：santowilem/skills 的 7 阶段反幻觉工作流。
 
 **关键约束（决定能否落地）**：
-- 原版输出 React/Vue 多文件项目 → 页舟PageSail只收单文件 HTML。**Skill 指令必须强制纯 HTML 输出**。
-- 原版依赖 Playwright 截图对比 → 页舟PageSail运行环境无 Playwright。**移除验证阶段**，降级为「AI 自检 + 用户反馈迭代」。
+- 原版输出 React/Vue 多文件项目 → 纸鹊 Magpie只收单文件 HTML。**Skill 指令必须强制纯 HTML 输出**。
+- 原版依赖 Playwright 截图对比 → 纸鹊 Magpie运行环境无 Playwright。**移除验证阶段**，降级为「AI 自检 + 用户反馈迭代」。
 - 原版的「学习系统」（lessons log）→ 简化为 Skill 内的「风格特征清单」。
 
-**落地**：在 `skills/pagesail/SKILL.md` 中新增 clone-ui 章节，零后端改动。输出单文件 HTML 走 `upload_file`。
+**落地**：在 `skills/magpie/SKILL.md` 中新增 clone-ui 章节，零后端改动。输出单文件 HTML 走 `upload_file`。
 
 ---
 
@@ -345,7 +345,7 @@ Phase 1 验证「Bundle Skill + 模板双轨」模式跑通后，Phase 2 按同�
 
 | 报告建议 | 本方案态度 | 理由 |
 |---|---|---|
-| `pagesail-chart` Skill | ❌ 砍掉 | 与 Mermaid + dashboard 模板重叠，伪需求 |
+| `magpie-chart` Skill | ❌ 砍掉 | 与 Mermaid + dashboard 模板重叠，伪需求 |
 | 对接 Composio（800+ Skill） | ⏸ 暂缓 | 依赖 Composio 平台（Rube MCP 等），解耦成本高，收益远 |
 | 对接 agentskills.so 市场 | ⏸ 暂缓 | 需 API 集成 + 动态加载安全模型，属 Phase 3 |
 | 用户自定义 Skill 上传 | ⏸ 暂缓 | 需沙箱执行模型，安全风险大，单独立项 |
@@ -361,7 +361,7 @@ Phase 1 验证「Bundle Skill + 模板双轨」模式跑通后，Phase 2 按同�
 |---|---|---|
 | 验证 Bundle 渲染 reveal.js | 0.5 天 | 用一个手写 reveal.js ZIP 走 `/api/files/upload`，确认 `<base>` 注入 + 资源加载正常 |
 | 4 套 reveal.js 主题 CSS | 4 天 | **含 UI 设计**：商务/学术/创意/极简，CSS 变量驱动 |
-| `pagesail` Skill SKILL.md（含幻灯片、模板市场、上传章节） | 1 天 | 触发词 + Bundle 工作流 + 上传方式 + iframe 注意事项 |
+| `magpie` Skill SKILL.md（含幻灯片、模板市场、上传章节） | 1 天 | 触发词 + Bundle 工作流 + 上传方式 + iframe 注意事项 |
 | presentation 场景模板预置 | 1 天 | scene 数组加项 + 1-2 个内置样例 |
 | 预览页「新窗口打开」按钮 | 0.5 天 | iframe 键盘兜底（可选，Phase 1.5） |
 | 端到端测试 | 1.5 天 | 4 主题 × MCP/curl 两通道 |
@@ -371,8 +371,8 @@ Phase 1 验证「Bundle Skill + 模板双轨」模式跑通后，Phase 2 按同�
 | 任务 | 工时 |
 |---|---|
 | `templates/editorial.html` + 主题映射 | 2 天 |
-| `pagesail` Skill 新增 editorial 章节 | 1 天 |
-| `pagesail` Skill 新增 clone-ui 章节（纯指令，限单文件输出） | 2 天 |
+| `magpie` Skill 新增 editorial 章节 | 1 天 |
+| `magpie` Skill 新增 clone-ui 章节（纯指令，限单文件输出） | 2 天 |
 | 扩充内容模板至 15+（覆盖新 scene） | 3 天 |
 | 文档更新（README、CLAUDE.md、docs/api.md） | 1 天 |
 
@@ -389,7 +389,7 @@ Phase 1 验证「Bundle Skill + 模板双轨」模式跑通后，Phase 2 按同�
 | # | 验证点 | 方法 | 阻塞性 |
 |---|---|---|---|
 | 1 | ZIP 含顶层目录时 entry_path 是否正确 | 手写带包裹目录的 reveal.js ZIP 上传，看渲染 | 🔴 高（若错，Bundle 模式不可用） |
-| 2 | reveal.js `embedded:true` 在页舟PageSail iframe 内翻页是否可用 | 浏览器实测方向键/空格 | 🟡 中（不可用则强依赖新窗口按钮） |
+| 2 | reveal.js `embedded:true` 在纸鹊 Magpie iframe 内翻页是否可用 | 浏览器实测方向键/空格 | 🟡 中（不可用则强依赖新窗口按钮） |
 | 3 | `<base>` 注入后 reveal.js 插件相对路径加载正常 | 打开 DevTools Network 看资源 200 | 🔴 高 |
 | 4 | upload_file 的 base64 ZIP 在 ~200KB reveal.js 体积下耗时 | 实测 token 流耗时 | 🟡 中（决定是否主推 curl 通道） |
 | 5 | 四套主题在深色/浅色系统模式下都不崩 | 切系统主题逐套看 | 🟢 低 |
@@ -402,4 +402,4 @@ Phase 1 验证「Bundle Skill + 模板双轨」模式跑通后，Phase 2 按同�
 
 1. **reveal.js 资源分发**：Phase 1 是否接受「reveal.js 随每个 Skill ZIP 下发一份」（~85KB × 多 Skill 重复）？还是抽到 `skills/_shared/`？后者要改 registry。
 2. **editorial 字体**：Google Fonts CDN（破坏离线）vs 系统字体栈（风格打折）？倾向 CDN + SKILL.md 注明权衡。
-3. **clone-ui 的 Playwright 验证**：是否值得在 Phase 2 给页舟PageSail加可选的 Playwright 校验能力（显著增加复杂度）？倾向不加，靠 AI 自检。
+3. **clone-ui 的 Playwright 验证**：是否值得在 Phase 2 给纸鹊 Magpie加可选的 Playwright 校验能力（显著增加复杂度）？倾向不加，靠 AI 自检。

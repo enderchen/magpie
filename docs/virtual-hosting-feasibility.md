@@ -1,8 +1,8 @@
-# 页舟PageSail虚拟主机（Virtual Hosting）方案可行性分析
+# 纸鹊 Magpie虚拟主机（Virtual Hosting）方案可行性分析
 
 > ⚠️ **本文为设计/分析提案，尚未实现。** 所有代码片段、migration、表名均为示例。下文 migration 编号 `013` 接续当前最大值（`012_add_email_and_verification.js`）；原始草案写的 `008` 已被 `008_add_fts5.js` 占用，落地时按实际序号续号。
 >
-> 分析日期：基于页舟PageSail当前代码库（Node.js + Express + SQLite3，端口 8858）。
+> 分析日期：基于纸鹊 Magpie当前代码库（Node.js + Express + SQLite3，端口 8858）。
 
 ---
 
@@ -25,11 +25,11 @@
 
 ### ✅ 总体判断：技术上完全可行，但需要分阶段实施
 
-你描述的 **基于 HTTP Host 头部的虚拟主机** 确实是现代 SaaS 的标准做法。页舟PageSail当前是 Express 单体应用，改造成本可控，不需要推翻重来。
+你描述的 **基于 HTTP Host 头部的虚拟主机** 确实是现代 SaaS 的标准做法。纸鹊 Magpie当前是 Express 单体应用，改造成本可控，不需要推翻重来。
 
 **但有一个关键前提需要明确：**
 
-> 当前页舟PageSail部署在内网 IP（`36.138.227.105:8858`），**自定义域名方案要求服务必须暴露在公网**（或至少有一个公网入口），否则企业的 CNAME 无法解析到你的服务器。
+> 当前纸鹊 Magpie部署在内网 IP（`36.138.227.105:8858`），**自定义域名方案要求服务必须暴露在公网**（或至少有一个公网入口），否则企业的 CNAME 无法解析到你的服务器。
 
 ---
 
@@ -45,7 +45,7 @@ app.use(async (req, res, next) => {
   const host = req.headers.host?.split(':')[0]; // 去掉端口
   
   // 跳过平台自有域名和 API 路由
-  if (host === 'pagesail.example.com' || host === 'localhost' || req.path.startsWith('/api/')) {
+  if (host === 'magpie.example.com' || host === 'localhost' || req.path.startsWith('/api/')) {
     return next();
   }
   
@@ -96,13 +96,13 @@ module.exports = {
 
 | 方案 | URL 示例 | 说明 |
 |------|---------|------|
-| A. 保留 `/s/:key`，Host 只影响品牌 | `www.pagesail.com/s/AmeAQDsZ` | 最简单，Host 只决定渲染时是否显示白标 |
-| B. Host + 路径双重路由 | `www.pagesail.com/s/AmeAQDsZ` 或 `www.pagesail.com/about` | 需要企业可配置路径映射，复杂度上升 |
-| C. 纯 Host 路由（放弃短链） | `www.pagesail.com/` → 企业首页 | 每个域名绑定一个「主文件」，其他文件走子路径 |
+| A. 保留 `/s/:key`，Host 只影响品牌 | `www.magpie.com/s/AmeAQDsZ` | 最简单，Host 只决定渲染时是否显示白标 |
+| B. Host + 路径双重路由 | `www.magpie.com/s/AmeAQDsZ` 或 `www.magpie.com/about` | 需要企业可配置路径映射，复杂度上升 |
+| C. 纯 Host 路由（放弃短链） | `www.magpie.com/` → 企业首页 | 每个域名绑定一个「主文件」，其他文件走子路径 |
 
-**推荐页舟PageSail现阶段采用方案 A**：
+**推荐纸鹊 Magpie现阶段采用方案 A**：
 - 自定义域名访问 `/s/:key` 时，正常渲染文件
-- 但页面去掉页舟PageSail Logo/导航，显示企业品牌（White-label）
+- 但页面去掉纸鹊 Magpie Logo/导航，显示企业品牌（White-label）
 - 企业后台可配置：域名绑定、页面标题、Logo URL、主题色
 
 ### 3.4 SSL 证书：中 ⚠️
@@ -122,7 +122,7 @@ module.exports = {
 当前内网 IP 无法接收公网 CNAME 流量。需要：
 
 1. **公网入口**：云服务器 + 公网 IP，或内网穿透（frp/ngrok，不推荐生产）
-2. **域名解析**：平台需要一个「平台域名」供企业 CNAME 指向，如 `cname.pagesail.example.com`
+2. **域名解析**：平台需要一个「平台域名」供企业 CNAME 指向，如 `cname.magpie.example.com`
 3. **防火墙**：开放 80/443，当前 8858 是内部端口
 
 ---
@@ -133,7 +133,7 @@ module.exports = {
 
 ```
 ┌─────────────────┐     CNAME      ┌─────────────────────────────┐
-│  www.pagesail.com  │ ──────────────→ │  Cloudflare (CDN + SSL 终止)  │
+│  www.magpie.com  │ ──────────────→ │  Cloudflare (CDN + SSL 终止)  │
 │  (企业自定义域名)  │                │  自动证书 + Host 头部透传      │
 └─────────────────┘                └─────────────────────────────┘
                                                   │
@@ -144,15 +144,15 @@ module.exports = {
                                     │  Caddy/Nginx (反向代理)      │
                                     │    → Host 头部透传给 Express │
                                     │  ─────────────────────────   │
-                                    │  Docker: pagesail:8858         │
+                                    │  Docker: magpie:8858         │
                                     │    → SQLite 数据持久化       │
                                     └─────────────────────────────┘
 ```
 
 **阶段一能力：**
-- 企业添加 CNAME → `cname.pagesail.example.com`
+- 企业添加 CNAME → `cname.magpie.example.com`
 - Cloudflare 自动处理 SSL
-- 页舟PageSail读取 Host，渲染时去掉平台品牌，显示企业名称
+- 纸鹊 Magpie读取 Host，渲染时去掉平台品牌，显示企业名称
 - 无需改路由结构，`/s/:key` 继续工作
 
 ### 阶段二：完整多租户（未来）
@@ -196,7 +196,7 @@ module.exports = {
 // 在 server.js 中，session 中间件之后添加
 
 const PLATFORM_DOMAINS = new Set([
-  'pagesail.example.com',
+  'magpie.example.com',
   'localhost',
   '127.0.0.1'
 ]);
@@ -275,7 +275,7 @@ app.get('/s/:key', async (req, res) => {
 ```javascript
 // 在 renderFile 中，生成 HTML 模板时：
 function buildPageHtml(content, file, tenant = null) {
-  const brandTitle = tenant?.page_title || '页舟PageSail';
+  const brandTitle = tenant?.page_title || '纸鹊 Magpie';
   const brandLogo = tenant?.logo_url || '/assets/logo.svg';
   const themeColor = tenant?.theme_color || '#2563eb';
   const showPlatformNav = !tenant; // 自定义域名下隐藏平台导航
@@ -337,7 +337,7 @@ app.post('/api/custom-domains', requireAuth, async (req, res) => {
       [req.userId, domain, page_title || null, logo_url || null, theme_color || '#2563eb']
     );
     
-    res.json({ id: result.lastID, domain, message: '请添加 CNAME 记录指向 cname.pagesail.example.com' });
+    res.json({ id: result.lastID, domain, message: '请添加 CNAME 记录指向 cname.magpie.example.com' });
   } catch (e) {
     res.status(500).json({ error: '保存失败' });
   }
@@ -370,7 +370,7 @@ app.delete('/api/custom-domains/:id', requireAuth, async (req, res) => {
 }
 
 # 平台域名
-pagesail.example.com {
+magpie.example.com {
     reverse_proxy localhost:8858
 }
 
@@ -388,12 +388,12 @@ pagesail.example.com {
 
 ```bash
 # 在内网服务器上安装 cloudflared
-cloudflared tunnel create pagesail
-cloudflared route dns pagesail cname.pagesail.example.com
+cloudflared tunnel create magpie
+cloudflared route dns magpie cname.magpie.example.com
 # 配置 tunnel 指向 localhost:8858
 ```
 
-这样企业 CNAME 到 `cname.pagesail.example.com`，流量通过 Cloudflare Tunnel 直达你的内网服务器，**不需要公网 IP、不需要开放端口**。
+这样企业 CNAME 到 `cname.magpie.example.com`，流量通过 Cloudflare Tunnel 直达你的内网服务器，**不需要公网 IP、不需要开放端口**。
 
 ---
 
@@ -426,7 +426,7 @@ cloudflared route dns pagesail cname.pagesail.example.com
 ### 7.2 域名合规
 
 境内托管自定义域名需要：
-- 平台域名备案（`pagesail.example.com` 若使用国内 CDN）
+- 平台域名备案（`magpie.example.com` 若使用国内 CDN）
 - 企业自定义域名**不需要**你备案，由企业自己负责
 - 如果用 Cloudflare（海外 CDN），备案要求宽松
 
@@ -434,7 +434,7 @@ cloudflared route dns pagesail cname.pagesail.example.com
 
 这个虚拟主机方案可以自然延伸为「数字员工成长系统」的**培训材料托管层**：
 - 每个企业绑定自己的域名
-- 上传培训教材（HTML/Markdown）到页舟PageSail
+- 上传培训教材（HTML/Markdown）到纸鹊 Magpie
 - 通过自定义域名分享，形成品牌闭环
 
 ---

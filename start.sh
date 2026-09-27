@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# pagesail 一键启动脚本
+# magpie 一键启动脚本
 #
 # 功能：前置检查（node_modules/.env）→ 端口占用处理 → 可选前端构建 → 启动服务。
 # 支持 dev（前台 nodemon）/ 生产（后台 nohup）两种模式。
@@ -15,7 +15,7 @@
 #
 # 说明：
 #   - 端口取值优先级：--port 参数 > .env 的 PORT > 默认 8858。
-#   - 若本服务由 systemd 管理（pagesail.service），建议改用 `sudo systemctl restart pagesail`，
+#   - 若本服务由 systemd 管理（magpie.service），建议改用 `sudo systemctl restart magpie`，
 #     本脚本的 --restart 仅处理"裸进程"占用，不动 systemd 单元。
 
 set -euo pipefail
@@ -95,7 +95,7 @@ fi
 
 # 1d. server.js 存在
 if [ ! -f "server.js" ]; then
-  err "未找到 server.js，当前目录不是 pagesail 项目根目录：$PROJECT_DIR"
+  err "未找到 server.js，当前目录不是 magpie 项目根目录：$PROJECT_DIR"
   exit 1
 fi
 
@@ -142,7 +142,7 @@ if [ -n "$OLD_PID" ]; then
   else
     err "端口 $PORT 已被占用（PID $OLD_PID / $OLD_CMD）"
     dim "若要重启旧实例，加 --restart 参数；或用 --port 指定其他端口"
-    dim "若由 systemd 管理，请改用：sudo systemctl restart pagesail"
+    dim "若由 systemd 管理，请改用：sudo systemctl restart magpie"
     exit 1
   fi
 fi

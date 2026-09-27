@@ -54,7 +54,7 @@ async function main() {
 
   // 落地页应含标题/hero
   const bodyText = await page.textContent('body');
-  check('落地页渲染内容（含"页舟PageSail"或 hero）', /页舟PageSail|pagesail|开始使用/i.test(bodyText || ''), (bodyText || '').slice(0, 100));
+  check('落地页渲染内容（含"纸鹊 Magpie"或 hero）', /纸鹊 Magpie|magpie|开始使用/i.test(bodyText || ''), (bodyText || '').slice(0, 100));
 
   // 2) 代码分割验证：落地页加载了 app + 共享 chunk + landing，但不应加载 home/preview chunk
   const distReqs = requested.filter(r => r.url.includes('/dist/')).map(r => r.url);

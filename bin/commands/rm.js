@@ -5,7 +5,7 @@ const { out, err } = require('./_shared');
 async function run(client, args, { exit }) {
   const id = args.sub;
   if (!id) {
-    const e = new Error('用法：pagesail rm <id>');
+    const e = new Error('用法：magpie rm <id>');
     e.name = 'UsageError';
     throw e;
   }

@@ -57,3 +57,9 @@ docs/market-operations.md
 # Local release and plugin build artifacts
 *.tgz
 plugin-workspace/dist/
+
+# Local design reviews, backups and preview caches
+.hallmark/
+.impeccable/
+backups/
+.thumbnails/

@@ -1,4 +1,4 @@
-// upload 命令：上传本地文件到页舟PageSail。
+// upload 命令：上传本地文件到纸鹊 Magpie。
 //
 // 后端契约（routes/files/upload.js）：
 //   POST /api/files/upload          multipart，field=file，可选 isPublic=true
@@ -15,7 +15,7 @@ const { formatSize, out } = require('./_shared');
 async function run(client, args, { base }) {
   const filePath = args.sub; // 第一个位置参数（cmd=upload，sub=文件路径）
   if (!filePath) {
-    throw new UsageError('用法：pagesail upload <文件路径> [--public] [--overwrite ID]');
+    throw new UsageError('用法：magpie upload <文件路径> [--public] [--overwrite ID]');
   }
 
   const abs = path.resolve(filePath);
@@ -73,7 +73,7 @@ function printResult(data, base) {
   out(`  预览：${url}\n`);
 }
 
-// 命令层专用的用法错误（区别于 HTTP/网络错误），bin/pagesail.js 据此打印帮助并退出 2
+// 命令层专用的用法错误（区别于 HTTP/网络错误），bin/magpie.js 据此打印帮助并退出 2
 class UsageError extends Error {
   constructor(message) {
     super(message);

@@ -1,6 +1,6 @@
 // MCP 模块共享常量。从 mcp-server.js 提取，行为保持不变。
 
-// 资源（pagesail://file/{id}）返回正文的大小上限：超过则提示改用 get_file_content 工具。
+// 资源（magpie://file/{id}）返回正文的大小上限：超过则提示改用 get_file_content 工具。
 const RESOURCE_MAX_BYTES = 256 * 1024;
 
 // upload_file 工具允许的文件扩展名（含 ZIP）。

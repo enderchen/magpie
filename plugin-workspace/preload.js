@@ -1,12 +1,12 @@
 /**
- * 页舟PageSail uTools 插件 · preload 脚本
+ * 纸鹊 Magpie uTools 插件 · preload 脚本
  *
- * 运行在 Node 环境，通过 window.pagesail 把 API 暴露给前端页面。
+ * 运行在 Node 环境，通过 window.magpie 把 API 暴露给前端页面。
  *
  * 为什么所有 HTTP 都在 preload（Node 侧）做？
- *  - 页舟PageSail服务端 CORS 设的是 `Access-Control-Allow-Origin: *`，但**没有**
+ *  - 纸鹊 Magpie服务端 CORS 设的是 `Access-Control-Allow-Origin: *`，但**没有**
  *    `Access-Control-Allow-Credentials: true`，浏览器 fetch 无法跨域携带 cookie。
- *  - 页舟PageSail是 session/cookie 鉴权（非 token），cookie 必须随请求带上。
+ *  - 纸鹊 Magpie是 session/cookie 鉴权（非 token），cookie 必须随请求带上。
  *  - 所以用 Node 原生 http/https + 自带 cookie jar 发请求，绕开浏览器 CORS 限制。
  *
  * 只依赖 Node 内置模块（http/https/url/fs/path/crypto），不引第三方包，
@@ -26,11 +26,11 @@ const path = require('path');
 // ---------------------------------------------------------------------------
 
 const DB_KEYS = {
-  base: 'pagesail.base',        // 服务器地址，如 https://pagesail.example.com
-  account: 'pagesail.account',  // 上次登录用的账号（仅用于回填输入框，不存密码）
-  cookies: 'pagesail.cookies',  // cookie jar（数组）
-  user: 'pagesail.user',        // 上次登录的用户信息
-  theme: 'pagesail.theme',      // 'dark' | 'light' | 'auto'
+  base: 'magpie.base',        // 服务器地址，如 https://magpie.example.com
+  account: 'magpie.account',  // 上次登录用的账号（仅用于回填输入框，不存密码）
+  cookies: 'magpie.cookies',  // cookie jar（数组）
+  user: 'magpie.user',        // 上次登录的用户信息
+  theme: 'magpie.theme',      // 'dark' | 'light' | 'auto'
 };
 
 function getCfg(key, fallback) {
@@ -302,7 +302,7 @@ function buildMultipartBody(mp) {
 }
 
 // ---------------------------------------------------------------------------
-// 页舟PageSail API 封装（统一拼 base + /api/...）
+// 纸鹊 Magpie API 封装（统一拼 base + /api/...）
 // ---------------------------------------------------------------------------
 
 function apiUrl(pathAndQuery) {
@@ -380,15 +380,15 @@ function applyTheme(theme) {
       html.classList.add(theme);
     }
   } catch (e) {
-    console.error('[页舟PageSail] 应用主题失败', e);
+    console.error('[纸鹊 Magpie] 应用主题失败', e);
   }
 }
 
 // ---------------------------------------------------------------------------
-// 暴露给前端的 API：window.pagesail
+// 暴露给前端的 API：window.magpie
 // ---------------------------------------------------------------------------
 
-const pagesail = {
+const magpie = {
   // ---- 配置 ----
   getConfig() {
     return {
@@ -482,7 +482,7 @@ const pagesail = {
     });
   },
 
-  /** 探测目标服务器是否是页舟PageSail（调 /health） */
+  /** 探测目标服务器是否是纸鹊 Magpie（调 /health） */
   async ping(baseUrl) {
     let target = baseUrl || getBase();
     if (!target) throw new Error('请先填写服务器地址');
@@ -558,7 +558,7 @@ const pagesail = {
       ext === '.html' || ext === '.htm' ? 'text/html' :
       ext === '.md' || ext === '.markdown' ? 'text/markdown' :
       'application/octet-stream';
-    const boundary = 'pagesail-' + Math.random().toString(16).slice(2) + Date.now().toString(16);
+    const boundary = 'magpie-' + Math.random().toString(16).slice(2) + Date.now().toString(16);
     return api('POST', '/api/files/upload', {
       multipart: {
         boundary,
@@ -665,7 +665,7 @@ const pagesail = {
       title: title || '选择文件',
       properties: ['openFile'],
       filters: [
-        { name: '页舟PageSail支持的文件', extensions: ['html', 'htm', 'md', 'markdown', 'zip'] },
+        { name: '纸鹊 Magpie支持的文件', extensions: ['html', 'htm', 'md', 'markdown', 'zip'] },
         { name: '所有文件', extensions: ['*'] },
       ],
     });
@@ -678,7 +678,7 @@ const pagesail = {
 
 // 注入到渲染进程
 try {
-  window.pagesail = pagesail;
+  window.magpie = magpie;
 } catch (e) {
-  console.error('[页舟PageSail preload] 注入 window.pagesail 失败', e);
+  console.error('[纸鹊 Magpie preload] 注入 window.magpie 失败', e);
 }

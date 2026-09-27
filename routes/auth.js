@@ -172,7 +172,7 @@ function appBaseUrl(req) {
 
 function redirectForReturnTo(req, returnTo) {
   const path = normalizeReturnTo(returnTo);
-  return `${appBaseUrl(req)}/#${path}`;
+  return `${appBaseUrl(req)}/app/#${path}`;
 }
 
 function sanitizeWechatUsername(raw) {
@@ -675,7 +675,7 @@ router.get('/wechat/start', oauthLimiter, (req, res) => {
 router.get('/wechat/callback', oauthLimiter, async (req, res) => {
   const fail = (reason, status = 302) => {
     logger.audit('wechat.login', { success: false, reason, ip: clientIp(req) });
-    return res.status(status).redirect(`${appBaseUrl(req)}/#/login`);
+    return res.status(status).redirect(`${appBaseUrl(req)}/app/#/login`);
   };
   if (!isWechatLoginEnabled()) return fail('not_configured');
   const saved = req.session.wechatOAuthState;
@@ -754,7 +754,7 @@ router.get('/github/start', oauthLimiter, (req, res) => {
 router.get('/github/callback', oauthLimiter, async (req, res) => {
   const fail = (reason, status = 302) => {
     logger.audit('github.login', { success: false, reason, ip: clientIp(req) });
-    return res.status(status).redirect(`${appBaseUrl(req)}/#/login`);
+    return res.status(status).redirect(`${appBaseUrl(req)}/app/#/login`);
   };
   if (!isGithubLoginEnabled()) return fail('not_configured');
   const saved = req.session.githubOAuthState;
@@ -855,7 +855,7 @@ router.get('/google/start', oauthLimiter, (req, res) => {
 router.get('/google/callback', oauthLimiter, async (req, res) => {
   const fail = (reason, status = 302) => {
     logger.audit('google.login', { success: false, reason, ip: clientIp(req) });
-    return res.status(status).redirect(`${appBaseUrl(req)}/#/login?oauth=google_failed`);
+    return res.status(status).redirect(`${appBaseUrl(req)}/app/#/login?oauth=google_failed`);
   };
   if (!isGoogleLoginEnabled()) return fail('not_configured');
   const saved = req.session.googleOAuthState;
@@ -1047,14 +1047,14 @@ router.post('/profile', requireAuth, async (req, res) => {
 // GET /api/auth/verify-email?token=...
 router.get('/verify-email', async (req, res) => {
   const { token } = req.query;
-  if (!token) return res.redirect('/#/email-verify-failed');
+  if (!token) return res.redirect('/app/#/email-verify-failed');
   try {
     const hash = crypto.createHash('sha256').update(token).digest('hex');
     const row = await dbGet('SELECT * FROM email_verifications WHERE token_hash = ?', [hash]);
-    if (!row) return res.redirect('/#/email-verify-failed');
+    if (!row) return res.redirect('/app/#/email-verify-failed');
     if (new Date(row.expires_at) < new Date()) {
       await dbRun('DELETE FROM email_verifications WHERE id = ?', [row.id]);
-      return res.redirect('/#/email-verify-expired');
+      return res.redirect('/app/#/email-verify-expired');
     }
     if (row.type === 'verify_email') {
       await dbRun('UPDATE users SET email_verified = 1 WHERE id = ?', [row.user_id]);
@@ -1063,10 +1063,10 @@ router.get('/verify-email', async (req, res) => {
     }
     await dbRun('DELETE FROM email_verifications WHERE id = ?', [row.id]);
     logger.audit('email.verify', { userId: row.user_id, type: row.type });
-    res.redirect('/#/email-verified');
+    res.redirect('/app/#/email-verified');
   } catch (e) {
     logger.error({ type: 'app', message: '邮箱验证失败', error: e.message });
-    res.redirect('/#/email-verify-failed');
+    res.redirect('/app/#/email-verify-failed');
   }
 });
 

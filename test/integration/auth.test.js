@@ -210,7 +210,7 @@ test('微信扫码回调可首次创建用户并建立 session', async () => {
 
     const callback = await agent.get(`/api/auth/wechat/callback?code=mock-code&state=${state}`);
     assert.strictEqual(callback.status, 302);
-    assert.strictEqual(callback.headers.location, 'http://localhost:8858/#/');
+    assert.strictEqual(callback.headers.location, 'http://localhost:8858/app/#/');
 
     const me = await agent.get('/api/auth/me');
     assert.strictEqual(me.status, 200);
@@ -264,7 +264,7 @@ test('已绑定的微信号不能被其他登录用户转绑', async () => {
     const state = loginUrl.searchParams.get('state');
     const callback = await regularAgent.get(`/api/auth/wechat/callback?code=mock-code&state=${state}`);
     assert.strictEqual(callback.status, 302);
-    assert.strictEqual(callback.headers.location, 'http://localhost:8858/#/login');
+    assert.strictEqual(callback.headers.location, 'http://localhost:8858/app/#/login');
     const stillRegular = await regularAgent.get('/api/auth/me');
     assert.strictEqual(stillRegular.status, 200);
     assert.strictEqual(stillRegular.body.username, 'regular');
@@ -389,7 +389,7 @@ test('GitHub 回调可首次创建用户并建立 session', async () => {
 
     const callback = await agent.get(`/api/auth/github/callback?code=mock-code&state=${state}`);
     assert.strictEqual(callback.status, 302);
-    assert.strictEqual(callback.headers.location, 'http://localhost:8858/#/');
+    assert.strictEqual(callback.headers.location, 'http://localhost:8858/app/#/');
 
     const me = await agent.get('/api/auth/me');
     assert.strictEqual(me.status, 200);
@@ -436,7 +436,7 @@ test('已绑定的 GitHub 账号不能被其他登录用户转绑', async () => 
     const state = loginUrl.searchParams.get('state');
     const callback = await regularAgent.get(`/api/auth/github/callback?code=mock-code&state=${state}`);
     assert.strictEqual(callback.status, 302);
-    assert.strictEqual(callback.headers.location, 'http://localhost:8858/#/login');
+    assert.strictEqual(callback.headers.location, 'http://localhost:8858/app/#/login');
     const stillRegular = await regularAgent.get('/api/auth/me');
     assert.strictEqual(stillRegular.status, 200);
     assert.strictEqual(stillRegular.body.username, 'regular');
@@ -493,7 +493,7 @@ test('GitHub 邮箱已存在且已验证时自动绑定到现有用户', async (
     const state = loginUrl.searchParams.get('state');
     const callback = await githubAgent.get(`/api/auth/github/callback?code=mock-code&state=${state}`);
     assert.strictEqual(callback.status, 302);
-    assert.strictEqual(callback.headers.location, 'http://localhost:8858/#/');
+    assert.strictEqual(callback.headers.location, 'http://localhost:8858/app/#/');
 
     const me = await githubAgent.get('/api/auth/me');
     assert.strictEqual(me.status, 200);
@@ -542,7 +542,7 @@ test('Google OAuth 使用专用请求超时和 HTTPS 代理配置', async () => 
     setExpectedNonce(loginUrl.searchParams.get('nonce'));
 
     const callback = await agent.get(`/api/auth/google/callback?code=mock-code&state=${loginUrl.searchParams.get('state')}`);
-    assert.strictEqual(callback.headers.location, 'http://localhost:8858/#/');
+    assert.strictEqual(callback.headers.location, 'http://localhost:8858/app/#/');
     assert.deepStrictEqual(getTransporterOptions(), {
       timeout: 2500,
       proxy: 'https://proxy.example.com:8443/'
@@ -575,7 +575,7 @@ test('Google OAuth 将底层 AbortError 安全分类为上游超时', async () =
       const start = await agent.get('/api/auth/google/start');
       const loginUrl = new URL(start.headers.location);
       const callback = await agent.get(`/api/auth/google/callback?code=mock-code&state=${loginUrl.searchParams.get('state')}`);
-      assert.strictEqual(callback.headers.location, 'http://localhost:8858/#/login?oauth=google_failed');
+      assert.strictEqual(callback.headers.location, 'http://localhost:8858/app/#/login?oauth=google_failed');
       assert.strictEqual(failureReason, 'google_upstream_timeout');
     }, {
       tokenError: Object.assign(new Error('The operation was aborted.'), {
@@ -616,7 +616,7 @@ test('Google OIDC 首次登录创建用户、绑定账号并建立 session', asy
 
     const callback = await agent.get(`/api/auth/google/callback?code=mock-code&state=${state}`);
     assert.strictEqual(callback.status, 302);
-    assert.strictEqual(callback.headers.location, 'http://localhost:8858/#/');
+    assert.strictEqual(callback.headers.location, 'http://localhost:8858/app/#/');
 
     const me = await agent.get('/api/auth/me');
     assert.strictEqual(me.status, 200);
@@ -673,7 +673,7 @@ test('Google 已验证邮箱可绑定到已验证的现有用户', async () => {
     const loginUrl = new URL(start.headers.location);
     setExpectedNonce(loginUrl.searchParams.get('nonce'));
     const callback = await googleAgent.get(`/api/auth/google/callback?code=mock-code&state=${loginUrl.searchParams.get('state')}`);
-    assert.strictEqual(callback.headers.location, 'http://localhost:8858/#/');
+    assert.strictEqual(callback.headers.location, 'http://localhost:8858/app/#/');
     const me = await googleAgent.get('/api/auth/me');
     assert.strictEqual(me.status, 200);
     assert.strictEqual(me.body.username, 'googleexisting');
@@ -696,7 +696,7 @@ test('已绑定 Google 账号不能被其他登录用户转绑', async () => {
     const loginUrl = new URL(start.headers.location);
     setExpectedNonce(loginUrl.searchParams.get('nonce'));
     const callback = await regularAgent.get(`/api/auth/google/callback?code=mock-code&state=${loginUrl.searchParams.get('state')}`);
-    assert.strictEqual(callback.headers.location, 'http://localhost:8858/#/login?oauth=google_failed');
+    assert.strictEqual(callback.headers.location, 'http://localhost:8858/app/#/login?oauth=google_failed');
     const me = await regularAgent.get('/api/auth/me');
     assert.strictEqual(me.status, 200);
     assert.strictEqual(me.body.username, 'regular');
@@ -717,7 +717,7 @@ test('Google nonce 校验失败时拒绝登录', async () => {
     const loginUrl = new URL(start.headers.location);
     setExpectedNonce(loginUrl.searchParams.get('nonce'));
     const callback = await agent.get(`/api/auth/google/callback?code=mock-code&state=${loginUrl.searchParams.get('state')}`);
-    assert.strictEqual(callback.headers.location, 'http://localhost:8858/#/login?oauth=google_failed');
+    assert.strictEqual(callback.headers.location, 'http://localhost:8858/app/#/login?oauth=google_failed');
     const me = await agent.get('/api/auth/me');
     assert.strictEqual(me.status, 401);
   });
@@ -734,7 +734,7 @@ test('Google state 不匹配时拒绝登录且不交换 token', async () => {
     const agent = request.agent(env.app);
     await agent.get('/api/auth/google/start');
     const callback = await agent.get('/api/auth/google/callback?code=mock-code&state=tampered');
-    assert.strictEqual(callback.headers.location, 'http://localhost:8858/#/login?oauth=google_failed');
+    assert.strictEqual(callback.headers.location, 'http://localhost:8858/app/#/login?oauth=google_failed');
     const me = await agent.get('/api/auth/me');
     assert.strictEqual(me.status, 401);
   });

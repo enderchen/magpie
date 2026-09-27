@@ -142,3 +142,23 @@ function updateHeaderSurface() {
 window.addEventListener('scroll', updateHeaderSurface, { passive: true });
 window.addEventListener('pageshow', updateHeaderSurface);
 updateHeaderSurface();
+
+// Refresh on pageshow as well, including return from the browser's back cache.
+async function updateWorkspaceLinks() {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+  let loggedIn = false;
+  try {
+    const response = await fetch('/api/auth/me', {
+      credentials: 'same-origin', cache: 'no-store', signal: controller.signal,
+    });
+    if (response.ok) loggedIn = !!(await response.json()).id;
+  } catch { /* The public homepage remains usable when authentication is unavailable. */ }
+  finally { clearTimeout(timeout); }
+  document.querySelectorAll('[data-workspace-link]').forEach(link => {
+    link.href = loggedIn ? '/app/' : '/app/#/login';
+    const label = link.querySelector('[data-workspace-label]');
+    if (label) label.textContent = loggedIn ? '进入工作台' : '登录上传';
+  });
+}
+window.addEventListener('pageshow', updateWorkspaceLinks);

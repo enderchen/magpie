@@ -33,13 +33,13 @@ function fakeZip(entries) {
   };
 }
 
-// 构造一个 fake zip 配合 extractEntries：zip.file(name) 返回带 async() 的对象
+// 构造一个 fake zip 配合 extractEntries：zip.file(name) 返回带 nodeStream() 的对象
 function fakeExtractableZip(files) {
   return {
     file(name) {
       const f = files.find(x => x.name === name);
       if (!f) return null;
-      return { async() { return Promise.resolve(Buffer.from(f.content || '')); } };
+      return { nodeStream() { return require('node:stream').Readable.from([Buffer.from(f.content || '')]); } };
     },
   };
 }

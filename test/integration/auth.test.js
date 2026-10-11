@@ -18,6 +18,7 @@ test.after(() => {
 });
 
 async function withMockedGoogle(payloadFactory, run, options = {}) {
+  const oldRegistration = process.env.ALLOW_REGISTRATION;
   const oldClientId = process.env.GOOGLE_CLIENT_ID;
   const oldClientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const oldAppUrl = process.env.APP_URL;
@@ -31,6 +32,7 @@ async function withMockedGoogle(payloadFactory, run, options = {}) {
   process.env.GOOGLE_CLIENT_ID = 'google-test-client.apps.googleusercontent.com';
   process.env.GOOGLE_CLIENT_SECRET = 'google-test-secret';
   process.env.APP_URL = 'http://localhost:8858';
+  process.env.ALLOW_REGISTRATION = options.registration === false ? 'false' : 'true';
   if (options.timeout !== undefined) process.env.GOOGLE_HTTP_TIMEOUT_MS = String(options.timeout);
   else delete process.env.GOOGLE_HTTP_TIMEOUT_MS;
   if (options.proxy !== undefined) process.env.GOOGLE_HTTPS_PROXY = String(options.proxy);
@@ -60,6 +62,8 @@ async function withMockedGoogle(payloadFactory, run, options = {}) {
       }
     });
   } finally {
+    if (oldRegistration === undefined) delete process.env.ALLOW_REGISTRATION;
+    else process.env.ALLOW_REGISTRATION = oldRegistration;
     OAuth2Client.prototype.getToken = oldGetToken;
     OAuth2Client.prototype.verifyIdToken = oldVerifyIdToken;
     if (oldClientId === undefined) delete process.env.GOOGLE_CLIENT_ID;
@@ -165,6 +169,8 @@ test('微信登录未配置时状态为关闭', async () => {
 });
 
 test('微信扫码回调可首次创建用户并建立 session', async () => {
+  const oldRegistration = process.env.ALLOW_REGISTRATION;
+  process.env.ALLOW_REGISTRATION = 'true';
   const oldAppId = process.env.WECHAT_OPEN_APP_ID;
   const oldSecret = process.env.WECHAT_OPEN_APP_SECRET;
   const oldAppUrl = process.env.APP_URL;
@@ -217,6 +223,8 @@ test('微信扫码回调可首次创建用户并建立 session', async () => {
     assert.match(me.body.username, /^wechat_/);
     assert.strictEqual(me.body.role, 'user');
   } finally {
+    if (oldRegistration === undefined) delete process.env.ALLOW_REGISTRATION;
+    else process.env.ALLOW_REGISTRATION = oldRegistration;
     global.fetch = oldFetch;
     if (oldAppId === undefined) delete process.env.WECHAT_OPEN_APP_ID;
     else process.env.WECHAT_OPEN_APP_ID = oldAppId;
@@ -296,14 +304,14 @@ test('用户名不存在时统一登录返回 404', async () => {
   assert.strictEqual(res.body.error, '用户名不存在');
 });
 
-test('邮箱未注册且 SMTP 未配置时统一登录返回 503', async () => {
+test('注册关闭时未知邮箱统一登录返回 403', async () => {
   const res = await request(env.app)
     .post('/api/auth/login')
     .send({ account: 'notfound@example.com', password: 'anypassword' });
-  assert.strictEqual(res.status, 503);
+  assert.strictEqual(res.status, 403);
 });
 
-test('邮箱未注册时统一登录自动发送验证码并返回 register_code_sent', async () => {
+test('注册关闭时即使 SMTP 已配置也不能通过登录发送注册码', async () => {
   const oldSmtpHost = process.env.SMTP_HOST;
   process.env.SMTP_HOST = 'smtp.test.local';
   const nodemailer = require('nodemailer');
@@ -318,9 +326,8 @@ test('邮箱未注册时统一登录自动发送验证码并返回 register_code
     const res = await request(env.app)
       .post('/api/auth/login')
       .send({ account: 'newuser@example.com', password: 'anypassword' });
-    assert.strictEqual(res.status, 200);
-    assert.strictEqual(res.body.action, 'register_code_sent');
-    assert.strictEqual(res.body.email, 'newuser@example.com');
+    assert.strictEqual(res.status, 403);
+    assert.strictEqual(res.body.action, undefined);
   } finally {
     nodemailer.createTransport = originalCreateTransport;
     mailer.initMailer();
@@ -342,6 +349,8 @@ test('GitHub 登录未配置时状态为关闭', async () => {
 });
 
 test('GitHub 回调可首次创建用户并建立 session', async () => {
+  const oldRegistration = process.env.ALLOW_REGISTRATION;
+  process.env.ALLOW_REGISTRATION = 'true';
   const oldClientId = process.env.GITHUB_CLIENT_ID;
   const oldClientSecret = process.env.GITHUB_CLIENT_SECRET;
   const oldAppUrl = process.env.APP_URL;
@@ -396,6 +405,8 @@ test('GitHub 回调可首次创建用户并建立 session', async () => {
     assert.match(me.body.username, /^octocat/);
     assert.strictEqual(me.body.role, 'user');
   } finally {
+    if (oldRegistration === undefined) delete process.env.ALLOW_REGISTRATION;
+    else process.env.ALLOW_REGISTRATION = oldRegistration;
     global.fetch = oldFetch;
     if (oldClientId === undefined) delete process.env.GITHUB_CLIENT_ID;
     else process.env.GITHUB_CLIENT_ID = oldClientId;
@@ -625,6 +636,23 @@ test('Google OIDC 首次登录创建用户、绑定账号并建立 session', asy
     assert.strictEqual(me.body.emailVerified, true);
     assert.strictEqual(me.body.role, 'user');
   });
+});
+
+test('关闭注册时 Google OIDC 不创建新账号', async () => {
+  await withMockedGoogle({
+    iss: 'https://accounts.google.com', aud: 'google-test-client.apps.googleusercontent.com',
+    sub: 'google-closed-registration', email: 'google.closed@example.test', email_verified: true,
+  }, async ({ setExpectedNonce }) => {
+    const agent = request.agent(env.app);
+    const start = await agent.get('/api/auth/google/start').expect(302);
+    const url = new URL(start.headers.location);
+    setExpectedNonce(url.searchParams.get('nonce'));
+    const callback = await agent.get('/api/auth/google/callback').query({ code: 'mock-code', state: url.searchParams.get('state') }).expect(302);
+    assert.match(callback.headers.location, /#\/login\?oauth=google_failed$/);
+    await agent.get('/api/auth/me').expect(401);
+    const { dbGet } = require('../../lib/db');
+    assert.strictEqual(await dbGet('SELECT id FROM users WHERE email = ?', ['google.closed@example.test']), undefined);
+  }, { registration: false });
 });
 
 test('已绑定的 Google 账号可以再次登录同一用户', async () => {

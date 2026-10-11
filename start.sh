@@ -2,11 +2,11 @@
 # magpie 一键启动脚本
 #
 # 功能：前置检查（node_modules/.env）→ 端口占用处理 → 可选前端构建 → 启动服务。
-# 支持 dev（前台 nodemon）/ 生产（后台 nohup）两种模式。
+# 支持 dev（前台 Node watch）/ 生产（后台 nohup）两种模式。
 #
 # 用法：
 #   ./start.sh                      生产模式启动（后台，若端口占用则提示）
-#   ./start.sh --dev                开发模式（前台 nodemon 热重载，不构建）
+#   ./start.sh --dev                开发模式（前台 Node watch 热重载，不构建）
 #   ./start.sh --build              启动前先构建前端到 public/dist/
 #   ./start.sh --restart            先停掉同端口的旧进程再启动（生产模式）
 #   ./start.sh --port 9000          指定端口（覆盖 .env 的 PORT）
@@ -66,7 +66,7 @@ log "前置检查"
 
 # 1a. Node.js
 if ! command -v node >/dev/null 2>&1; then
-  err "未找到 node，请先安装 Node.js（建议 18+）"
+  err "未找到 node，请先安装 Node.js（最低 22.13，推荐受支持的 LTS）"
   exit 1
 fi
 NODE_VER=$(node -v)
@@ -173,15 +173,10 @@ fi
 export PORT="$RESOLVED_PORT"
 
 if [ "$MODE" = "dev" ]; then
-  # 开发模式：前台 nodemon 热重载（不后台化，Ctrl+C 退出）
-  log "开发模式启动（nodemon 前台）…"
+  # 开发模式：前台 Node watch 热重载（不后台化，Ctrl+C 退出）
+  log "开发模式启动（Node watch 前台）…"
   dim "Ctrl+C 停止。修改代码自动重启。"
-  if command -v npx >/dev/null 2>&1; then
-    exec npx nodemon server.js
-  else
-    warn "未找到 npx，回退为 node 直接运行（无热重载）"
-    exec node server.js
-  fi
+  exec node --watch server.js
 fi
 
 # 生产模式：后台 nohup，日志写 server.log

@@ -21,13 +21,15 @@ const { isFtsIndexable, indexFileContent } = require('../../lib/fts');
 const { checkFileOwnership } = require('../../lib/middleware/files');
 const { addUserStorage } = require('../../lib/usage');
 const logger = require('../../logger');
+const { HTML_CSP, RENDER_FRAME_VALUE } = require('../../lib/csp');
 
 function registerVersions(router) {
   // --- 版本列表 ---
   router.get('/:id/versions', requireAuth, async (req, res) => {
     try {
-      const file = await dbGet('SELECT id, size, updated_at FROM files WHERE id = ?', [req.params.id]);
+      const file = await dbGet('SELECT id, size, updated_at, uploaded_by FROM files WHERE id = ?', [req.params.id]);
       if (!file) return res.status(404).json({ error: '文件不存在' });
+      if (!checkFileOwnership(req, file)) return res.status(403).json({ error: '无权读取此文件版本' });
 
       const versions = await dbAll(
         `SELECT fv.id, fv.version, fv.size, fv.created_at, fv.performed_by,
@@ -123,6 +125,7 @@ function registerVersions(router) {
 
       const file = await dbGet('SELECT * FROM files WHERE id = ?', [req.params.id]);
       if (!file) return res.status(404).json({ error: '文件不存在' });
+      if (!checkFileOwnership(req, file)) return res.status(403).json({ error: '无权读取此文件版本' });
 
       // 构造历史版本的完整 file-like 对象，bundle 依赖入口路径与存储形态。
       const versionFile = {
@@ -134,6 +137,7 @@ function registerVersions(router) {
         entry_path: ver.entry_path,
         updated_at: ver.created_at,
         asset_base_path: `/api/files/${file.id}/versions/${ver.version}/asset/`,
+        asset_version: ver.version,
       };
       await renderFile(res, versionFile);
     } catch (e) {
@@ -160,6 +164,9 @@ function registerVersions(router) {
       if (!isWithinBundle(assetPath, bundleDir)) return res.status(403).json({ error: '非法路径' });
       const stat = await fs.promises.stat(assetPath).catch(() => null);
       if (!stat || stat.isDirectory()) return res.status(404).json({ error: '资源不存在' });
+      res.setHeader('Content-Security-Policy', HTML_CSP);
+      res.setHeader('X-Frame-Options', RENDER_FRAME_VALUE);
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
       return res.sendFile(path.resolve(assetPath));
     } catch (e) {
       if (!res.headersSent) res.status(500).json({ error: '读取版本资源失败' });

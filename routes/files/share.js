@@ -58,53 +58,39 @@ function registerShare(router) {
       if (!file) return res.status(404).json({ error: '文件不存在' });
       if (!checkFileOwnership(req, file)) return res.status(403).json({ error: '无权操作此文件' });
 
-      // --- 自定义别名 ---
-      // null/空串 → 清空别名回到随机：重新生成一个随机 key。
-      // 非空 → 校验格式 + 唯一性后写回。
-      if (alias !== undefined) {
-        const trimmed = typeof alias === 'string' ? alias.trim() : '';
-        if (trimmed === '') {
-          const candidate = generateShareKey();
-          await dbRun('UPDATE files SET share_key = ?, updated_at = ? WHERE id = ?', [candidate, now(), file.id]);
-        } else {
-          if (!ALIAS_RE.test(trimmed)) {
-            return res.status(400).json({ error: '别名只能含字母、数字、下划线、连字符，3~32 位' });
-          }
-          const clash = await dbGet('SELECT 1 AS hit FROM files WHERE share_key = ? AND id != ?', [trimmed, file.id]);
-          if (clash) return res.status(409).json({ error: '该别名已被占用' });
-          await dbRun('UPDATE files SET share_key = ?, updated_at = ? WHERE id = ?', [trimmed, now(), file.id]);
+      // 全部验证完成后一次写入，400/409 不会部分修改已有分享设置。
+      const changes = [], values = [];
+      for (const value of [alias, expiresAt, password]) {
+        if (value !== undefined && value !== null && typeof value !== 'string') {
+          return res.status(400).json({ error: '分享设置需为字符串或 null' });
         }
       }
-
-      // --- 过期时间 ---
-      // null/空串 → 永不过期；ISO 字符串 → 转 UTC 存储；拒绝过去时间。
+      if (alias !== undefined) {
+        const trimmed = (alias || '').trim();
+        if (trimmed && !ALIAS_RE.test(trimmed)) return res.status(400).json({ error: '别名只能含字母、数字、下划线、连字符，3~32 位' });
+        const key = trimmed || generateShareKey();
+        const clash = await dbGet('SELECT 1 AS hit FROM files WHERE share_key = ? AND id != ?', [key, file.id]);
+        if (clash) return res.status(409).json({ error: '该别名已被占用' });
+        changes.push('share_key = ?'); values.push(key);
+      }
       if (expiresAt !== undefined) {
-        const value = typeof expiresAt === 'string' ? expiresAt.trim() : '';
-        if (value === '' || value === null) {
-          await dbRun('UPDATE files SET share_expires_at = NULL WHERE id = ?', [file.id]);
-        } else {
+        const value = (expiresAt || '').trim();
+        let utcStr = null;
+        if (value) {
           const d = new Date(value);
           if (isNaN(d.getTime())) return res.status(400).json({ error: '过期时间格式无效' });
-          const utcStr = d.toISOString().slice(0, 19).replace('T', ' ');
+          utcStr = d.toISOString().slice(0, 19).replace('T', ' ');
           if (utcStr <= now()) return res.status(400).json({ error: '过期时间必须晚于当前时间' });
-          await dbRun('UPDATE files SET share_expires_at = ? WHERE id = ?', [utcStr, file.id]);
         }
+        changes.push('share_expires_at = ?'); values.push(utcStr);
       }
-
-      // --- 访问密码 ---
-      // null/空串 → 清除密码；非空 → bcrypt 哈希后存。
       if (password !== undefined) {
-        const value = typeof password === 'string' ? password : '';
-        if (value === '' || value === null) {
-          await dbRun('UPDATE files SET share_password_hash = NULL WHERE id = ?', [file.id]);
-        } else {
-          if (value.length < 4 || value.length > 128) {
-            return res.status(400).json({ error: '密码长度需为 4~128 位' });
-          }
-          const hash = await bcrypt.hash(value, 10);
-          await dbRun('UPDATE files SET share_password_hash = ? WHERE id = ?', [hash, file.id]);
-        }
+        const value = password || '';
+        if (value && (value.length < 4 || value.length > 128)) return res.status(400).json({ error: '密码长度需为 4~128 位' });
+        changes.push('share_password_hash = ?'); values.push(value ? await bcrypt.hash(value, 10) : null);
       }
+      changes.push('updated_at = ?'); values.push(now(), file.id);
+      await dbRun(`UPDATE files SET ${changes.join(', ')} WHERE id = ?`, values);
 
       const updated = await dbGet('SELECT share_key, share_expires_at, share_password_hash IS NOT NULL AS has_share_password FROM files WHERE id = ?', [file.id]);
       logger.audit('share.update', {

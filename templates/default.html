@@ -38,8 +38,8 @@ pre.mermaid { background: #ffffff; color: #1f2328; text-align: center; }
 </style>
 </head>
 <body>{{content}}
-<script src="{{mermaid_js_url}}"></script>
-<script>
+<script type="module">
+import mermaid from "{{mermaid_js_url}}";
 (function() {
   function initMermaid() {
     var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;

@@ -192,7 +192,7 @@ function renderHome(container) {
   // 邮箱验证提示条
   const verifyBanner = container.querySelector('#email-verify-banner');
   const resendBtn = container.querySelector('#btn-resend-verify');
-  if (verifyBanner && state.currentUser && !state.currentUser.emailVerified) {
+  if (verifyBanner && state.currentUser?.email && !state.currentUser.emailVerified) {
     api('/api/auth/smtp-status').then(data => {
       if (data.configured) verifyBanner.hidden = false;
     }).catch(() => {});

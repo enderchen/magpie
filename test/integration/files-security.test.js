@@ -89,8 +89,8 @@ test('ZIP 穿越防护：上传带 ../ 的 ZIP 不会写出越界文件', async 
     name: 'traversal.zip',
     content: buf.toString('base64'),
   });
-  // 上传成功（被规范化为合法 bundle），但越界文件绝不能存在
-  assert.strictEqual(res.status, 200);
+  // unsafeOriginalName 仍保留原始穿越路径；必须拒绝，且不产生越界文件。
+  assert.strictEqual(res.status, 400);
   const dataDir = env.dataDir;
   const uploadsDir = require('path').join(dataDir, 'uploads');
   const walk = (dir) => {

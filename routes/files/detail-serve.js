@@ -12,6 +12,8 @@ const { UPLOAD_DIR } = require('../../lib/paths');
 const { listBundleEntries, renderFile } = require('../../lib/render');
 const { setDownloadHeaders, isWithinBundle } = require('./_shared');
 const logger = require('../../logger');
+const { HTML_CSP, RENDER_FRAME_VALUE } = require('../../lib/csp');
+const { loadBundleGrant } = require('../../lib/bundle-access');
 
 function registerDetailServe(router) {
   // --- 详情 ---
@@ -116,7 +118,7 @@ function registerDetailServe(router) {
   });
 
   // --- 资源（bundle 内静态文件） ---
-  router.get('/:id/asset/*', loadSession, loadFileWithPrivacy, async (req, res) => {
+  async function serveBundleAsset(req, res) {
     const file = req.fileRecord;
     if (!file.is_bundle) return res.status(400).json({ error: '非网站包' });
     const bundleDir = path.resolve(path.join(UPLOAD_DIR, file.stored_name));
@@ -131,12 +133,17 @@ function registerDetailServe(router) {
     } catch {
       return res.status(404).json({ error: '资源不存在' });
     }
+    res.setHeader('Content-Security-Policy', HTML_CSP);
+    res.setHeader('X-Frame-Options', RENDER_FRAME_VALUE);
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     res.sendFile(assetPath, (err) => {
       if (err && !res.headersSent && err.code === 'ENOENT') {
         res.status(404).json({ error: '资源不存在' });
       }
     });
-  });
+  }
+  router.get('/:id/asset/*', loadSession, loadFileWithPrivacy, serveBundleAsset);
+  router.get('/:id/bundle-resource/:grant/*', loadBundleGrant, serveBundleAsset);
 
   // --- 渲染 ---
   router.get('/:id/render', loadSession, loadFileWithPrivacy, async (req, res) => {

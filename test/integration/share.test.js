@@ -31,7 +31,7 @@ test('公开文件：匿名访问短链 /s/:key → 200', async () => {
   assert.match(res.headers['content-type'] || '', /text\/html/);
 });
 
-test('私有文件：匿名访问短链 /s/:key → 重定向到首页', async () => {
+test('私有文件：匿名访问短链 /s/:key → 重定向到登录页', async () => {
   const up = await agent.post('/api/files/upload-json').send({
     name: 'private.md',
     content: '# 私有文档',
@@ -39,7 +39,7 @@ test('私有文件：匿名访问短链 /s/:key → 重定向到首页', async (
   });
   const res = await request(env.app).get(`/s/${up.body.share_key}`);
   assert.strictEqual(res.status, 302);
-  assert.strictEqual(res.headers.location, '/');
+  assert.strictEqual(res.headers.location, '/app/#/login');
 });
 
 test('不存在的短链 → 404', async () => {

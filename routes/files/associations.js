@@ -3,7 +3,7 @@
 
 const { dbGet, dbRun, dbAll } = require('../../lib/db');
 const { requireAuth } = require('../../lib/middleware/auth');
-const { checkFileOwnership } = require('../../lib/middleware/files');
+const { checkFileOwnership, loadFileWithPrivacy } = require('../../lib/middleware/files');
 const { clientIp } = require('../../lib/util');
 const { getPendingViewCount } = require('../../lib/view-counts');
 const logger = require('../../logger');
@@ -29,7 +29,7 @@ function registerAssociations(router) {
   });
 
   // --- 收藏 ---
-  router.post('/:id/star', requireAuth, async (req, res) => {
+  router.post('/:id/star', requireAuth, loadFileWithPrivacy, async (req, res) => {
     try {
       const file = await dbGet('SELECT id FROM files WHERE id = ?', [req.params.id]);
       if (!file) return res.status(404).json({ error: '文件不存在' });

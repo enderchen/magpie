@@ -33,8 +33,8 @@ pre.mermaid { background: #ffffff; text-align: center; border: none; }
 </style>
 </head>
 <body>{{content}}
-<script src="{{mermaid_js_url}}"></script>
-<script>
+<script type="module">
+import mermaid from "{{mermaid_js_url}}";
 mermaid.initialize({ startOnLoad: true, securityLevel: 'strict', theme: 'default' });
 </script>
 </body>

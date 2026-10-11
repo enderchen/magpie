@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 const { dbAll, dbGet, dbRun } = require('../lib/db');
 const { requireAuth, requireAdmin } = require('../lib/middleware/auth');
 const { clientIp } = require('../lib/util');
-const { recalculateUserStorage } = require('../lib/usage');
+const { recalculateUserStorage, summarizeApiCalls } = require('../lib/usage');
 const logger = require('../logger');
 
 const router = express.Router();
@@ -29,21 +29,18 @@ router.get('/me/usage', requireAuth, async (req, res) => {
     );
     const fileCount = await dbGet('SELECT COUNT(*) AS c FROM files WHERE uploaded_by = ?', [req.userId]);
     const views = await dbGet('SELECT COALESCE(SUM(view_count), 0) AS c FROM files WHERE uploaded_by = ?', [req.userId]);
-    const bySource = await dbAll(
-      'SELECT source, COUNT(*) AS count FROM api_calls WHERE user_id = ? GROUP BY source',
-      [req.userId]
-    );
-    const apiCallsBySource = {};
-    for (const row of bySource) {
-      apiCallsBySource[row.source || 'unknown'] = row.count;
-    }
+    const apiUsage = await summarizeApiCalls(req.userId);
 
     res.json({
       storageBytes: user ? user.total_storage_bytes || 0 : 0,
       storageQuota: user ? user.storage_quota_bytes : null,
       fileCount: fileCount ? fileCount.c : 0,
-      apiCallsTotal: user ? user.api_calls_count || 0 : 0,
-      apiCallsBySource,
+      apiCallsTotal: apiUsage.successful,
+      apiCalls24h: apiUsage.successful24h,
+      apiRequestsTotal: apiUsage.requests,
+      apiCacheHits: apiUsage.cacheHits,
+      apiFailed: apiUsage.failed,
+      apiCallsBySource: apiUsage.bySource,
       shortLinkViews: views ? views.c : 0,
     });
   } catch (e) {

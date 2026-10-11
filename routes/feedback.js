@@ -107,7 +107,8 @@ router.post('/', feedbackLimiter, loadSession, async (req, res) => {
     if (to && isMailerConfigured()) {
       sendMailBackground(to, `[纸鹊 Magpie反馈] ${CATEGORY_LABELS[cat]}`, buildFeedbackHtml({
         name: trimmedName, contact: trimmedContact, category: cat, content: content.trim(), userId, ip
-      })).then(() => {
+      })).then(sent => {
+        if (!sent) return;
         dbRun('UPDATE feedback SET email_sent = 1 WHERE id = ?', [feedbackId]).catch(e => {
           logger.error({ type: 'app', message: '回填 email_sent 失败', feedbackId, error: e.message });
         });

@@ -120,6 +120,8 @@ test('GET /api/cli/guide → 200，返回 CLI 用法指南（与 MCP 并列的�
   assert.ok(typeof res.body.guideText === 'string' && res.body.guideText.length > 0, 'guideText 应为非空文档');
   // guideText 里 baseUrl 应已被替换为实际服务地址（不含 <baseUrl> 占位）
   assert.ok(!res.body.guideText.includes('<baseUrl>'), 'guideText 不应残留 baseUrl 占位符');
+  const commandRows = res.body.guideHtml.match(/<tbody>[\s\S]*?<\/tbody>/)[0].match(/<tr>[\s\S]*?<\/tr>/g);
+  assert.ok(commandRows.every(row => (row.match(/<td>/g) || []).length === 2), 'CLI 参数中的竖线不能拆坏命令说明表');
 });
 
 test('未登录 GET /api/cli/guide → 401', async () => {

@@ -40,9 +40,10 @@ async function sendMail(to, subject, html) {
 
 // 后台异步发信：不阻塞调用方（HTTP 请求路径），失败仅记录日志
 function sendMailBackground(to, subject, html) {
-  if (!transporter) return;
-  sendMail(to, subject, html).catch(e => {
+  if (!transporter) return Promise.resolve(false);
+  return sendMail(to, subject, html).then(() => true).catch(e => {
     logger.error({ type: 'app', message: '后台发送邮件失败', to, subject, error: e.message });
+    return false;
   });
 }
 

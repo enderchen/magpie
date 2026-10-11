@@ -79,7 +79,11 @@ test('同名 bundle ZIP 覆盖保持 file ID/share key，并可渲染历史版�
   const currentRender = await agent.get(`/api/files/${first.body.id}/render`);
   assert.strictEqual(oldRender.status, 200);
   assert.match(oldRender.text, /bundle-v1/);
-  assert.match(oldRender.text, new RegExp(`/api/files/${first.body.id}/versions/1/asset/`));
+  const resourceBase = oldRender.text.match(/<base href="([^"]+)"/)[1];
+  assert.match(resourceBase, /bundle-resource/);
+  const oldAnonymousAsset = await request(env.app).get(resourceBase + 'assets/app.js');
+  assert.strictEqual(oldAnonymousAsset.status, 200);
+  assert.match(oldAnonymousAsset.text, /bundleVersion=1/);
   const oldAsset = await agent.get(`/api/files/${first.body.id}/versions/1/asset/assets/app.js`);
   assert.strictEqual(oldAsset.status, 200);
   assert.match(oldAsset.text, /bundleVersion=1/);

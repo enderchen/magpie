@@ -75,14 +75,41 @@ function buildSkeletonCards(n, viewMode) {
   return html;
 }
 
+const modalFocusState = new WeakMap();
 function openModal(el) {
   el.hidden = false;
   el.setAttribute('aria-hidden', 'false');
+  if (!['profile-modal', 'share-settings-modal'].includes(el.id)) return;
+  if (modalFocusState.has(el)) return;
+  const previous = document.activeElement;
+  const focusables = () => [...el.querySelectorAll('button, input, select, textarea, a[href], [tabindex="0"]')]
+    .filter(node => !node.disabled && !node.hidden && node.getClientRects().length);
+  const onKey = (event) => {
+    if (event.key === 'Escape') { event.preventDefault(); closeModal(el); return; }
+    if (event.key !== 'Tab') return;
+    const nodes = focusables();
+    if (!nodes.length) { event.preventDefault(); return; }
+    const first = nodes[0], last = nodes[nodes.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  };
+  const app = document.getElementById('app');
+  if (app) app.inert = true;
+  el.addEventListener('keydown', onKey);
+  modalFocusState.set(el, { previous, onKey, app });
+  const initial = el.querySelector('input:not([readonly])') || focusables()[0];
+  initial?.focus();
 }
 
 function closeModal(el) {
   el.hidden = true;
   el.setAttribute('aria-hidden', 'true');
+  const saved = modalFocusState.get(el);
+  if (!saved) return;
+  el.removeEventListener('keydown', saved.onKey);
+  if (saved.app) saved.app.inert = false;
+  if (saved.previous?.isConnected) saved.previous.focus();
+  modalFocusState.delete(el);
 }
 
 // 复制到剪贴板：优先用现代 Clipboard API，回退到 execCommand

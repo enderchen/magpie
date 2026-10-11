@@ -55,7 +55,7 @@ const upload = multer({
 });
 
 // JSON body 解析器：上传类端点需要放宽到 50MB（全局默认 1MB）
-const largeJson = express.json({ limit: '50mb' });
+const largeJson = express.json({ limit: '70mb' }); // Base64 overhead for a 50MB ZIP; decoded size is checked separately.
 
 // --- 下载 Content-Disposition 头（UTF-8 文件名） ---
 // 替换 download 路由两处重复的 encoded + filename*=UTF-8'' 拼接。

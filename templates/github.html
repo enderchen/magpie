@@ -49,8 +49,8 @@ pre.mermaid { background: #ffffff; text-align: center; }
 </style>
 </head>
 <body><div class="markdown-body">{{content}}</div>
-<script src="{{mermaid_js_url}}"></script>
-<script>
+<script type="module">
+import mermaid from "{{mermaid_js_url}}";
 (function() {
   function initMermaid() {
     var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;

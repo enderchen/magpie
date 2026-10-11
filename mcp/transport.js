@@ -5,7 +5,7 @@
 // 每次 session initialize 时通过 getServer(callerToken) 重建 server + dispatcher，
 // 把调用者 token 绑进后续所有进程内 API 调用。
 
-const { randomUUID } = require('node:crypto');
+const { randomUUID, createHash } = require('node:crypto');
 const { StreamableHTTPServerTransport } = require('@modelcontextprotocol/sdk/server/streamableHttp.js');
 const { isInitializeRequest } = require('@modelcontextprotocol/sdk/types.js');
 const logger = require('../logger');
@@ -19,6 +19,7 @@ const { createMcpServer } = require('./server');
 // --- 模块级 session 状态 ---
 const transports = {};
 const sessionActivity = {};
+const sessionOwners = {};
 const SESSION_TTL_MS = 60 * 60 * 1000;
 const SESSION_SWEEP_MS = 10 * 60 * 1000;
 let sessionSweepTimer = null;
@@ -38,6 +39,7 @@ function sweepSessions() {
       }
       delete transports[sid];
       delete sessionActivity[sid];
+      delete sessionOwners[sid];
     }
   }
 }
@@ -76,6 +78,10 @@ function mountMcpServer(app, { port, mcpToken, mcpIp, protocol, authenticateRequ
       return res.status(401).json({ error: 'MCP 鉴权失败' });
     }
     const tokenValue = auth.slice(7);
+    const sid = req.headers['mcp-session-id'];
+    if (sid && transports[sid] && sessionOwners[sid] !== createHash('sha256').update(tokenValue).digest('hex')) {
+      return res.status(403).json({ error: '无权访问此 MCP 会话' });
+    }
 
     // 旧 MCP_TOKEN 向后兼容
     if (mcpToken && tokenValue === mcpToken) {
@@ -99,16 +105,22 @@ function mountMcpServer(app, { port, mcpToken, mcpIp, protocol, authenticateRequ
         transport = transports[sessionId];
         touchSession(sessionId);
       } else if (!sessionId && isInitializeRequest(req.body)) {
+        const owner = createHash('sha256').update(req.headers.authorization.slice(7)).digest('hex');
+        if (Object.keys(transports).length >= 500 || Object.values(sessionOwners).filter(value => value === owner).length >= 20) {
+          return res.status(429).json({ error: 'MCP 会话数量已达上限，请关闭已有会话后重试' });
+        }
         transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
           onsessioninitialized: (sid) => {
             transports[sid] = transport;
+            sessionOwners[sid] = createHash('sha256').update(req.headers.authorization.slice(7)).digest('hex');
             touchSession(sid);
           },
         });
         transport.onclose = () => {
           const sid = transport.sessionId;
           if (sid && transports[sid]) delete transports[sid];
+          if (sid) { delete sessionOwners[sid]; delete sessionActivity[sid]; }
         };
         const callerToken = req.headers.authorization?.startsWith('Bearer ')
           ? req.headers.authorization.slice(7)
@@ -130,7 +142,7 @@ function mountMcpServer(app, { port, mcpToken, mcpIp, protocol, authenticateRequ
       if (!res.headersSent) {
         res.status(500).json({
           jsonrpc: '2.0',
-          error: { code: -32603, message: e.message || 'Internal server error' },
+          error: { code: -32603, message: 'Internal server error' },
           id: null,
         });
       }
@@ -177,6 +189,7 @@ async function closeMcpTransports() {
     }
     delete transports[sid];
     delete sessionActivity[sid];
+    delete sessionOwners[sid];
   }
 }
 

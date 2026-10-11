@@ -19,7 +19,7 @@ const rateLimit = require('express-rate-limit');
 const { runMigrations } = require('./migrations');
 const { setDb, dbGet, dbRun, configureDatabase } = require('./lib/db');
 const { DATA_DIR, UPLOAD_DIR } = require('./lib/paths');
-const { generateReadablePassword, currentUserId, now, unlinkQuiet } = require('./lib/util');
+const { generateReadablePassword, now, unlinkQuiet } = require('./lib/util');
 const { loadTemplates, loadTemplateNameMap } = require('./lib/templates');
 const { reloadCategoryNameCache } = require('./lib/categories');
 const { backfillFtsIndex, deleteFileIndex } = require('./lib/fts');
@@ -32,6 +32,8 @@ const logger = require('./logger');
 
 // 用量统计中间件（需在 /api 路由之前挂载，才能捕获所有 API 请求）
 const { recordUsage } = require('./lib/middleware/usage');
+const { loadSession } = require('./lib/middleware/auth');
+const { checkFileOwnership, isShareUnlocked } = require('./lib/middleware/files');
 
 // 路由域
 const authRouter = require('./routes/auth');
@@ -60,6 +62,10 @@ setDb(db);
 // --- 会话密钥 ---
 let sessionSecret = process.env.SESSION_SECRET;
 let sessionSecretWarning = false;
+if (NODE_ENV === 'production' && sessionSecret && (sessionSecret.length < 32 || sessionSecret === 'please-generate-a-random-string-here')) {
+  logger.error({ type: 'app', message: '生产模式下 SESSION_SECRET 必须为至少 32 字符的独立随机密钥，不能使用示例值' });
+  process.exit(1);
+}
 if (!sessionSecret) {
   if (NODE_ENV === 'production') {
     logger.error({ type: 'app', message: '生产模式下必须设置 SESSION_SECRET' });
@@ -70,7 +76,9 @@ if (!sessionSecret) {
 }
 
 const app = express();
-app.set('trust proxy', 1);
+// Trust only the configured reverse proxy. Direct clients cannot spoof rate-limit IPs.
+const trustProxy = process.env.TRUST_PROXY;
+app.set('trust proxy', trustProxy && /^\d+$/.test(trustProxy) ? Number(trustProxy) : (trustProxy || false));
 
 // helmet：关闭内置 CSP（由下方手写中间件 + render.js 分级下发），
 // frameguard 默认 deny（全局 X-Frame-Options: DENY），但渲染端点需被同源 iframe 嵌入（文件列表卡片缩略图），
@@ -99,13 +107,26 @@ app.use((req, res, next) => {
 });
 
 // 全局 JSON 解析限制为 1MB；大 body（upload-json / upload-zip-base64）由端点级中间件放宽。
-app.use(express.json({ limit: '1mb' }));
+app.use(adminRouter.trackDataRequests);
+const defaultJson = express.json({ limit: '1mb' });
+app.use((req, res, next) => {
+  const uploadJson = req.method === 'POST' && /^\/api\/files\/(?:upload-json|upload-zip-base64|\d+\/overwrite-(?:json|zip-base64))$/.test(req.path);
+  if (uploadJson) return next(); // Parse only after endpoint authentication, using its bounded largeJson.
+  defaultJson(req, res, next);
+});
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  const origin = req.headers.origin;
+  const unsafe = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
+  const requestOrigin = `${req.protocol}://${req.get('host')}`;
+  const siteOrigin = process.env.APP_URL ? new URL(process.env.APP_URL).origin : requestOrigin;
+  if (unsafe && origin && origin !== siteOrigin && origin !== requestOrigin && !req.get('authorization')?.startsWith('Bearer ')) {
+    return res.status(403).json({ error: '不允许跨站提交，请在纸鹊网站内操作' });
+  }
+  res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, MCP-Session-Id, MCP-Protocol-Version');
   if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
 });
@@ -134,7 +155,7 @@ app.use(morgan((tokens, req, res) => {
     level: 'info',
     type: 'http',
     method: tokens.method(req, res),
-    url: tokens.url(req, res),
+    url: tokens.url(req, res).replace(/(\/bundle-resource\/)[^/]+/g, '$1[redacted]'),
     status: parseInt(tokens.status(req, res), 10),
     contentLength: tokens.res(req, res, 'content-length') || 0,
     responseTime: tokens['response-time'](req, res) + ' ms',
@@ -212,12 +233,6 @@ const shareKeyLimiter = rateLimit({
 });
 
 // 判定短链文件是否已被本会话解锁（无密码视为已解锁）。
-function isShareUnlocked(req, file) {
-  if (!file.share_password_hash) return true;
-  const unlocked = req.session && req.session.unlockedShares;
-  return !!(unlocked && unlocked[file.share_key]);
-}
-
 // 过期页 HTML：告知链接已过期，引导联系分享者。
 const EXPIRED_HTML = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:sans-serif;text-align:center;padding:4em"><h1>链接已过期</h1><p>该分享链接已失效。</p><a href="/">返回首页</a></body></html>';
 
@@ -240,7 +255,7 @@ ${errorBlock}
 </div></body></html>`;
 }
 
-app.get('/s/:key', async (req, res) => {
+app.get('/s/:key', loadSession, async (req, res) => {
   try {
     const file = await dbGet('SELECT * FROM files WHERE share_key = ?', [req.params.key]);
     if (!file) return res.status(404).send('<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:sans-serif;text-align:center;padding:4em"><h1>404</h1><p>页面不存在</p><a href="/">返回首页</a></body></html>');
@@ -254,7 +269,8 @@ app.get('/s/:key', async (req, res) => {
       }
       return res.status(410).send(EXPIRED_HTML);
     }
-    if (!file.is_public && !currentUserId(req)) return res.redirect('/');
+    if (!file.is_public && !req.userId) return res.redirect('/app/#/login');
+    if (!file.is_public && !checkFileOwnership(req, file)) return res.status(403).json({ error: '无权访问此文件' });
     // 访问密码门
     if (!isShareUnlocked(req, file)) {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -271,7 +287,7 @@ app.get('/s/:key', async (req, res) => {
 // --- 短链密码校验（POST）---
 // 验证通过 → 在 session 标记解锁该 key → 重定向回 GET /s/:key（现可渲染）。
 // 失败 → 重新返回表单页并提示错误。
-app.post('/s/:key', shareKeyLimiter, async (req, res) => {
+app.post('/s/:key', shareKeyLimiter, loadSession, async (req, res) => {
   try {
     const file = await dbGet('SELECT * FROM files WHERE share_key = ?', [req.params.key]);
     // 出于安全：无论文件是否存在，密码错误时都回"密码错误"，避免泄露文件存在性。
@@ -288,7 +304,8 @@ app.post('/s/:key', shareKeyLimiter, async (req, res) => {
       }
       return res.status(410).send(EXPIRED_HTML);
     }
-    if (!file.is_public && !currentUserId(req)) return res.redirect('/');
+    if (!file.is_public && !req.userId) return res.redirect('/app/#/login');
+    if (!file.is_public && !checkFileOwnership(req, file)) return res.status(403).json({ error: '无权访问此文件' });
     const ok = file.share_password_hash
       ? await bcrypt.compare(password, file.share_password_hash).catch(() => false)
       : true; // 无密码：放行（与 GET 一致）
@@ -297,7 +314,7 @@ app.post('/s/:key', shareKeyLimiter, async (req, res) => {
       return res.status(200).send(renderSharePasswordPage(req.params.key, '密码错误'));
     }
     if (!req.session.unlockedShares) req.session.unlockedShares = {};
-    req.session.unlockedShares[file.share_key] = true;
+    req.session.unlockedShares[file.share_key] = file.share_password_hash;
     res.redirect(`/s/${encodeURIComponent(file.share_key)}`);
   } catch (e) {
     logger.error({ type: 'app', action: 'shortlink.post', error: e.message });
@@ -334,7 +351,7 @@ async function authenticateMcpToken(tokenValue) {
   if (process.env.MCP_TOKEN && tokenValue === process.env.MCP_TOKEN) return true;
   // 用户级 Token
   const hash = crypto.createHash('sha256').update(tokenValue).digest('hex');
-  const row = await dbGet('SELECT id FROM tokens WHERE token_hash = ?', [hash]);
+  const row = await dbGet('SELECT t.id FROM tokens t JOIN users u ON u.id = t.user_id WHERE t.token_hash = ?', [hash]);
   return !!row;
 }
 
@@ -351,6 +368,11 @@ const NODE_MODULES = path.join(__dirname, 'node_modules');
 // 静态资源长缓存：版本化路径（vendor 内容随包固定，public 资源带 ?v= 查询参数）
 // 30 天 + immutable，命中后浏览器零往返；首次加载仍走 ETag。
 const STATIC_OPTS = { maxAge: '30d', immutable: true, etag: true, lastModified: true };
+// Sandboxed documents have an opaque origin. Public vendor styles/fonts must remain loadable.
+app.use('/vendor', (_req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+});
 app.use('/vendor/katex', express.static(path.join(NODE_MODULES, 'katex', 'dist'), STATIC_OPTS));
 app.use('/vendor/highlight.js', express.static(path.join(NODE_MODULES, 'highlight.js'), STATIC_OPTS));
 app.use('/vendor/mermaid', express.static(path.join(NODE_MODULES, 'mermaid', 'dist'), STATIC_OPTS));
@@ -406,12 +428,14 @@ app.get(['/app/', '/app/*'], (req, res) => {
 
 // --- 全局错误处理 ---
 app.use((err, req, res, _next) => {
-  logger.error({ type: 'app', message: err.message, stack: err.stack });
+  logger.error({ type: 'app', message: '请求处理失败', code: err.code || err.type || 'INTERNAL' });
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') return res.status(400).json({ error: '文件大小超过50MB限制' });
     return res.status(400).json({ error: err.message });
   }
-  res.status(500).json({ error: err.message || '服务器内部错误' });
+  if (err.type === 'entity.parse.failed') return res.status(400).json({ error: '请求 JSON 格式不正确' });
+  if (err.type === 'entity.too.large') return res.status(413).json({ error: '请求内容超过大小限制' });
+  res.status(500).json({ error: '服务器内部错误' });
 });
 
 // --- 初始管理员引导 ---
@@ -461,7 +485,7 @@ async function initApp() {
   await bootstrapAdmin();
   let adminUserId = null;
   try {
-    const row = await dbGet('SELECT id FROM users ORDER BY id ASC LIMIT 1');
+    const row = await dbGet("SELECT id FROM users WHERE role = 'admin' ORDER BY id ASC LIMIT 1");
     if (row) adminUserId = row.id;
   } catch (e) {
     logger.error({ type: 'app', message: '解析 admin user id 失败', error: e.message });
@@ -487,14 +511,23 @@ if (require.main === module) {
       const backupDir = process.env.BACKUP_DIR || path.join(DATA_DIR, 'backups');
       if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
       if (cron.validate(backupCron)) {
-        cron.schedule(backupCron, () => {
+        cron.schedule(backupCron, async () => {
           try {
             const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
             const fname = `magpie-backup-${ts}.zip`;
             const fpath = path.join(backupDir, fname);
             const output = fs.createWriteStream(fpath);
-            const archive = createBackupArchive();
+            const archive = await createBackupArchive();
+            output.on('error', error => {
+              logger.error({ type: 'app', message: '自动备份写入失败', error: error.message });
+              archive.abort();
+            });
+            archive.on('error', error => {
+              logger.error({ type: 'app', message: '自动备份归档失败', error: error.message });
+              output.destroy();
+            });
             output.on('close', () => {
+              if (!output.writableFinished) return;
               logger.info({ type: 'app', message: '自动备份完成', file: fpath });
               const backups = fs.readdirSync(backupDir)
                 .filter(f => f.startsWith('magpie-backup-') && f.endsWith('.zip'))
@@ -504,7 +537,7 @@ if (require.main === module) {
               }
             });
             archive.pipe(output);
-            archive.finalize();
+            await archive.finalize();
           } catch (e) {
             logger.error({ type: 'app', message: '自动备份失败', error: e.message });
           }

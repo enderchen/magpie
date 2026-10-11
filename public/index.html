@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="light neo-app">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="纸鹊 Magpie，拖入 HTML 或 Markdown 文件，即刻获得在线预览页面。">
 <title>纸鹊 Magpie — 一纸，寄万千。</title>
 <link rel="icon" type="image/png" href="/magpie-logo.png">
-<link rel="stylesheet" href="/css/style.css?v=1.6.7">
+<link rel="stylesheet" href="/css/style.css?v=1.6.7-neo1">
 </head>
 <body>
 <div id="app"></div>
@@ -14,69 +14,22 @@
 <!-- 登录与工作台应用壳 -->
 <template id="login-template">
 <div class="layout login-layout">
-<button class="theme-toggle login-theme-toggle" aria-label="切换主题">
-  <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
-  <svg class="icon-sun" viewBox="0 0 24 24"><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41M12 6a6 6 0 100 12 6 6 0 000-12z"/></svg>
-</button>
+<header class="neo-auth-header"><div class="neo-brand-group"><a class="neo-brand" href="/" aria-label="返回纸鹊首页"><img src="/home-share/assets/magpie-logo-transparent-v1.png" alt="纸鹊 Magpie" width="168" height="76"></a><span class="neo-motto" lang="en">Ideas Worth Spreading</span></div><a href="/" class="neo-back-home">返回首页 ↗</a></header>
 <main class="login-main">
-  <section class="login-story" aria-label="纸鹊 Magpie产品介绍">
-    <a class="login-brand" href="/" aria-label="返回纸鹊 Magpie首页">
-      <span class="brand-mark magpie-icon" aria-hidden="true"></span>
-      <span class="login-brand-copy">
-        <strong class="login-title">纸鹊 Magpie</strong>
-        <span class="login-subtitle">Magpie · 一纸，寄万千。</span>
-      </span>
-    </a>
-    <div class="login-story-copy">
-      <span class="login-kicker">从文件到页面，只差一次登录</span>
-      <h1 class="login-story-title">让创作离开本地，<br>在链接里继续生长。</h1>
-      <p class="login-story-desc">上传 HTML、Markdown 或演示文稿，即刻获得可预览、可分享、可迭代的在线页面。</p>
-    </div>
-    <ol class="login-flow" aria-label="纸鹊 Magpie工作流">
-      <li><span>01</span><div><strong>上传</strong><small>拖入文件或交给 AI</small></div></li>
-      <li><span>02</span><div><strong>预览</strong><small>保留排版与交互</small></div></li>
-      <li><span>03</span><div><strong>分享</strong><small>一个链接直达内容</small></div></li>
-    </ol>
-    <p class="login-story-foot">为创作者、开发者与 AI 工作流而生。</p>
-  </section>
-
-  <section class="login-card" aria-labelledby="login-heading">
-    <a class="login-back" href="/">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m6 6-6-6 6-6"/></svg>
-      返回首页
-    </a>
-    <div class="login-hero">
-      <span class="login-eyebrow">WELCOME BACK</span>
-      <h2 class="login-headline" id="login-heading">继续你的下一页</h2>
-      <p class="login-tagline">登录后管理文件、版本、模板与分享链接。</p>
-    </div>
-    <div class="auth-oauth" id="auth-oauth" hidden>
-      <button type="button" class="btn google-login-btn" id="btn-google-login" aria-label="使用 Google 账号登录" hidden>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.4-.18-2.07H12v3.91h5.38a4.6 4.6 0 0 1-2 3.02v2.54h3.24c1.9-1.75 2.98-4.33 2.98-7.4z"/>
-          <path fill="#34A853" d="M12 22c2.7 0 4.98-.9 6.64-2.43l-3.24-2.54c-.9.6-2.05.96-3.4.96-2.61 0-4.82-1.76-5.61-4.13H3.04v2.62A10 10 0 0 0 12 22z"/>
-          <path fill="#FBBC05" d="M6.39 13.86A6 6 0 0 1 6.07 12c0-.65.11-1.28.32-1.86V7.52H3.04A10 10 0 0 0 2 12c0 1.61.39 3.14 1.04 4.48l3.35-2.62z"/>
-          <path fill="#EA4335" d="M12 6.01c1.47 0 2.79.5 3.83 1.5l2.87-2.87A9.65 9.65 0 0 0 12 2a10 10 0 0 0-8.96 5.52l3.35 2.62C7.18 7.77 9.39 6.01 12 6.01z"/>
-        </svg>
-        使用 Google 账号继续
-      </button>
-      <div class="auth-provider-grid">
-        <button type="button" class="btn github-login-btn" id="btn-github-login" aria-label="使用 GitHub 登录" hidden>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-          GitHub
-        </button>
-        <button type="button" class="btn wechat-login-btn" id="btn-wechat-login" aria-label="使用微信扫码登录" hidden>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.4 4.2c-4.1 0-7.4 2.7-7.4 6.1 0 1.9 1.1 3.6 2.7 4.7l-.7 2.2 2.6-1.3c.9.3 1.8.5 2.8.5.3 0 .6 0 .9-.1-.2-.6-.3-1.2-.3-1.8 0-3.2 3.2-5.8 7.1-5.8h.2c-.9-2.6-4-4.5-7.9-4.5zm-2.5 4.6c-.6 0-1-.4-1-1s.4-1 1-1 1 .4 1 1-.4 1-1 1zm5 0c-.6 0-1-.4-1-1s.4-1 1-1 1 .4 1 1-.4 1-1 1zm5.2 1.1c-3.3 0-6 2.1-6 4.7s2.7 4.7 6 4.7c.8 0 1.5-.1 2.2-.4l2.1 1-.6-1.8c1.3-.9 2.2-2.2 2.2-3.7 0-2.4-2.7-4.5-5.9-4.5zm-2 3.4c-.5 0-.8-.3-.8-.8s.3-.8.8-.8.8.3.8.8-.3.8-.8.8zm4 0c-.5 0-.8-.3-.8-.8s.3-.8.8-.8.8.3.8.8-.3.8-.8.8z"/></svg>
-          微信
-        </button>
-      </div>
-      <div class="auth-divider"><span>或使用邮箱 / 用户名</span></div>
-    </div>
+<section class="login-story" aria-label="纸鹊产品介绍">
+  <h1 class="login-story-title" id="auth-story-title">一纸，寄万千。</h1>
+  <p class="login-story-desc" id="auth-story-desc">让创作离开本地，在链接里继续生长。</p>
+  <div class="neo-auth-art" aria-hidden="true"><img src="/home-share/assets/magpie-courier-flight-v1.png" alt="" width="1536" height="1024"><div class="neo-browser-art"><span class="neo-browser-dots">● ● ●</span><span class="neo-file-glyph">↥</span><strong>拖拽文件到这里</strong><small>HTML / Markdown / ZIP</small></div></div>
+  <ol class="login-flow" aria-label="分享流程"><li><span>↑</span><strong>上传</strong></li><li><span>◎</span><strong>预览</strong></li><li><span>↗</span><strong>分享</strong></li></ol>
+  <p class="login-story-foot">好想法，值得被更多人看见。</p>
+</section>
+<section class="login-card" aria-labelledby="login-heading">
+  <div class="login-hero"><span class="login-eyebrow">WELCOME BACK / 欢迎回来</span><h2 class="login-headline" id="login-heading">继续你的下一页</h2><p class="login-tagline">登录纸鹊，管理你的文件与分享链接。</p></div>
     <form class="login-form auth-panel active" id="auth-form" autocomplete="on">
       <label class="login-field has-icon">
         <span>邮箱 / 用户名</span>
         <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
-        <input type="text" name="account" id="auth-account" required autocomplete="username" placeholder="name@example.com" autofocus>
+        <input type="text" name="account" id="auth-account" required autocomplete="username" placeholder="输入邮箱或用户名">
       </label>
       <label class="login-field has-icon" id="auth-password-field">
         <span>密码</span>
@@ -85,8 +38,7 @@
       </label>
       <div class="login-error" id="auth-error" role="alert" hidden></div>
       <button type="submit" class="btn btn-primary login-submit" id="auth-submit">
-        进入工作台
-        <svg class="btn-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+        进入工作台 ↗
       </button>
     </form>
     <form class="login-form auth-panel" id="register-extra" autocomplete="on" hidden>
@@ -95,7 +47,7 @@
         <span>邮箱</span>
         <input type="email" name="email" id="register-email" autocomplete="email" readonly>
       </label>
-      <div class="register-code-row">
+      <label for="register-code" class="neo-field-label">6 位验证码</label><div class="register-code-row">
         <input type="text" id="register-code" placeholder="6 位验证码" maxlength="6" inputmode="numeric" pattern="\d{6}" required autocomplete="one-time-code">
         <button type="button" class="btn btn-small" id="btn-send-code">发送验证码</button>
       </div>
@@ -117,13 +69,16 @@
       <button type="submit" class="btn btn-primary login-submit" id="register-submit">创建账号</button>
       <button type="button" class="btn btn-text" id="btn-back-to-login">返回登录</button>
     </form>
-    <p class="auth-security">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.9 3 8.3 7 10 4-1.7 7-5.1 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg>
-      登录信息仅用于身份验证，纸鹊 Magpie不会获得你的 Google 密码。
-    </p>
-    <p class="auth-terms">继续即表示你同意<a href="/terms" target="_blank">服务条款</a>和<a href="/privacy" target="_blank">隐私政策</a></p>
+
+  <p class="neo-register-entry" id="register-entry" hidden>首次使用？<a href="#/register">创建账号</a></p>
+  <section class="neo-wechat" id="auth-oauth" aria-labelledby="wechat-title">
+    <div class="auth-divider"><span>或使用微信扫码登录</span></div>
+    <div class="neo-wechat-content"><div class="neo-wechat-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.4 4.2c-4.1 0-7.4 2.7-7.4 6.1 0 1.9 1.1 3.6 2.7 4.7l-.7 2.2 2.6-1.3c.9.3 1.8.5 2.8.5.3 0 .6 0 .9-.1-.2-.6-.3-1.2-.3-1.8 0-3.2 3.2-5.8 7.1-5.8h.2c-.9-2.6-4-4.5-7.9-4.5zm-2.5 4.6c-.6 0-1-.4-1-1s.4-1 1-1 1 .4 1 1-.4 1-1 1zm5 0c-.6 0-1-.4-1-1s.4-1 1-1 1 .4 1 1-.4 1-1 1zm5.2 1.1c-3.3 0-6 2.1-6 4.7s2.7 4.7 6 4.7c.8 0 1.5-.1 2.2-.4l2.1 1-.6-1.8c1.3-.9 2.2-2.2 2.2-3.7 0-2.4-2.7-4.5-5.9-4.5zm-2 3.4c-.5 0-.8-.3-.8-.8s.3-.8.8-.8.8.3.8.8-.3.8-.8.8zm4 0c-.5 0-.8-.3-.8-.8s.3-.8.8-.8.8.3.8.8-.3.8-.8.8z"/></svg></div><div><h3 id="wechat-title">微信扫码登录</h3><p id="wechat-status" role="status">正在检查登录方式…</p><button type="button" class="btn" id="btn-wechat-login" hidden>打开微信扫码 ↗</button></div></div>
   </section>
+  <p class="auth-terms">继续即表示你同意 <a href="/terms" target="_blank" rel="noopener">服务条款</a> 与 <a href="/privacy" target="_blank" rel="noopener">隐私政策</a></p>
+</section>
 </main>
+<footer class="neo-auth-footer"><span>纸鹊 Magpie</span><span>Designed by Ender</span></footer>
 </div>
 </template>
 
@@ -131,14 +86,8 @@
 <template id="home-template">
 <div class="layout workspace-layout">
 <header class="header workspace-header">
-<div class="header-left">
-<a class="brand-mark magpie-icon" href="/" aria-label="返回纸鹊首页" title="返回首页"></a>
-<div class="brand-text">
-<h1>纸鹊 Magpie</h1>
-<p class="header-tagline">一纸，寄万千。</p>
-</div>
-</div>
-<div class="header-right">
+<div class="header-left neo-brand-group"><a class="neo-brand" href="/" aria-label="返回纸鹊首页"><img src="/home-share/assets/magpie-logo-transparent-v1.png" alt="纸鹊 Magpie" width="168" height="76"></a><span class="neo-motto" lang="en">Ideas Worth Spreading</span></div>
+<div class="header-right"><a class="neo-back-home" href="/">返回首页 ↗</a>
 <a class="header-tool-link" id="market-link" href="#/market" aria-label="创作市场" title="创作市场">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h18l-2 7H5L3 3z"/><path d="M4 10v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V10"/><path d="M9 21V10"/><path d="M15 21V10"/></svg>
   <span class="header-tool-label">创作市场</span>
@@ -215,27 +164,20 @@ CLI 工具
 </div>
 <main class="main workspace-main">
 <section class="workspace-top" aria-labelledby="workspace-title">
-<div class="workspace-intro">
-  <span class="workspace-eyebrow">YOUR WORKSPACE</span>
-  <h2 id="workspace-title">把每一次创作，<br>变成可访问的页面。</h2>
-  <p>上传、整理、迭代，再用一个链接分享出去。</p>
-  <div class="workspace-capabilities" aria-label="工作区能力">
-    <span>即时预览</span><span>版本可追溯</span><span>链接可分享</span>
-  </div>
-</div>
+<div class="workspace-intro"><h2 id="workspace-title">我的工作台</h2><p>上传、整理、迭代，用一个链接分享出去。</p></div>
 <div class="toolbar">
-<div class="upload-area" id="upload-area" role="button" tabindex="0" aria-label="选择或拖入 HTML、Markdown 文件上传，支持多选">
+<div class="upload-area" id="upload-area" role="button" tabindex="0" aria-label="选择或拖入 HTML、Markdown、ZIP 文件上传，支持多选">
 <input type="file" id="file-input" accept=".html,.htm,.md,.markdown,.zip" multiple hidden aria-label="选择要上传的文件，支持多选">
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+<img class="neo-upload-bird" src="/home-share/assets/magpie-courier-flight-v1.png" alt="喜鹊快递员叼着信件" width="1536" height="1024">
 <div class="upload-copy">
-  <p class="upload-title">拖入文件，立即发布</p>
+  <p class="upload-title">拖拽文件到这里，或点击上传</p>
   <span class="upload-hint">支持 HTML、Markdown 与 ZIP，可多选，单文件最大 50MB</span>
 </div>
-<span class="upload-action" aria-hidden="true">选择文件</span>
+<span class="upload-action" aria-hidden="true">选择文件 ↑</span>
 </div>
 <label class="upload-privacy">
 <input type="checkbox" id="upload-is-public" checked>
-<span class="upload-privacy-copy"><strong>默认公开访问</strong><small>关闭后，新文件仅自己可见</small></span>
+<span class="upload-privacy-copy"><strong>默认公开</strong><small>关闭后，新文件仅自己可见</small></span>
 </label>
 <div class="upload-progress" id="upload-progress" style="display:none">
 <div class="upload-progress-bar" id="upload-progress-bar"></div>
@@ -290,6 +232,7 @@ CLI 工具
 <button type="button" class="view-toggle-btn" data-view="card" role="tab" title="卡片视图" aria-label="卡片视图">▦</button>
 </div>
 </div>
+<div class="neo-list-columns" aria-hidden="true"><span></span><span>文件名称</span><span>格式</span><span>可见性</span><span>更新时间</span><span>操作</span></div>
 <div class="file-list" id="file-list" aria-busy="false"></div>
 <div class="empty-state" id="empty-state" style="display:none">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
@@ -318,7 +261,7 @@ CLI 工具
 <template id="preview-template">
 <div class="layout preview-layout" id="preview-layout-root">
 <header class="header header-preview" id="preview-header">
-<div class="preview-topbar">
+<div class="neo-preview-brand"><div class="neo-brand-group"><a class="neo-brand" href="/" aria-label="返回纸鹊首页"><img src="/home-share/assets/magpie-logo-transparent-v1.png" alt="纸鹊 Magpie" width="168" height="76"></a><span class="neo-motto" lang="en">Ideas Worth Spreading</span></div><a href="#/" class="neo-back-home">返回工作台 ↗</a></div><div class="preview-topbar">
 <button type="button" class="preview-title-strip" id="preview-title-expand" aria-controls="preview-toolbar-expanded" aria-expanded="true">
 <span id="preview-title" class="preview-title-text">加载中…</span>
 <svg class="preview-title-strip-hint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
@@ -338,7 +281,7 @@ CLI 工具
 <button type="button" class="btn btn-small" data-mode="source">源码</button>
 <button type="button" class="btn btn-small" data-mode="edit" id="btn-edit" hidden>编辑</button>
 </div>
-<div class="preview-more-dropdown" id="preview-more-dropdown">
+<button type="button" class="btn btn-small btn-primary" id="btn-preview-share" hidden>分享设置</button><div class="preview-more-dropdown" id="preview-more-dropdown">
 <button type="button" class="btn btn-small preview-more-trigger" id="btn-preview-more" aria-label="更多操作" aria-haspopup="true" aria-expanded="false">
 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:16px;height:16px"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
 </button>
@@ -642,11 +585,11 @@ CLI 工具
 <div class="modal-body">
 <label class="login-field">
 <span>用户名</span>
-<input type="text" id="profile-username" autocomplete="username" placeholder="字母、数字、下划线，2-30 位">
+<input type="text" id="profile-username" autocomplete="username" placeholder="字母、数字、下划线，2-30 位" aria-describedby="profile-username-help"><small id="profile-username-help">字母、数字、下划线，2–30 位</small>
 </label>
 <label class="login-field">
 <span>邮箱</span>
-<input type="email" id="profile-email" autocomplete="email" placeholder="可选">
+<input type="email" id="profile-email" autocomplete="email" placeholder="可选"><small>选填</small>
 </label>
 <div class="login-error" id="profile-error" role="alert" hidden></div>
 </div>
@@ -828,11 +771,11 @@ CLI 工具
 <button type="button" class="btn btn-small modal-close" id="share-settings-close" aria-label="关闭">×</button>
 </div>
 <div class="modal-body">
-<div class="share-status" id="share-status-badges"></div>
+<p class="neo-share-filename" id="share-filename"></p><div class="share-status" id="share-status-badges"></div>
 
 <div class="share-link-card">
 <div class="share-link-card-header">
-<span class="share-link-card-label">分享链接</span>
+<label class="share-link-card-label" for="share-link-input">分享链接</label>
 </div>
 <div class="share-link-row">
 <input type="text" id="share-link-input" readonly>
@@ -843,13 +786,19 @@ CLI 工具
 </div>
 </div>
 
+<div class="share-section-footer">
+<button type="button" class="btn btn-small btn-danger-soft" id="share-regenerate">
+<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+重新生成链接
+</button><p class="neo-share-warning">重新生成后，旧链接将立即失效。</p>
+</div>
 <div class="share-sections">
 <div class="share-section">
 <div class="share-section-header">
 <div class="share-section-icon">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
 </div>
-<div class="share-section-title">自定义别名</div>
+<label class="share-section-title" for="share-alias-input">自定义别名</label>
 </div>
 <div class="share-section-body">
 <div class="share-input-group">
@@ -858,12 +807,7 @@ CLI 工具
 </div>
 <div class="share-hint">仅字母、数字、下划线、连字符，3~32 位</div>
 </div>
-<div class="share-section-footer">
-<button type="button" class="btn btn-small btn-danger-soft" id="share-regenerate">
-<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-重新生成链接
-</button>
-</div>
+
 </div>
 
 <div class="share-section">
@@ -871,11 +815,11 @@ CLI 工具
 <div class="share-section-icon">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
 </div>
-<div class="share-section-title">过期时间</div>
+<label class="share-section-title" for="share-expires-input">过期时间</label>
 </div>
 <div class="share-section-body">
 <input type="datetime-local" id="share-expires-input">
-<div class="share-hint">留空表示永不过期（UTC 存储，本地时区显示）</div>
+<div class="share-hint">留空表示永不过期</div>
 </div>
 <div class="share-section-footer">
 <button type="button" class="btn btn-small" id="share-expires-save">保存</button>
@@ -888,7 +832,7 @@ CLI 工具
 <div class="share-section-icon">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
 </div>
-<div class="share-section-title">访问密码</div>
+<label class="share-section-title" for="share-password-input">访问密码</label>
 </div>
 <div class="share-section-body">
 <div class="share-input-group share-password-group">
@@ -913,6 +857,6 @@ CLI 工具
 </div>
 </div>
 
-<script type="module" src="/js/app.js?v=1.6.7-home-entry"></script>
+<script type="module" src="/js/app.js?v=1.6.7-neo1"></script>
 </body>
 </html>

@@ -80,11 +80,11 @@ MAGPIE_BASE 应指向你自己的服务。以下示例使用 \`${baseUrl}\`。
 | \`ls [--page --limit --kw --cat --tag]\` | 列出文件 |
 | \`cat <id>\` | 查看文件内容 |
 | \`url <id>\` | 打印 /s/:key 短链接 |
-| \`mv <id> <新名> [--public|--private]\` | 重命名 / 改公开性 |
+| \`mv <id> <新名> [--public\\|--private]\` | 重命名 / 改公开性 |
 | \`rm <id> [--yes]\` | 删除 |
 | \`star <id>\` / \`unstar <id>\` | 收藏 / 取消收藏 |
-| \`tags <id> [add|set|clear] [名,名,...]\` | 标签管理 |
-| \`skills ls | get <名> | download <名>\` | Skill 包 |
+| \`tags <id> [add\\|set\\|clear] [名,名,...]\` | 标签管理 |
+| \`skills ls\\|get <名>\\|download <名>\` | Skill 包 |
 | \`whoami\` | 校验 token |
 | \`update [--check] [--registry <url>]\` | 源码更新说明（**不需 token**；npm 尚未发布） |
 

@@ -98,3 +98,20 @@ test('删除文件后个人存储减少', async () => {
   assert.strictEqual(after.body.storageBytes, before.body.storageBytes - Buffer.byteLength(content, 'utf-8'));
   assert.strictEqual(after.body.fileCount, before.body.fileCount - 1);
 });
+
+test('usage separates successful responses, cache hits, failures and actual 24-hour counts', async () => {
+  const created = await adminAgent.post('/api/users').send({ username: 'metricfixture', password: 'metrics-test-password' }).expect(200);
+  const { dbRun } = require('../../lib/db');
+  for (const [status, time] of [[200, "datetime('now')"], [201, "datetime('now','-2 days')"], [304, "datetime('now')"], [403, "datetime('now')"]]) {
+    await dbRun(`INSERT INTO api_calls (user_id, source, status, created_at) VALUES (?, 'cli', ?, ${time})`, [created.body.id, status]);
+  }
+  const agent = request.agent(env.app);
+  await agent.post('/api/auth/login').send({ account: 'metricfixture', password: 'metrics-test-password' }).expect(200);
+  const usage = (await agent.get('/api/users/me/usage').expect(200)).body;
+  assert.equal(usage.apiCallsTotal, 2);
+  assert.equal(usage.apiCalls24h, 1);
+  assert.equal(usage.apiRequestsTotal, 4);
+  assert.equal(usage.apiCacheHits, 1);
+  assert.equal(usage.apiFailed, 1);
+  assert.equal(usage.apiCallsBySource.cli, 2);
+});

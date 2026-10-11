@@ -1,5 +1,5 @@
 # --- builder：装编译工具链，编译 native 模块（sqlite3 等） ---
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 # --- frontend builder：装 devDeps（esbuild）并打包前端到 public/dist ---
-FROM node:20-alpine AS frontend
+FROM node:24-alpine AS frontend
 
 WORKDIR /app
 
@@ -22,7 +22,7 @@ COPY build.js ./
 RUN npm run build
 
 # --- runner：纯运行环境，不带编译工具链，镜像保持小体积 ---
-FROM node:20-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 
@@ -39,6 +39,6 @@ ENV PORT=8858
 EXPOSE 8858
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget -qO /dev/null http://localhost:8858/ || exit 1
+  CMD wget -qO /dev/null http://localhost:8858/health || exit 1
 
 CMD ["node", "server.js"]

@@ -1,4 +1,4 @@
-// 登录/注册页：统一入口，支持 Google / GitHub / 微信 OAuth 与邮箱/用户名登录。
+// 登录/注册页：邮箱/用户名登录与微信官方扫码入口。
 // 邮箱未注册时自动发送验证码并引导完成注册；用户名不存在时提示错误。
 
 import { api } from '../api.js';
@@ -22,48 +22,25 @@ function oauthErrorFromHash() {
   return null;
 }
 
-function renderLogin(container) {
+function renderLogin(container, mode = 'login') {
   if (state.currentUser) { navigate('/'); return; }
   const tmpl = document.getElementById('login-template');
   container.innerHTML = '';
   container.appendChild(tmpl.content.cloneNode(true));
 
   const oauthBox = container.querySelector('#auth-oauth');
-  const googleBtn = container.querySelector('#btn-google-login');
-  const githubBtn = container.querySelector('#btn-github-login');
   const wechatBtn = container.querySelector('#btn-wechat-login');
-
-  function revealProvider(button) {
-    if (!oauthBox || !button) return;
-    button.hidden = false;
-    oauthBox.hidden = false;
-  }
-
-  // Google 登录
-  api('/api/auth/google/status').then(data => {
-    if (data.enabled) revealProvider(googleBtn);
-  }).catch(() => {});
-  googleBtn?.addEventListener('click', () => {
-    const returnTo = encodeURIComponent(currentReturnTo());
-    location.href = `/api/auth/google/start?returnTo=${returnTo}`;
-  });
-
-  // GitHub 登录
-  api('/api/auth/github/status').then(data => {
-    if (data.enabled) revealProvider(githubBtn);
-  }).catch(() => {});
-  githubBtn?.addEventListener('click', () => {
-    const returnTo = encodeURIComponent(currentReturnTo());
-    location.href = `/api/auth/github/start?returnTo=${returnTo}`;
-  });
-
-  // 微信登录（保留兼容）
+  const wechatStatus = container.querySelector('#wechat-status');
   api('/api/auth/wechat/status').then(data => {
-    if (data.enabled) revealProvider(wechatBtn);
-  }).catch(() => {});
-  wechatBtn?.addEventListener('click', () => {
-    const returnTo = encodeURIComponent(currentReturnTo());
-    location.href = `/api/auth/wechat/start?returnTo=${returnTo}`;
+    wechatBtn.hidden = !data.enabled;
+    wechatStatus.textContent = data.enabled
+      ? '打开微信官方页面，扫码后在手机上确认登录。'
+      : '微信登录暂未启用，请使用账号密码登录。';
+  }).catch(() => {
+    wechatStatus.textContent = '微信登录暂不可用，请使用账号密码登录。';
+  });
+  wechatBtn.addEventListener('click', () => {
+    location.href = `/api/auth/wechat/start?returnTo=${encodeURIComponent(currentReturnTo())}`;
   });
 
   // 统一登录/注册表单
@@ -96,7 +73,19 @@ function renderLogin(container) {
   const oauthError = oauthErrorFromHash();
   if (oauthError) showError(authError, oauthError);
 
+  function setAuthPresentation(registering) {
+    container.querySelector('.login-layout').classList.toggle('is-register', registering);
+    container.querySelector('#login-heading').textContent = registering ? '创建你的工作台' : '继续你的下一页';
+    container.querySelector('.login-eyebrow').textContent = registering ? 'GET STARTED / 开始使用' : 'WELCOME BACK / 欢迎回来';
+    container.querySelector('.login-tagline').textContent = registering ? '验证邮箱，完成注册。' : '登录纸鹊，管理你的文件与分享链接。';
+    container.querySelector('#auth-story-title').innerHTML = registering ? '让好想法，<br>从这里寄出。' : '一纸，寄万千。';
+    container.querySelector('#auth-story-desc').textContent = registering ? '验证邮箱，开启你的纸鹊工作台。' : '让创作离开本地，在链接里继续生长。';
+    oauthBox.hidden = registering;
+  }
+
   function showRegisterExtra(email) {
+    setAuthPresentation(true);
+    registerEmail.readOnly = !!email;
     authForm.classList.remove('active');
     authForm.hidden = true;
     registerExtra.hidden = false;
@@ -110,6 +99,7 @@ function renderLogin(container) {
   }
 
   function resetToLogin() {
+    setAuthPresentation(false);
     registerExtra.hidden = true;
     registerExtra.classList.remove('active');
     authForm.hidden = false;
@@ -118,7 +108,22 @@ function renderLogin(container) {
     clearError(authError);
   }
 
-  backToLoginBtn?.addEventListener('click', resetToLogin);
+  backToLoginBtn?.addEventListener('click', () => {
+    resetToLogin();
+    if (location.hash.startsWith('#/register')) navigate('/login');
+  });
+
+  // 服务端仍是注册开放与 SMTP 校验的最终边界。
+  Promise.all([api('/api/auth/registration-status'), api('/api/auth/smtp-status')]).then(([registration, smtp]) => {
+    if (!container.querySelector('#auth-form')) return;
+    container.querySelector('#register-entry').hidden = !(registration.enabled && smtp.configured);
+    if (mode === 'register') {
+      if (registration.enabled && smtp.configured) showRegisterExtra('');
+      else showError(authError, registration.enabled ? '邮箱注册暂不可用，请联系管理员。' : '当前未开放注册，请使用已有账号登录。');
+    }
+  }).catch(() => {
+    if (mode === 'register') showError(authError, '暂时无法检查注册状态，请稍后重试。');
+  });
 
   // 用户名实时校验
   registerUsername?.addEventListener('input', () => {
@@ -174,6 +179,12 @@ function renderLogin(container) {
   // 发送验证码
   let codeTimer = null;
   let tipTimer = null;
+  let tipDelay = null;
+  window.addEventListener('hashchange', () => {
+    clearInterval(codeTimer);
+    clearInterval(tipTimer);
+    clearTimeout(tipDelay);
+  }, { once: true });
   sendCodeBtn?.addEventListener('click', async () => {
     const email = registerEmail.value.trim();
     if (!email) { showError(registerError, '邮箱不能为空'); return; }
@@ -196,7 +207,7 @@ function renderLogin(container) {
           sendCodeBtn.textContent = remain + 's';
         }
       }, 1000);
-      setTimeout(() => {
+      tipDelay = setTimeout(() => {
         if (remain <= 0) return;
         const tips = ['还没收到？检查一下垃圾邮件', '邮件可能在垃圾箱里，去看看吧', '仍未收到？稍等片刻再查看'];
         let tipIdx = 0;

@@ -17,7 +17,7 @@ metadata:
 
 **统一走本技能的工作流**。
 
-> 内容生成后必须调用 `upload_file` 上传到纸鹊 Magpie，返回预览链接；不要只输出代码块让用户自己复制。
+> 内容生成后必须按下方入口优先级上传到纸鹊 Magpie，返回预览链接；不要只输出代码块让用户自己复制。CLI 可用时将内容写入文件并使用 `magpie upload`，否则调用 `upload_file`。
 > 大段 base64 上传很慢且费 token，本地已有的大文件 / ZIP 优先用 CLI 或 curl multipart 上传。
 
 ---
@@ -51,9 +51,16 @@ magpie whoami --token mg_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 > 没有 npm / 无法安装 CLI / 没有 Bash 能力的纯 MCP 客户端，直接调用下方的 MCP 工具即可，无需安装。
 
-## 同步 Skill 到 Claude
+## 安装 Skill 到客户端
 
-CLI 安装好后，把本 Skill 同步到 Claude Code / Desktop 的 skills 目录：
+CLI 安装好后，把本 Skill 同步到目标客户端的 skills 目录。Codex 可显式指定目录：
+
+```bash
+magpie skill install --dir ~/.agents/skills/magpie
+magpie skill update --dir ~/.agents/skills/magpie
+```
+
+其他客户端可使用原有默认检测或显式指定目录：
 
 ```bash
 # 自动安装到默认 skills 目录（按 ~/.claude/skills → ~/.claude-code/skills → ~/.agents/skills 顺序检测）
@@ -77,10 +84,10 @@ magpie skill update
 
 本 Skill 同时对应 **magpie CLI（命令行）** 与 **MCP 工具** 两套入口。执行上传、模板实例化、批量管理等任何操作时：
 
-1. **优先使用 magpie CLI**。只要当前环境能调用 `magpie` 命令（或可通过 npm/pnpm 安装），就先走 CLI：二进制流式上传、base64 不进模型、速度最快、token 消耗最少。
-2. **CLI 不可用时，再调用 MCP 工具**。纯 MCP 客户端（无 Bash、无法执行命令、无法安装 CLI）才通过 `upload_file`、`instantiate_content_template` 等 tool 完成。
+1. **CLI 支持的操作优先使用 magpie CLI**。当前环境能执行 `magpie`，并已配置服务地址和 Token 时，先走 CLI：multipart 二进制上传，避免把文件 base64 放入模型参数。
+2. **CLI 无法执行或不支持该操作时，使用已连接的 MCP 工具**。例如版本恢复、创建分类没有对应 CLI 命令，可直接调用 MCP；无 Bash 的客户端通过 `upload_file`、`instantiate_content_template` 等工具完成任务。
 
-> 判断标准：能否在当前环境执行 `magpie --version` 并成功返回版本号？能 → CLI；不能 → MCP。
+> 先用 `magpie --version` 检查命令可用，再用 `magpie whoami` 检查地址和 Token。参数或鉴权错误按实际错误处理，不自动更换账号或 Token。下文 MCP 示例适用于 CLI 不可用或无对应能力的场景。
 
 ---
 
@@ -223,6 +230,7 @@ deck/
   <script>
     Reveal.initialize({
       embedded: true,   // ★ iframe 内兼容，必须 true
+      scrollActivationWidth: null, // 隔离 iframe 中保持翻页模式，避免滚动模式访问 sessionStorage
       hash: true,
       controls: true,
       progress: true,
@@ -240,7 +248,8 @@ deck/
 - `Reveal.initialize` 必须设 **`embedded: true`**，避免 iframe 父页面抢方向键。
 - 全屏演示必须为 `html`、`body` 和 `.reveal` 设置高度；嵌入其他布局时给 `.reveal` 的父容器明确高度，否则初始化成功仍可能呈现空白。
 - **不要引用任何 CDN**（jsdelivr/unpkg/cdnjs）。所有 reveal.js 资源必须打进 `assets/`。
-- 每页 `<section>` 内容精简；reveal.js 不自动滚动，溢出会被裁切。
+- 必须设置 **`scrollActivationWidth: null`**，关闭窄屏自动滚动模式。Magpie 使用隔离 iframe，Reveal 的滚动模式会访问受限的 `sessionStorage`；固定翻页模式可保持桌面/窄屏按钮及键盘交互。
+- 每页 `<section>` 内容精简；固定翻页模式下溢出会被裁切。
 - 中文字体用系统栈。
 
 ## 4. 获取 reveal.js 资源
@@ -248,7 +257,8 @@ deck/
 reveal.js 引擎 + 基础 CSS + 4 套主题 + notes/highlight 插件骨架**已随本 Skill 包下发**（`assets/` 目录）。生成幻灯片时直接复制：
 
 ```bash
-SKILL=~/.claude/skills/magpie
+# 使用本次实际安装目录；Codex 的常用目录如下
+SKILL=~/.agents/skills/magpie
 
 mkdir -p deck/assets/plugin/notes deck/assets/plugin/highlight
 cp "$SKILL/assets/reveal.js"              deck/assets/
@@ -261,15 +271,11 @@ cp "$SKILL/assets/plugin/highlight/monokai.css" deck/assets/plugin/highlight/
 
 **必须引入的两个 CSS**：`reveal-base.css`（基础布局）+ `theme.css`（主题变量）。顺序：base 在前，theme 在后。
 
-### highlight.js 按需获取（可选）
+### 代码高亮（可选）
 
-本 Skill 默认**不含** highlight.js 全量文件（940KB，太重）。若幻灯片需要代码高亮：
+随包 `assets/plugin/highlight/plugin.js` 是浏览器可直接执行的插件，已包含 highlight.js。需要高亮时复制此文件及 `monokai.css`，按上方示例通过普通 script 加载并使用 `plugins: [RevealHighlight]`；无需额外下载或加载 highlighter。
 
-```bash
-npm pack highlight.js@11 && tar -xzf highlight.js-*.tgz --strip-components=1 -C deck/assets/plugin/highlight package/es/highlight.min.js package/styles/monokai.css
-```
-
-不需要代码高亮时，不要引入。
+不需要代码高亮时，省略插件 script、对应 CSS 及 plugins 配置。
 
 ### 找不到本 Skill 包时
 
@@ -327,11 +333,11 @@ upload_file(
 ## 场景一：用户指定模板或风格
 
 ```
-1. 调 list_content_templates 查询模板市场
+1. CLI 可用时用 magpie template ls 查询模板市场，否则调 list_content_templates
    - 如果用户指定了分类类型（如「PPT」「书稿」），设置 category 参数
    - 如果用户指定了风格关键词，设置 keyword 参数
 2. 向用户展示匹配的模板列表（标题、分类、描述）
-3. 用户选择一个模板后，调 get_content_template(shareKey=选择的模板share_key) 获取完整样例
+3. 用户选择后，用 magpie template get <share_key> 获取完整样例；CLI 不可用时调 get_content_template(shareKey=选择的模板share_key)
 4. 学习样例的以下特征：
    - 整体布局结构（header/main/footer/sidebar 等区域划分）
    - 色彩方案（主色、辅色、背景色、文字色）
@@ -340,14 +346,14 @@ upload_file(
    - 使用的 CSS 技术（Grid/Flexbox/absolute 等）
    - 特殊效果（渐变、阴影、动画等）
 5. 根据用户的具体内容需求，生成风格一致但内容全新的 HTML/Markdown
-6. 调 upload_file 上传到纸鹊 Magpie，返回预览链接
+6. 将内容写入文件，用 magpie upload <路径> 上传并返回链接；CLI 不可用时调 upload_file
 ```
 
 ## 场景二：自动推荐模板
 
 ```
 1. 根据用户需求判断可能的分类类型
-2. 调 list_content_templates(category=分类, sort="use_count", limit=3)
+2. CLI 可用时用 magpie template ls --category <分类> --limit 3；否则调 list_content_templates(category=分类, sort="use_count", limit=3)
 3. 如果有匹配模板，向用户推荐：
    「我找到了几个相关模板，是否参照某个模板的风格？还是直接生成？」
 4. 用户选择后，按场景一的流程继续
@@ -428,7 +434,7 @@ AI 拿到样例后应学习的维度（按优先级）：
 
 ```
 1. 根据用户需求生成完整的 HTML 或 Markdown 内容
-2. 调用 upload_file:
+2. CLI 可用时将内容写入文件，执行 magpie upload <路径>；分享公开内容加 --public，用户要求私有时不加。CLI 不可用时调用 upload_file:
    - name: 带扩展名的文件名（如 "data-report.html"、"meeting-notes.md"）
    - content: 完整正文（UTF-8 字符串）
    - isPublic: 默认 true（除非用户明确要求私有）
@@ -452,10 +458,10 @@ AI 拿到样例后应学习的维度（按优先级）：
 ## 场景二：读取已有文件 → 修改 → 覆盖更新
 
 ```
-1. 调 list_files 查看文件列表，找到目标文件 id
-2. 调 get_file_content(id=目标id) 读取当前内容
+1. 用 magpie ls 查找目标 id；CLI 不可用时调 list_files
+2. 用 magpie cat <id> 读取内容；CLI 不可用时调 get_file_content(id=目标id)
 3. 根据用户要求修改内容
-4. 调 upload_file(name=原文件名, content=修改后内容, overwriteFileId=目标id)
+4. 写入文件后执行 magpie upload <路径> --overwrite <id>；CLI 不可用时调 upload_file(name=原文件名, content=修改后内容, overwriteFileId=目标id)
 5. 告知用户已更新
 ```
 
@@ -464,7 +470,7 @@ AI 拿到样例后应学习的维度（按优先级）：
 ## 场景三：查看已上传文件
 
 ```
-1. 调 list_files 返回文件列表
+1. 用 magpie ls 返回列表；CLI 不可用时调 list_files
 2. 向用户展示文件摘要（文件名、类型、大小、公开/私有）
 ```
 
@@ -553,11 +559,11 @@ zip -r site.zip index.html assets/
 magpie upload site.zip --public
 ```
 
-## 模型刚生成的 HTML/MD（含大文件）→ 直接 upload_file
+## 模型刚生成的 HTML/MD → 按入口优先级上传
 
-内容本就在模型输出里，`upload_file` 让这些 token 只发一遍——返回值不含 content，不会回灌进上下文。
+CLI 可用时先写入本地文件，再通过 `magpie upload` 上传；同样不传 base64。CLI 不可用时，用 `upload_file` 发送完整正文，其返回值不包含正文。
 
-判断标准：内容是「此刻生成、已在上下文」还是「磁盘上已存在的文件」——前者用 `upload_file`，后者用 CLI / curl。
+内容来源不改变 CLI 优先级；大文件和 ZIP 尤其应避免把 base64 放入模型参数。
 
 ---
 
@@ -583,7 +589,7 @@ magpie upload site.zip --public
 - `list_files` — 列出文件
 - `get_file_content` — 读取文件内容
 - `delete_file` — 删除文件
-- `rename_file` — 改名 / 改公开性
+- `rename_file` — 仅改名；修改公开性使用 `magpie mv <id> <名称> --public` 或 `--private`
 - `get_file_url` — 获取分享链接
 - `star_file` / `unstar_file` — 收藏
 - `list_file_versions` / `restore_file_version` — 版本历史

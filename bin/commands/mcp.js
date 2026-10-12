@@ -11,6 +11,7 @@ async function run(_client, _args, { base, token }) {
   const api = createClient({ base, token, source: 'mcp' });
   await api.get('/api/files?limit=1'); // Fail before handshake if the token is invalid.
   const server = createMcpServer({
+    baseUrl: base,
     api, port: Number(url.port || (url.protocol === 'https:' ? 443 : 80)),
     mcpIp: url.hostname, protocol: url.protocol.slice(0, -1),
   });

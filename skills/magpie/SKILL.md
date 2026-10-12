@@ -36,6 +36,14 @@ npm install && npm link  # 在 Magpie 源码目录执行，npm 包尚未发布
 magpie --version
 ```
 
+先配置服务根地址。远程部署填写实际可访问的 HTTP(S) 地址；本机部署可用 `http://localhost:8858`。不得用 `/mcp` 地址作为 CLI 根地址。
+
+```bash
+export MAGPIE_BASE="https://your-magpie.example" # 替换为自己的服务根地址
+```
+
+地址优先级：`--base` > `MAGPIE_BASE` 环境变量 > 最近 `.env` 的 `MAGPIE_BASE` > 本地默认地址。
+
 配置 Token（三选一即可）：
 
 ```bash

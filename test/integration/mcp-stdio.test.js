@@ -22,13 +22,14 @@ test('exported desktop stdio configuration supports real tools/resources and tok
     const transport = new StdioClientTransport({
       command: process.execPath,
       args: [path.resolve(__dirname, '../../bin/magpie.js'), ...config.args],
-      env: { ...config.env, MAGPIE_BASE: base, MAGPIE_TOKEN: token.token }, cwd: env.dataDir,
+      env: { ...config.env, APP_URL: 'https://unrelated.example', MAGPIE_BASE: base, MAGPIE_TOKEN: token.token }, cwd: env.dataDir,
     });
     await client.connect(transport);
     assert.equal((await client.listTools()).tools.length, 18);
     assert.equal((await client.listResources()).resources.length, 1);
     const uploaded = await client.callTool({ name: 'upload_file', arguments: { name: 'stdio-canary.md', content: '# STDIO CANARY', isPublic: false } });
     const file = JSON.parse(uploaded.content[0].text);
+    assert.equal(new URL(file.url).origin, base, 'stdio必须使用客户端MAGPIE_BASE，不能继承其他应用APP_URL');
     const read = await client.callTool({ name: 'get_file_content', arguments: { id: file.id } });
     assert.match(read.content[0].text, /STDIO CANARY/);
     const resource = await client.readResource({ uri: `magpie://file/${file.id}` });

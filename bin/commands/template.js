@@ -36,7 +36,7 @@ async function run(client, args) {
 async function listTemplates(client, opts) {
   const params = new URLSearchParams();
   if (opts.category) params.set('category', opts.category);
-  if (opts.fileType) params.set('fileType', opts.fileType);
+    if (opts['file-type'] || opts.fileType) params.set('fileType', opts['file-type'] || opts.fileType);
   if (opts.kw) params.set('keyword', opts.kw);
   if (opts.limit) params.set('limit', String(opts.limit));
   const qs = params.toString();
@@ -58,6 +58,7 @@ async function getTemplate(client, shareKey) {
   out(`${t.share_key || shareKey} ${t.title}\n`);
   out(`类型：${t.file_type}\n`);
   if (t.description) out(`描述：${t.description}\n`);
+  out(`\n${t.content || ''}\n`);
   out(`\n使用此模板：magpie template use ${shareKey}\n`);
 }
 

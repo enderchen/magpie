@@ -41,18 +41,70 @@ function ensureSource() {
   }
 }
 
+function sourceFiles(dir = SOURCE_SKILL_DIR, prefix = '') {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+    const relative = path.join(prefix, entry.name);
+    if (entry.isDirectory()) return sourceFiles(path.join(dir, entry.name), relative);
+    return [relative];
+  });
+}
+
+function validateTarget(target) {
+  if (target === path.parse(target).root || target === os.homedir() ||
+      target === SOURCE_SKILL_DIR || SOURCE_SKILL_DIR.startsWith(target + path.sep) ||
+      target.startsWith(SOURCE_SKILL_DIR + path.sep)) {
+    throw new Error('拒绝把根目录、个人主目录或技能源码目录作为安装目标');
+  }
+  if (!fs.existsSync(target)) {
+    // A dangling symlink must not be treated as a new directory.
+    try { fs.lstatSync(target); } catch (e) { if (e.code === 'ENOENT') return; throw e; }
+    throw new Error('安装目标不能是符号链接');
+  }
+  if (!fs.lstatSync(target).isDirectory()) throw new Error('安装目标必须是普通目录，不能是符号链接');
+  const actual = fs.realpathSync(target);
+  const source = fs.realpathSync(SOURCE_SKILL_DIR);
+  if (source === actual || source.startsWith(actual + path.sep) || actual.startsWith(source + path.sep)) {
+    throw new Error('安装目标与技能源码目录重叠');
+  }
+  const entries = fs.readdirSync(target);
+  if (!entries.length) return;
+  const md = path.join(target, 'SKILL.md');
+  if (!fs.existsSync(md) || !fs.lstatSync(md).isFile() ||
+      !/^name:\s*magpie\s*$/m.test(fs.readFileSync(md, 'utf8'))) {
+    throw new Error('目标目录不是已安装的 magpie Skill，拒绝删除原有内容');
+  }
+  const allowed = new Set(sourceFiles());
+  function inspect(dir, prefix = '') {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const relative = path.join(prefix, entry.name);
+      if (entry.isDirectory()) inspect(path.join(dir, entry.name), relative);
+      else if (!entry.isFile() || !allowed.has(relative)) {
+        throw new Error(`目标目录含非 Skill 内容：${relative}，拒绝删除`);
+      }
+    }
+  }
+  inspect(target);
+}
+
 async function installSkill(explicitDir) {
   ensureSource();
   const target = detectTargetDir(explicitDir);
-
+  validateTarget(target);
   fs.mkdirSync(path.dirname(target), { recursive: true });
-
-  // 先清空旧版本，避免残留文件
-  if (fs.existsSync(target)) {
-    fs.rmSync(target, { recursive: true, force: true });
+  const staging = fs.mkdtempSync(path.join(path.dirname(target), '.magpie-install-'));
+  const backup = staging + '-previous';
+  try {
+    fs.cpSync(SOURCE_SKILL_DIR, staging, { recursive: true, preserveTimestamps: true });
+    if (fs.existsSync(target)) fs.renameSync(target, backup);
+    try { fs.renameSync(staging, target); }
+    catch (e) {
+      if (fs.existsSync(backup)) fs.renameSync(backup, target);
+      throw e;
+    }
+    fs.rmSync(backup, { recursive: true, force: true });
+  } finally {
+    fs.rmSync(staging, { recursive: true, force: true });
   }
-
-  fs.cpSync(SOURCE_SKILL_DIR, target, { recursive: true, preserveTimestamps: true });
 
   const pkg = require('../../package.json');
   out(`✓ 已安装 magpie Skill v${pkg.version} → ${target}\n`);
@@ -61,7 +113,9 @@ async function installSkill(explicitDir) {
 }
 
 async function uninstallSkill(explicitDir) {
+  ensureSource();
   const target = detectTargetDir(explicitDir);
+  validateTarget(target);
   if (!fs.existsSync(target)) {
     out(`（Skill 未安装于 ${target}）\n`);
     return;

@@ -24,7 +24,7 @@ metadata:
 
 # 安装 CLI
 
-本 Skill 推荐配合 **magpie CLI** 使用。当前尚未发布 npm 包。准备好 Node.js ≥ 20 并取得 Magpie 源码后，在源码目录安装：
+本 Skill 推荐配合 **magpie CLI** 使用。当前尚未发布 npm 包。准备好 Node.js ≥ 22.13.0 并取得 Magpie 源码后，在源码目录安装：
 
 ```bash
 npm install && npm link  # 在 Magpie 源码目录执行，npm 包尚未发布
@@ -202,6 +202,10 @@ deck/
   <link rel="stylesheet" href="assets/reveal-base.css">
   <link rel="stylesheet" href="assets/theme.css">
   <link rel="stylesheet" href="assets/plugin/highlight/monokai.css">
+  <style>
+    html, body { height: 100%; margin: 0; overflow: hidden; }
+    .reveal { height: 100%; }
+  </style>
 </head>
 <body>
   <div class="reveal">
@@ -234,6 +238,7 @@ deck/
 **关键约束**：
 
 - `Reveal.initialize` 必须设 **`embedded: true`**，避免 iframe 父页面抢方向键。
+- 全屏演示必须为 `html`、`body` 和 `.reveal` 设置高度；嵌入其他布局时给 `.reveal` 的父容器明确高度，否则初始化成功仍可能呈现空白。
 - **不要引用任何 CDN**（jsdelivr/unpkg/cdnjs）。所有 reveal.js 资源必须打进 `assets/`。
 - 每页 `<section>` 内容精简；reveal.js 不自动滚动，溢出会被裁切。
 - 中文字体用系统栈。
@@ -326,7 +331,7 @@ upload_file(
    - 如果用户指定了分类类型（如「PPT」「书稿」），设置 category 参数
    - 如果用户指定了风格关键词，设置 keyword 参数
 2. 向用户展示匹配的模板列表（标题、分类、描述）
-3. 用户选择一个模板后，调 get_content_template(id=选择的模板id) 获取完整样例
+3. 用户选择一个模板后，调 get_content_template(shareKey=选择的模板share_key) 获取完整样例
 4. 学习样例的以下特征：
    - 整体布局结构（header/main/footer/sidebar 等区域划分）
    - 色彩方案（主色、辅色、背景色、文字色）
@@ -375,14 +380,16 @@ upload_file(
 magpie template ls --category html-book --limit 5
 
 # 使用指定模板实例化（默认私有）
-magpie template use 42 --name "我的报告.html" --public
+magpie template use <share_key> --name "我的报告.html" --public
 ```
 
 **CLI 不可用时，再调用 MCP 工具**：
 
+Claude Desktop 等 stdio 客户端可以先安装 magpie CLI，再配置 `command: "magpie"`、`args: ["mcp"]`，并通过 `env.MAGPIE_BASE`、`env.MAGPIE_TOKEN` 指定服务和用户令牌。CLI 的 `mcp` 入口只在 stdout 输出 MCP 协议消息；需要后台服务已启动。桌面程序找不到命令时，用 magpie 的绝对路径。不要把 HTTP 配置直接粘贴进 stdio 配置。
+
 ```python
 instantiate_content_template(
-  id=42,
+  shareKey="<share_key>",
   originalName="我的报告.html",
   isPublic=True
 )

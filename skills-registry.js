@@ -62,8 +62,8 @@ function parseFrontmatter(text) {
 }
 
 function readSkillMeta(skillName) {
-  const skillRoot = path.join(SKILLS_DIR, skillName);
-  if (!fs.existsSync(skillRoot) || !fs.statSync(skillRoot).isDirectory()) return null;
+  const skillRoot = resolveSkillRoot(skillName);
+  if (!skillRoot) return null;
   const skillMdPath = path.join(skillRoot, 'SKILL.md');
   let parsed = { meta: {}, body: '' };
   if (fs.existsSync(skillMdPath)) {
@@ -74,7 +74,7 @@ function readSkillMeta(skillName) {
   const files = walkFiles(skillRoot);
   const installMdPath = path.join(skillRoot, 'INSTALL.md');
   let installBody = '';
-  if (fs.existsSync(installMdPath)) {
+  if (fs.existsSync(installMdPath) && fs.lstatSync(installMdPath).isFile()) {
     installBody = fs.readFileSync(installMdPath, 'utf-8');
   }
   return {
@@ -115,14 +115,31 @@ function listSkills() {
 }
 
 function getSkill(name) {
-  if (!/^[A-Za-z0-9._-]+$/.test(name)) return null;
   return readSkillMeta(name);
+}
+
+function resolveSkillRoot(name) {
+  if (typeof name !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(name)) return null;
+  try {
+    const base = fs.realpathSync(SKILLS_DIR);
+    const candidate = path.join(base, name);
+    if (!fs.lstatSync(candidate).isDirectory()) return null; // Reject directory symlinks.
+    const root = fs.realpathSync(candidate);
+    const relative = path.relative(base, root);
+    if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) return null;
+    if (!fs.lstatSync(path.join(root, 'SKILL.md')).isFile()) return null;
+    return root;
+  } catch (e) {
+    if (['ENOENT', 'ENOTDIR', 'ELOOP'].includes(e.code)) return null;
+    throw e;
+  }
 }
 
 function createZipStream(name) {
   const skill = getSkill(name);
   if (!skill) return null;
-  const skillRoot = path.join(SKILLS_DIR, name);
+  const skillRoot = resolveSkillRoot(name);
+  if (!skillRoot) return null;
   const archive = archiver('zip', { zlib: { level: 9 } });
   archive.on('warning', (err) => {
     if (err.code !== 'ENOENT') logger.error({ type: 'app', message: 'archiver 警告', error: err.message });
@@ -130,7 +147,10 @@ function createZipStream(name) {
   archive.on('error', (err) => {
     logger.error({ type: 'app', message: 'archiver 错误', error: err.message });
   });
-  archive.directory(skillRoot, name);
+  // Match the advertised file list and never archive symlinks or their targets.
+  for (const file of walkFiles(skillRoot)) {
+    archive.file(file.absPath, { name: `${name}/${file.relPath}` });
+  }
   return archive;
 }
 

@@ -3,6 +3,14 @@ const test = require('node:test');
 const assert = require('node:assert');
 const { parse } = require('../../bin/args');
 
+test('boolean flags before positionals never consume a filename or command', () => {
+  assert.deepStrictEqual(parse(['upload', '--public', 'report.html']).positional, ['upload', 'report.html']);
+  assert.strictEqual(parse(['--help', 'upload']).opts.help, true);
+  assert.strictEqual(parse(['-h']).opts.help, true);
+  assert.strictEqual(parse(['-v']).opts.version, true);
+  assert.strictEqual(parse(['upload', '--public=false', 'report.html']).opts.public, false);
+});
+
 test('parse: 空数组 → cmd/sub 为 null', () => {
   const r = parse([]);
   assert.strictEqual(r.cmd, null);

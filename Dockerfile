@@ -18,6 +18,7 @@ COPY package*.json ./
 RUN npm ci
 
 COPY public ./public
+COPY skills ./skills
 COPY build.js ./
 RUN npm run build
 
@@ -30,6 +31,8 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY . .
 # 用 frontend 阶段打包好的 dist 覆盖（runner 的 COPY . . 可能带入本地 dist，这里以构建产物为准）
 COPY --from=frontend /app/public/dist ./public/dist
+COPY --from=frontend /app/public/vendor/mermaid-safe.js ./public/vendor/mermaid-safe.js
+COPY --from=frontend /app/skills/magpie/assets/plugin/highlight/plugin.js ./skills/magpie/assets/plugin/highlight/plugin.js
 
 RUN mkdir -p data/uploads
 

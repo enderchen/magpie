@@ -20,6 +20,7 @@ const { createClient, HttpError } = require('./client');
 const { setIo, resetIo } = require('./commands/_shared');
 
 const COMMANDS = {
+  mcp: () => require('./commands/mcp'),
   upload: () => require('./commands/upload'),
   ls: () => require('./commands/ls'),
   cat: () => require('./commands/cat'),
@@ -52,7 +53,7 @@ const HELP = `magpie —— 纸鹊 Magpie 命令行
   cat <id>                                    输出文件原始内容
   url <id>                                    打印文件公开预览链接 /s/:key
   mv <id> <新名> [--public|--private]          改名 / 改公开性
-  rm <id> [--yes]                             删除文件（--yes 跳过确认）
+  rm <id> --yes                               删除文件（必须明确确认）
   star <id> / unstar <id>                     收藏 / 取消收藏
   tags <id> [add|set|clear] [名,名,...]        查看 / 追加 / 替换 / 清空标签
   skills ls | get <名> | download <名> [--out 文件]
@@ -64,10 +65,11 @@ const HELP = `magpie —— 纸鹊 Magpie 命令行
                                               交互式升级项目版本号并同步所有文件
   template ls [--category <slug> --file-type html|markdown --kw <词> --limit N]
                                               浏览内容模板市场
-  template get <id>                           查看模板完整内容
-  template use <id> [--name <文件名>] [--public]
+  template get <shareKey>                           查看模板完整内容
+  template use <shareKey> [--name <文件名>] [--public]
                                               使用模板创建文件
   whoami                                      校验 token 是否有效
+  mcp                                         通过 stdin/stdout 提供 MCP（需运行中的服务）
   update [--registry <url>] [--check]         显示 Magpie 源码更新说明（不需 token）
 
 通用选项：
@@ -76,7 +78,7 @@ const HELP = `magpie —— 纸鹊 Magpie 命令行
   --help, -h             显示本帮助
 
 token 优先级：--token > MAGPIE_TOKEN 环境变量 > MCP_TOKEN 环境变量 > .env 里的同名变量
-base  优先级：--base  > MAGPIE_BASE  环境变量 > 默认 http://localhost:8858
+base  优先级：--base  > MAGPIE_BASE 环境变量 > 最近 .env 的 MAGPIE_BASE > 默认 http://localhost:8858
 
 支持的环境变量：MAGPIE_TOKEN、MAGPIE_BASE、MCP_TOKEN（MAGPIE_BASE 可替代 --base）
 
@@ -88,7 +90,7 @@ base  优先级：--base  > MAGPIE_BASE  环境变量 > 默认 http://localhost:
   magpie cat 8
   magpie tags 8 add 季度,财报
   magpie skills download magpie
-  magpie template use 12 --name 季度汇报.html --public
+  magpie template use <share_key> --name 季度汇报.html --public
 
 详细文档：https://github.com/enderchen/magpie`;
 
@@ -108,7 +110,8 @@ async function run(argv, inject = {}) {
   // 把命令模块的 out()/err() 重定向到同一组流
   setIo({ stdout, stderr });
 
-  const parsed = parse(argv);
+  let parsed;
+  try { parsed = parse(argv); } catch (e) { handleError(e, { stderr, exit }); return; }
   const { cmd, opts } = parsed;
 
   if (opts.version) {
@@ -128,7 +131,8 @@ async function run(argv, inject = {}) {
     return;
   }
 
-  const { token, base } = resolveConfig(opts, inject.env, inject.cwd);
+  let token, base;
+  try { ({ token, base } = resolveConfig(opts, inject.env, inject.cwd)); } catch (e) { handleError(e, { stderr, exit }); return; }
   if (!token && !NO_TOKEN.has(cmd)) {
     stderr.write(
       '未提供 token。用 --token <TOKEN>、MAGPIE_TOKEN 环境变量、或 .env 的 MCP_TOKEN 设置。\n'

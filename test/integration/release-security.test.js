@@ -225,6 +225,18 @@ test('MCP sessions reject another token and revoked tokens across POST, GET and 
   await request(env.app).post('/mcp').set('Authorization', `Bearer ${token.token}`).set('mcp-session-id', sid).expect(401);
 });
 
+test('MCP rejects external and opaque Origin on every method and route spelling', async () => {
+  const token = (await alice.post('/api/tokens').send({ name: 'origin-mcp' }).expect(200)).body.token;
+  await request(env.app).post('/mcp').set('Host', 'outside.invalid').set('Origin', 'http://outside.invalid').set('Authorization', `Bearer ${token}`).expect(403);
+  for (const route of ['/mcp', '/mcp/', '/MCP']) {
+    for (const method of ['post', 'get', 'delete', 'options']) {
+      for (const origin of ['https://outside.invalid', 'null']) {
+        await request(env.app)[method](route).set('Authorization', `Bearer ${token}`).set('Origin', origin).expect(403);
+      }
+    }
+  }
+});
+
 test('a fake bearer header never bypasses CSRF with an existing cookie session', async () => {
   await alice.post('/api/files/upload-json').set('Origin', 'https://attacker.example').set('Authorization', 'Bearer invalid-token').send({ name: 'csrf-cookie.html', content: '<p>bad</p>' }).expect(401);
 });

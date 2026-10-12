@@ -11,6 +11,8 @@
 const fs = require('fs');
 const path = require('path');
 
+const { UsageError } = require('./commands/upload');
+
 const DEFAULT_BASE = 'http://localhost:8858';
 
 // 解析 .env 文件为对象。仅支持最简语法：KEY=VALUE，值可带引号，# 开头为注释。
@@ -50,7 +52,10 @@ function loadEnvUp(startDir) {
   for (let i = 0; i < 5; i++) {
     const envPath = path.join(dir, '.env');
     const parsed = parseEnvFile(envPath);
-    Object.assign(merged, parsed);
+    // Fill missing keys from ancestors; the closest project wins.
+    for (const [key, value] of Object.entries(parsed)) {
+      if (!(key in merged)) merged[key] = value;
+    }
     const parent = path.dirname(dir);
     if (parent === dir) break;
     dir = parent;
@@ -71,13 +76,17 @@ function resolveConfig(opts, env = process.env, cwd = process.cwd()) {
   const token =
     opts.token ||
     env.MAGPIE_TOKEN ||
-    dotEnv.MAGPIE_TOKEN ||
     env.MCP_TOKEN ||
+    dotEnv.MAGPIE_TOKEN ||
     dotEnv.MCP_TOKEN ||
     null;
 
-  const base = (opts.base || env.MAGPIE_BASE || dotEnv.MAGPIE_BASE || DEFAULT_BASE)
-    .replace(/\/+$/, ''); // 去尾部斜杠，避免拼接出 //
+  const inputBase = opts.base || env.MAGPIE_BASE || dotEnv.MAGPIE_BASE || DEFAULT_BASE;
+  let address;
+  try { address = new URL(inputBase); } catch { throw new UsageError('服务地址必须是 HTTP(S) URL'); }
+  if (typeof inputBase !== 'string' || !['http:', 'https:'].includes(address.protocol) || address.username || address.password || address.search || address.hash) throw new UsageError('服务地址必须是 HTTP(S) URL，不含用户名密码、查询或片段');
+  if (token !== null && typeof token !== 'string') throw new UsageError('token 必须是字符串');
+  const base = inputBase.replace(/\/+$/, '');
 
   return { token, base };
 }

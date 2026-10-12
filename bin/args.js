@@ -16,6 +16,11 @@
 // 设计目标：够用、可预测、无运行时依赖。commander 级别的复杂场景（子命令嵌套、
 // 变长参数类型校验）超出 CLI 需求，故不引入。
 
+const { UsageError } = require('./commands/upload');
+const VALUE_OPTIONS = new Set(['token', 'base', 'overwrite', 'out', 'dir', 'type', 'target', 'category', 'file-type', 'fileType', 'kw', 'limit', 'name', 'registry', 'page', 'cat', 'tag', 'sort', 'order']);
+
+const BOOLEAN_OPTIONS = new Set(['public', 'private', 'yes', 'help', 'h', 'version', 'check', 'dry-run', 'dryRun', 'verbose']);
+
 function parse(argv) {
   const opts = {};
   const positional = [];
@@ -24,6 +29,11 @@ function parse(argv) {
 
   for (let i = 0; i < argv.length; i++) {
     const tok = argv[i];
+
+    if (tok === '-h' || tok === '-v') {
+      opts[tok === '-h' ? 'help' : 'version'] = true;
+      continue;
+    }
 
     if (tok === '--') {
       // 之后的全部当位置参数
@@ -37,12 +47,15 @@ function parse(argv) {
         // --key=value
         const key = tok.slice(2, eq);
         const value = tok.slice(eq + 1);
-        opts[key] = value;
+        if (BOOLEAN_OPTIONS.has(key) && !['true', 'false'].includes(value)) throw new UsageError(`--${key} 只接受 true 或 false`);
+        if (VALUE_OPTIONS.has(key) && !value) throw new UsageError(`--${key} 缺少参数值`);
+        opts[key] = BOOLEAN_OPTIONS.has(key) ? value === 'true' : value;
       } else {
         const key = tok.slice(2);
         const next = argv[i + 1];
+        if (VALUE_OPTIONS.has(key) && (next === undefined || next.startsWith('--') || next === '-h' || next === '-v')) throw new UsageError(`--${key} 缺少参数值`);
         // 下一个 token 不是选项（且存在）→ 当作值；否则当布尔标志
-        if (next !== undefined && !next.startsWith('--')) {
+        if (!BOOLEAN_OPTIONS.has(key) && next !== undefined && (!next.startsWith('-') || VALUE_OPTIONS.has(key))) {
           opts[key] = next;
           i++;
         } else {

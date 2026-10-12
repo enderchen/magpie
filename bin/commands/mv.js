@@ -10,9 +10,14 @@ async function run(client, args) {
     e.name = 'UsageError';
     throw e;
   }
+  if (args.opts.public && args.opts.private) {
+    const e = new Error('--public 与 --private 不能同时启用');
+    e.name = 'UsageError';
+    throw e;
+  }
   const body = { name: newName };
-  if (args.opts.public !== undefined) body.isPublic = true;
-  if (args.opts.private !== undefined) body.isPublic = false;
+  if (args.opts.public !== undefined) body.isPublic = args.opts.public;
+  if (args.opts.private) body.isPublic = false;
   await client.put(`/api/files/${id}`, body);
   out(`✓ 已更新 #${id}\n`);
 }

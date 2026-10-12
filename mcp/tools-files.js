@@ -2,14 +2,14 @@
 // rename_file / get_file_url / star_file / unstar_file。
 // 从 mcp-server.js 提取，行为保持不变。
 //
-// 统一接口：导出 register(server, ctx)，ctx = { api, port, mcpIp, protocol }。
+// 统一接口：导出 register(server, ctx)，ctx = { api, baseUrl }。
 // api 是 lib/dispatch 的进程内客户端（{get,post,put,del}），与 fetch 客户端同形。
 
 const { z } = require('zod');
 const { textResult, applyTagsAndCategory } = require('./util');
 const { ALLOWED_EXTS, MAX_FILE_SIZE } = require('./constants');
 
-function registerFileTools(server, { api, port, mcpIp, protocol }) {
+function registerFileTools(server, { api, baseUrl }) {
   // --- list_files ---
   server.registerTool(
     'list_files',
@@ -39,7 +39,7 @@ function registerFileTools(server, { api, port, mcpIp, protocol }) {
       const data = await api.get('/api/files' + (qs ? '?' + qs : ''));
       const files = (data.files || []).map((f) => ({
         ...f,
-        url: f.share_key ? `${protocol}://${mcpIp}:${port}/s/${f.share_key}` : null,
+        url: f.share_key ? `${baseUrl}/s/${f.share_key}` : null,
       }));
       return textResult({ files, pagination: data.pagination });
     }
@@ -110,7 +110,7 @@ function registerFileTools(server, { api, port, mcpIp, protocol }) {
           await applyTagsAndCategory(api, data.id, tags, categoryId);
           return textResult({
             ...data,
-            url: data.share_key ? `${protocol}://${mcpIp}:${port}/s/${data.share_key}` : `${protocol}://${mcpIp}:${port}/api/files/${data.id}/render`,
+            url: data.share_key ? `${baseUrl}/s/${data.share_key}` : `${baseUrl}/api/files/${data.id}/render`,
           });
         } catch (e) {
           return textResult(`ZIP 上传失败: ${e.message}`, { isError: true });
@@ -140,7 +140,7 @@ function registerFileTools(server, { api, port, mcpIp, protocol }) {
 
       return textResult({
         ...data,
-        url: data.share_key ? `${protocol}://${mcpIp}:${port}/s/${data.share_key}` : `${protocol}://${mcpIp}:${port}/api/files/${data.id}/render`,
+        url: data.share_key ? `${baseUrl}/s/${data.share_key}` : `${baseUrl}/api/files/${data.id}/render`,
       });
     }
   );
@@ -212,7 +212,7 @@ function registerFileTools(server, { api, port, mcpIp, protocol }) {
     },
     async ({ id }) => {
       const data = await api.get(`/api/files/${id}`);
-      const url = data.share_key ? `${protocol}://${mcpIp}:${port}/s/${data.share_key}` : `${protocol}://${mcpIp}:${port}/api/files/${id}/render`;
+      const url = data.share_key ? `${baseUrl}/s/${data.share_key}` : `${baseUrl}/api/files/${id}/render`;
       return textResult({ id, url, share_key: data.share_key || null });
     }
   );

@@ -3,6 +3,7 @@
 // 设计：CLI 与 MCP 是并列的两个客户端入口（REST / MCP），各有独立端点与 UI 入口，不互相嵌套。
 
 const express = require('express');
+const { publicBaseUrl } = require('../lib/util');
 const { dbAll } = require('../lib/db');
 const { requireAuth } = require('../lib/middleware/auth');
 const { marked } = require('../lib/templates');
@@ -107,7 +108,8 @@ router.get('/mcp/config', requireAuth, async (req, res) => {
   const enabled = !!process.env.MCP_TOKEN || true; // 现在总是可以用用户级 Token
   const host = req.headers.host || `localhost:${process.env.PORT || 8858}`;
   const protocol = req.protocol || 'http';
-  const url = `${protocol}://${host}/mcp`;
+  const baseUrl = publicBaseUrl(`${protocol}://${host}`);
+  const url = `${baseUrl}/mcp`;
 
   // 获取当前用户的 Token 列表
   const tokens = await dbAll(
@@ -122,7 +124,7 @@ router.get('/mcp/config', requireAuth, async (req, res) => {
   const config = buildServerConfig(url, globalToken);
   const stdioConfig = { mcpServers: { magpie: {
     command: 'magpie', args: ['mcp'],
-    env: { MAGPIE_BASE: `${protocol}://${host}`, MAGPIE_TOKEN: globalToken || '<YOUR_TOKEN>' },
+    env: { MAGPIE_BASE: baseUrl, MAGPIE_TOKEN: globalToken || '<YOUR_TOKEN>' },
   } } };
   const configs = [
     { id: 'claude-code',    label: 'Claude Code',    path: '.mcp.json（项目根）或 ~/.claude.json', config },
@@ -147,7 +149,7 @@ router.get('/mcp/config', requireAuth, async (req, res) => {
 router.get('/cli/guide', requireAuth, (req, res) => {
   const host = req.headers.host || `localhost:${process.env.PORT || 8858}`;
   const protocol = req.protocol || 'http';
-  const baseUrl = `${protocol}://${host}`;
+  const baseUrl = publicBaseUrl(`${protocol}://${host}`);
   const guideText = buildCliGuide(baseUrl);
   res.json({
     enabled: true,

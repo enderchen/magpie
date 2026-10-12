@@ -6,6 +6,7 @@
 // 当前共 18 tools + 2 resources。
 
 const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
+const { publicBaseUrl } = require('../lib/util');
 const pkgVersion = require('../package.json').version;
 const { registerFileTools } = require('./tools-files');
 const { registerVersionTools } = require('./tools-versions');
@@ -23,13 +24,13 @@ const { registerResources } = require('./resources');
  * @param {string} opts.protocol
  * @returns {McpServer}
  */
-function createMcpServer({ port, api, mcpIp, protocol }) {
+function createMcpServer({ port, api, mcpIp, protocol, baseUrl }) {
   const server = new McpServer(
     { name: 'magpie', version: pkgVersion },
     { capabilities: {} }
   );
 
-  const ctx = { api, port, mcpIp, protocol };
+  const ctx = { api, baseUrl: baseUrl || publicBaseUrl(`${protocol}://${mcpIp}:${port}`) };
 
   registerFileTools(server, ctx);
   registerVersionTools(server, ctx);

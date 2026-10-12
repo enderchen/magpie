@@ -6,7 +6,7 @@
 const { z } = require('zod');
 const { textResult } = require('./util');
 
-function registerContentTemplateTools(server, { api, port, mcpIp, protocol }) {
+function registerContentTemplateTools(server, { api, baseUrl }) {
   // --- list_content_templates ---
   server.registerTool(
     'list_content_templates',
@@ -87,7 +87,7 @@ function registerContentTemplateTools(server, { api, port, mcpIp, protocol }) {
         success: true,
         fileId: data.fileId,
         templateShareKey: data.templateShareKey,
-        url: `${protocol}://${mcpIp}:${port}/s/${data.shareKey || data.fileId}`,
+        url: `${baseUrl}/s/${data.shareKey || data.fileId}`,
         hint: '文件已创建到您的文件列表，可直接编辑或分享。',
       });
     }

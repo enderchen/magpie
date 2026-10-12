@@ -6,6 +6,19 @@ const path = require('path');
 const os = require('os');
 const { resolveConfig, parseEnvFile, loadEnvUp, DEFAULT_BASE } = require('../../bin/config');
 
+test('closest .env wins and process MCP_TOKEN wins over file MAGPIE_TOKEN', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'magpie-config-precedence-'));
+  const sub = path.join(root, 'project');
+  fs.mkdirSync(sub);
+  fs.writeFileSync(path.join(root, '.env'), 'MAGPIE_TOKEN=parent\nMAGPIE_BASE=http://parent:9\n');
+  fs.writeFileSync(path.join(sub, '.env'), 'MAGPIE_TOKEN=child\nMAGPIE_BASE=http://child:9\n');
+  try {
+    assert.equal(loadEnvUp(sub).MAGPIE_TOKEN, 'child');
+    assert.equal(resolveConfig({}, {}, sub).base, 'http://child:9');
+    assert.equal(resolveConfig({}, { MCP_TOKEN: 'process' }, sub).token, 'process');
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
 test('parseEnvFile: 基本 KEY=VALUE', () => {
   const tmp = path.join(os.tmpdir(), '.env-test-' + process.pid);
   fs.writeFileSync(tmp, 'MCP_TOKEN=abc123\nMAGPIE_BASE=http://1.2.3.4:8858\n');

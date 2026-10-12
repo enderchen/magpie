@@ -5,13 +5,13 @@ const { out, err } = require('./_shared');
 async function run(client, args, { exit }) {
   const id = args.sub;
   if (!id) {
-    const e = new Error('用法：magpie rm <id>');
+    const e = new Error('用法：magpie rm <id> --yes');
     e.name = 'UsageError';
     throw e;
   }
-  // 简单防误删：--yes 才跳过确认（非交互环境默认会提示）
-  if (!args.opts.yes && process.stdin.isTTY) {
-    err(`将删除文件 #${id}，此操作不可撤销。加 --yes 跳过确认。\n`);
+  // 自动化客户端与交互终端使用相同的显式删除确认。
+  if (!args.opts.yes) {
+    err(`未删除文件 #${id}。此操作不可撤销，请加 --yes 确认删除。\n`);
     (exit || ((c) => { process.exitCode = c; }))(1);
     return;
   }

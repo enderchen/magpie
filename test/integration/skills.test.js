@@ -108,6 +108,13 @@ test('GET /api/mcp/config → 200，含多客户端 configs 数组（仅 MCP 客
   res.body.configs.forEach(c => {
     assert.ok(c.config && c.config.mcpServers && c.config.mcpServers.magpie, `${c.id} config 应含 mcpServers.magpie`);
   });
+  for (const id of ['claude-desktop', 'cursor']) {
+    const entry = res.body.configs.find(c => c.id === id).config.mcpServers.magpie;
+    assert.equal(entry.command, 'magpie');
+    assert.deepEqual(entry.args, ['mcp']);
+    assert.ok(entry.env.MAGPIE_BASE);
+    assert.equal(entry.url, undefined);
+  }
 });
 
 test('GET /api/cli/guide → 200，返回 CLI 用法指南（与 MCP 并列的独立入口）', async () => {

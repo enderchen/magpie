@@ -74,6 +74,30 @@ manifest['app.js'] = appFile;
 
 fs.writeFileSync(path.join(DIST, 'manifest.json'), JSON.stringify(manifest, null, 2));
 
+// Ship a browser-ready Reveal plugin; upstream source imports highlight.js as a module.
+const highlightDir = path.join(__dirname, 'skills', 'magpie', 'assets', 'plugin', 'highlight');
+runEsbuild([
+  path.join(highlightDir, 'plugin.source.js'), '--bundle', '--format=iife',
+  '--global-name=RevealHighlight', '--footer:js=RevealHighlight = RevealHighlight.default;',
+  '--supported:template-literal=false',
+  '--minify', '--outfile=' + path.join(highlightDir, 'plugin.js'),
+]);
+
+// Build Mermaid from its external-dependency entry, rather than its upstream
+// prebundled KaTeX. Align the shipped manifest with the tested dependency pair.
+const mermaidPackagePath = require.resolve('mermaid/package.json');
+const mermaidPackage = JSON.parse(fs.readFileSync(mermaidPackagePath, 'utf8'));
+mermaidPackage.dependencies.katex = require('./package.json').dependencies.katex;
+fs.writeFileSync(mermaidPackagePath, JSON.stringify(mermaidPackage, null, 2) + '\n');
+const safeMermaidDir = path.join(PUBLIC, 'vendor');
+fs.mkdirSync(safeMermaidDir, { recursive: true });
+runEsbuild([
+  path.join(path.dirname(mermaidPackagePath), 'dist', 'mermaid.core.mjs'),
+  '--bundle', '--format=esm', '--minify', '--supported:template-literal=false',
+  '--alias:katex=' + require.resolve('katex/dist/katex.mjs'),
+  '--outfile=' + path.join(safeMermaidDir, 'mermaid-safe.js'),
+]);
+
 // --- 4. 汇总报告 ---
 const files = [];
 function walk(dir, rel = '') {

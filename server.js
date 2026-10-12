@@ -8,7 +8,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const multer = require('multer');
 const session = require('express-session');
-const SQLiteStore = require('connect-sqlite3')(session);
+const SQLiteStore = require('./lib/session-store');
 const bcrypt = require('bcryptjs');
 const helmet = require('helmet');
 const sqlite3 = require('sqlite3').verbose();
@@ -121,6 +121,10 @@ app.use((req, res, next) => {
   const unsafe = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
   const requestOrigin = `${req.protocol}://${req.get('host')}`;
   const siteOrigin = process.env.APP_URL ? new URL(process.env.APP_URL).origin : requestOrigin;
+  // MCP validates Origin for every method, including Bearer-authenticated requests.
+  if (/^\/mcp\/?$/i.test(req.path) && origin && origin !== siteOrigin) {
+    return res.status(403).json({ error: '不允许来自此 Origin 的 MCP 请求' });
+  }
   if (unsafe && origin && origin !== siteOrigin && origin !== requestOrigin && !req.get('authorization')?.startsWith('Bearer ')) {
     return res.status(403).json({ error: '不允许跨站提交，请在纸鹊网站内操作' });
   }
@@ -131,8 +135,9 @@ app.use((req, res, next) => {
   next();
 });
 
+const sessionStore = new SQLiteStore({ db: 'sessions.sqlite', dir: DATA_DIR });
 app.use(session({
-  store: new SQLiteStore({ db: 'sessions.sqlite', dir: DATA_DIR }),
+  store: sessionStore,
   secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
@@ -375,6 +380,7 @@ app.use('/vendor', (_req, res, next) => {
 });
 app.use('/vendor/katex', express.static(path.join(NODE_MODULES, 'katex', 'dist'), STATIC_OPTS));
 app.use('/vendor/highlight.js', express.static(path.join(NODE_MODULES, 'highlight.js'), STATIC_OPTS));
+app.get('/vendor/mermaid/mermaid.esm.min.mjs', (_req, res) => res.sendFile(path.join(__dirname, 'public/vendor/mermaid-safe.js')));
 app.use('/vendor/mermaid', express.static(path.join(NODE_MODULES, 'mermaid', 'dist'), STATIC_OPTS));
 
 // index:false：官网与应用壳由下方各自入口提供，避免静态目录默认首页。
@@ -475,6 +481,7 @@ async function bootstrapAdmin() {
 // --- 启动 ---
 // 初始化数据库与缓存（启动和测试都需要）；listen 仅在直接运行时执行。
 async function initApp() {
+  await sessionStore.ready;
   await configureDatabase();
   await runMigrations(db);
   initMailer();

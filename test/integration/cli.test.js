@@ -347,21 +347,20 @@ test('CLI skill install: 安装内置 magpie Skill 到指定目录', async () =>
   assert.match(s.out(), /已安装 magpie Skill v\d+\.\d+\.\d+/);
 });
 
-test('CLI skill update: install 别名，覆盖旧版本', async () => {
+test('CLI skill update: 拒绝删除未识别目录中的旧文件', async () => {
   const target = path.join(skillTestDir, 'update');
   fs.mkdirSync(target, { recursive: true });
   fs.writeFileSync(path.join(target, 'old-file.txt'), 'should be removed');
   const s = makeSinks();
   await run(['skill', 'update', '--dir', target], ctx(s));
-  assert.strictEqual(s.code(), 0, s.err());
-  assert.ok(!fs.existsSync(path.join(target, 'old-file.txt')), '旧残留文件应被清理');
-  assert.ok(fs.existsSync(path.join(target, 'SKILL.md')));
+  assert.strictEqual(s.code(), 1, s.err());
+  assert.ok(fs.existsSync(path.join(target, 'old-file.txt')), '未知文件必须保留');
 });
 
 test('CLI skill uninstall: 卸载指定目录的 Skill', async () => {
   const target = path.join(skillTestDir, 'uninstall');
   fs.mkdirSync(target, { recursive: true });
-  fs.writeFileSync(path.join(target, 'SKILL.md'), 'placeholder');
+  fs.cpSync(path.join(__dirname, '../../skills/magpie'), target, { recursive: true });
   const s = makeSinks();
   await run(['skill', 'uninstall', '--dir', target], ctx(s));
   assert.strictEqual(s.code(), 0, s.err());

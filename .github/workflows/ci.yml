@@ -46,3 +46,13 @@ jobs:
 
       - name: Build frontend bundle
         run: npm run build
+
+      - name: Verify fresh package installation
+        run: |
+          MAGPIE_PACKAGE_DIR=$(mktemp -d)
+          npm pack --pack-destination "$MAGPIE_PACKAGE_DIR"
+          MAGPIE_PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          npm install --prefix "$MAGPIE_PACKAGE_DIR/client" "$MAGPIE_PACKAGE_DIR/magpie-$MAGPIE_PACKAGE_VERSION.tgz" --no-audit --no-fund
+          npm audit --prefix "$MAGPIE_PACKAGE_DIR/client" --omit=dev
+          npm ls --prefix "$MAGPIE_PACKAGE_DIR/client" --all
+          "$MAGPIE_PACKAGE_DIR/client/node_modules/.bin/magpie" --version

@@ -18,6 +18,8 @@ async function run(client, args, { base }) {
     throw new UsageError('用法：magpie upload <文件路径> [--public] [--overwrite ID]');
   }
 
+  if (args.opts.overwrite !== undefined && !/^[1-9][0-9]*$/.test(String(args.opts.overwrite))) throw new UsageError('--overwrite 必须是正整数文件 ID');
+
   const abs = path.resolve(filePath);
   let stat;
   try {

@@ -72,7 +72,19 @@ function mountMcpServer(app, { port, mcpToken, mcpIp, protocol, authenticateRequ
     return createMcpServer({ port, api, mcpIp, protocol });
   }
 
+  const allowedHosts = new Set(['localhost', '127.0.0.1', '[::1]', mcpIp]);
+  if (process.env.APP_URL) allowedHosts.add(new URL(process.env.APP_URL).hostname);
+
   const bearerAuth = async (req, res, next) => {
+    // A forged Host must not turn an external Origin into a trusted same-origin request.
+    try {
+      const address = new URL(`http://${req.get('host')}`);
+      if (!allowedHosts.has(address.hostname) || address.username || address.password || address.pathname !== '/') {
+        return res.status(403).json({ error: 'MCP Host 不在允许范围内，请配置 APP_URL 或 MCP_IP' });
+      }
+    } catch {
+      return res.status(403).json({ error: '非法 MCP Host' });
+    }
     const auth = req.headers.authorization;
     if (!auth || !auth.startsWith('Bearer ')) {
       return res.status(401).json({ error: 'MCP 鉴权失败' });

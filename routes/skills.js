@@ -29,7 +29,7 @@ router.get('/skills/:name', requireAuth, async (req, res) => {
   res.json(skill);
 });
 
-// 生成标准 mcpServers 配置块（所有客户端共用同一格式，仅目标文件/说明不同）
+// HTTP and stdio clients need different transport configurations.
 function buildServerConfig(url, token) {
   return {
     mcpServers: {
@@ -81,7 +81,7 @@ MAGPIE_BASE 应指向你自己的服务。以下示例使用 \`${baseUrl}\`。
 | \`cat <id>\` | 查看文件内容 |
 | \`url <id>\` | 打印 /s/:key 短链接 |
 | \`mv <id> <新名> [--public\\|--private]\` | 重命名 / 改公开性 |
-| \`rm <id> [--yes]\` | 删除 |
+| \`rm <id> --yes\` | 删除（必须明确确认） |
 | \`star <id>\` / \`unstar <id>\` | 收藏 / 取消收藏 |
 | \`tags <id> [add\\|set\\|clear] [名,名,...]\` | 标签管理 |
 | \`skills ls\\|get <名>\\|download <名>\` | Skill 包 |
@@ -120,10 +120,14 @@ router.get('/mcp/config', requireAuth, async (req, res) => {
   // 所有 MCP 客户端共用同一配置对象；差异仅在目标文件路径/说明文字。
   // CLI 不属于 MCP 客户端（它是 REST 命令行入口），走独立的 /api/cli/guide 端点，不混在此处。
   const config = buildServerConfig(url, globalToken);
+  const stdioConfig = { mcpServers: { magpie: {
+    command: 'magpie', args: ['mcp'],
+    env: { MAGPIE_BASE: `${protocol}://${host}`, MAGPIE_TOKEN: globalToken || '<YOUR_TOKEN>' },
+  } } };
   const configs = [
     { id: 'claude-code',    label: 'Claude Code',    path: '.mcp.json（项目根）或 ~/.claude.json', config },
-    { id: 'claude-desktop', label: 'Claude Desktop', path: 'claude_desktop_config.json',           config },
-    { id: 'cursor',         label: 'Cursor',         path: '~/.cursor/mcp.json',                   config },
+    { id: 'claude-desktop', label: 'Claude Desktop', path: 'claude_desktop_config.json（先安装 CLI；command 可填 magpie 的绝对路径）', config: stdioConfig },
+    { id: 'cursor',         label: 'Cursor',         path: '~/.cursor/mcp.json（先安装 CLI；command 可填 magpie 的绝对路径）', config: stdioConfig },
     { id: 'zcode',          label: 'ZCode',          path: 'ZCode 设置 → MCP 服务器',              config },
     { id: 'generic',        label: '通用/标准 JSON', path: '任意支持 mcpServers 的客户端',         config }
   ];

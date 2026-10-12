@@ -6,7 +6,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 const readline = require('readline');
 const { out } = require('./_shared');
 
@@ -71,7 +71,7 @@ function readPkgVersion() {
   return JSON.parse(fs.readFileSync(pkgPath, 'utf-8')).version;
 }
 
-function syncFiles(current, next) {
+function planSync(current, next) {
   const changed = [];
   for (const item of SYNC_FILES) {
     const filePath = path.join(REPO_ROOT, item.path);
@@ -84,14 +84,13 @@ function syncFiles(current, next) {
       throw new Error(`${item.path} 中未找到当前版本号 ${current}，请检查文件是否已手动修改`);
     }
     content = content.replace(item.pattern(current), item.replacement(next));
-    fs.writeFileSync(filePath, content, 'utf-8');
-    changed.push(item.path);
+    changed.push({ path: item.path, content });
   }
   return changed;
 }
 
-function runCmd(cmd, opts = {}) {
-  execSync(cmd, { cwd: REPO_ROOT, stdio: 'inherit', ...opts });
+function runCmd(command, argv) {
+  execFileSync(command, argv, { cwd: REPO_ROOT, stdio: 'inherit' });
 }
 
 async function run(client, args) {
@@ -103,6 +102,7 @@ async function run(client, args) {
   const current = readPkgVersion();
   const target = args.opts.target;
   let type = args.opts.type;
+  if (target && type) throw usageError('--target 和 --type 不能同时指定');
   let next;
 
   if (target) {
@@ -121,6 +121,16 @@ async function run(client, args) {
   }
 
   const dryRun = args.opts['dry-run'] || args.opts.dryRun;
+  // Validate every target before npm version or any other write.
+  const changed = planSync(current, next);
+  const lockFiles = ['package-lock.json', 'npm-shrinkwrap.json'].filter(file => fs.existsSync(path.join(REPO_ROOT, file)));
+  const files = ['package.json', ...lockFiles, ...changed.map(item => item.path)];
+  if (dryRun) {
+    out(`[演练模式] 将更新以下文件（未写入、未提交、未打 tag、未推送）：\n`);
+    for (const file of files) out(`  ${file}\n`);
+    out(`版本：${current} → ${next}\n`);
+    return;
+  }
 
   if (!args.opts.yes) {
     const filesList = SYNC_FILES.map((f) => `  - ${f.path}`).join('\n');
@@ -136,33 +146,26 @@ async function run(client, args) {
     }
   }
 
-  // 1. npm version 更新 package.json / package-lock.json
-  runCmd(`npm version ${next} --no-git-tag-version`);
-
-  // 2. 同步其他文件
-  const changed = syncFiles(current, next);
-
-  if (dryRun) {
-    out(`[演练模式] 已更新文件（未提交/打 tag/推送）：\n`);
-    out(`  package.json\n`);
-    out(`  package-lock.json\n`);
-    for (const f of changed) out(`  ${f}\n`);
-    out(`版本：${current} → ${next}\n`);
-    out('如需回滚：git checkout -- . && git clean -fd\n');
-    return;
+  const originals = new Map(files.map(file => [file, fs.readFileSync(path.join(REPO_ROOT, file))]));
+  try {
+    runCmd('npm', ['version', next, '--no-git-tag-version', '--ignore-scripts']);
+    for (const item of changed) fs.writeFileSync(path.join(REPO_ROOT, item.path), item.content, 'utf8');
+  } catch (e) {
+    for (const [file, content] of originals) fs.writeFileSync(path.join(REPO_ROOT, file), content);
+    throw e;
   }
 
   // 3. git add + commit
-  runCmd('git add -A');
-  runCmd(`git commit -m "chore(release): bump version to ${next}\n\n统一同步版本号到 ${next}。"`);
+  runCmd('git', ['add', '--', ...files]);
+  runCmd('git', ['commit', '--only', '-m', `chore(release): bump version to ${next}`, '--', ...files]);
 
   // 4. 打 tag 并推送
-  runCmd(`git tag v${next}`);
-  runCmd('git push origin main');
-  runCmd(`git push origin v${next}`);
+  runCmd('git', ['tag', `v${next}`]);
+  runCmd('git', ['push', 'origin', 'HEAD']);
+  runCmd('git', ['push', 'origin', `v${next}`]);
 
   out(`✓ 已升级并推送：${current} → ${next}（tag v${next}）\n`);
-  out('  若仓库已配置 NPM_TOKEN，GitHub Actions release 工作流会自动发布到 npm。\n');
+  out('  npm 发布仍需单独授权与手动执行，当前工作流只验证和打包。\n');
 }
 
 module.exports = { run };

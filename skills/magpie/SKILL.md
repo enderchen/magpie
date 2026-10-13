@@ -24,7 +24,13 @@ metadata:
 
 # 安装 CLI
 
-本 Skill 推荐配合 **magpie CLI** 使用。当前尚未发布 npm 包。准备好 Node.js ≥ 22.13.0 并取得 Magpie 源码后，在源码目录安装：
+本 Skill 推荐配合 **magpie CLI** 使用。准备好 Node.js ≥ 22.13.0（支持 Node 22 / 24）。`@enderchen/magpie@1.6.7` 正式发布后可安装：
+
+```bash
+npm install -g @enderchen/magpie@1.6.7
+```
+
+当前发布候选尚未上架。发布前可安装维护者审核的 `enderchen-magpie-1.6.7.tgz`，或取得 Magpie 源码后，在源码目录安装：
 
 ```bash
 npm install && npm link  # 在 Magpie 源码目录执行，npm 包尚未发布

@@ -70,7 +70,7 @@ const HELP = `magpie —— 纸鹊 Magpie 命令行
                                               使用模板创建文件
   whoami                                      校验 token 是否有效
   mcp                                         通过 stdin/stdout 提供 MCP（需运行中的服务）
-  update [--registry <url>] [--check]         显示 Magpie 源码更新说明（不需 token）
+  update [--registry <url>] [--check]         查询 / 更新 @enderchen/magpie 最新版（不需 token）
 
 通用选项：
   --token <TOKEN>        鉴权 token（mg_ 用户 token 或 MCP_TOKEN）

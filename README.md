@@ -107,9 +107,21 @@ node test/mcp-harness.js 8858    # MCP 端点
 node test/perf-bench.js 8858     # 渲染/列表/缓存延迟基准
 ```
 
-### Magpie CLI（从源码安装）
+### Magpie CLI（npm 安装与源码安装）
 
 纸鹊 Magpie随包提供 `magpie` 命令行工具，可通过 REST API 上传 / 列出 / 管理文件，对大文件和 ZIP 走 multipart 二进制流式上传（比 MCP 的 base64 进 token 流更快更省）：
+
+待 `@enderchen/magpie@1.6.7` 正式发布后，使用 Node.js ≥ 22.13.0 安装（支持 Node 22 / 24）：
+
+```bash
+npm install -g @enderchen/magpie@1.6.7
+export MAGPIE_BASE=https://magpiesend.site
+# 在工作台设置中创建个人 API Token 后，配置 MAGPIE_TOKEN
+magpie --version
+magpie --help
+```
+
+发布前可安装已审核的 `enderchen-magpie-1.6.7.tgz` 本地包；源码安装方式如下：
 
 ```bash
 npm install
@@ -123,7 +135,7 @@ magpie --help
 
 `magpie` 与 MCP 是对称的两个客户端入口，都架在同一套 REST API 之上。详见 `magpie --help`。
 
-当前 `magpie update` 仅显示源码更新说明，不访问 npm 或安装其他包。正式发布前的打包、安装与发布步骤见下方指南。
+`magpie update --check` 查询 `@enderchen/magpie` 的版本；`magpie update` 更新同一包名。首次发布前 registry 尚无该版本时，查询会报错，不能代替本地包验收。正式发布前的打包、安装与发布步骤见下方指南。
 
 ### 发版
 

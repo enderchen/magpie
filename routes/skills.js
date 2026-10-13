@@ -9,6 +9,7 @@ const { requireAuth } = require('../lib/middleware/auth');
 const { marked } = require('../lib/templates');
 const { listSkills, getSkill, createZipStream } = require('../skills-registry');
 const logger = require('../logger');
+const pkg = require('../package.json');
 
 const router = express.Router();
 
@@ -50,7 +51,16 @@ function buildCliGuide(baseUrl) {
 
 \`magpie\` 是纸鹊 Magpie 的命令行工具，与 MCP 并列、基于同一套 REST API。适合 Bash/脚本/CI/Agent 场景，multipart 上传大文件更省流。
 
-## 安装（尚未发布 npm 包，从源码安装）
+## npm 安装（正式发布后）
+
+当前为发布候选；registry 上架前使用维护者审核的本地 tarball 或下方源码安装方式。
+
+\`\`\`bash
+npm install -g ${pkg.name}@${pkg.version}
+export MAGPIE_BASE=${baseUrl}
+\`\`\`
+
+## 从源码安装
 
 \`\`\`bash
 git clone https://github.com/enderchen/magpie.git magpie
@@ -87,7 +97,7 @@ MAGPIE_BASE 应指向你自己的服务。以下示例使用 \`${baseUrl}\`。
 | \`tags <id> [add\\|set\\|clear] [名,名,...]\` | 标签管理 |
 | \`skills ls\\|get <名>\\|download <名>\` | Skill 包 |
 | \`whoami\` | 校验 token |
-| \`update [--check] [--registry <url>]\` | 源码更新说明（**不需 token**；npm 尚未发布） |
+| \`update [--check] [--registry <url>]\` | 查询 / 更新 ${pkg.name}（**不需 token**；首次发布前查询可能返回 E404） |
 
 ## 常用示例
 

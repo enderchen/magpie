@@ -311,22 +311,47 @@ test('CLI: --help 打印帮助', async () => {
   await run(['--help'], ctx(s));
   assert.match(s.out(), /magpie —— 纸鹊 Magpie 命令行/);
   assert.match(s.out(), /upload/);
+  assert.match(s.out(), /查询 \/ 更新 @enderchen\/magpie/);
 });
 
-// --- Magpie fork updates ---
+// --- Scoped npm updates: never query or install the unrelated unscoped package ---
 for (const argv of [['update'], ['update', '--check'], ['update', '--registry', 'https://registry.npmjs.org']]) {
-  test(`Magpie ${argv.join(' ')} never queries or installs the upstream package`, async () => {
+  test(`Magpie ${argv.join(' ')} targets only @enderchen/magpie`, async () => {
     const s = makeSinks();
     const calls = [];
     await run(argv, ctx(s, {
-      env: {}, cwd: os.tmpdir(), npmExec: (args) => { calls.push(args); return ''; },
+      env: {}, cwd: os.tmpdir(), npmExec: (args) => { calls.push(args); return '1.6.8'; },
     }));
     assert.strictEqual(s.code(), 0);
-    assert.deepStrictEqual(calls, [], 'must not call npm for an unpublished fork');
-    // The repository URL remains reachable under its current name until GitHub is renamed.
-    assert.match(s.out(), /github\.com\/enderchen\/magpie/);
+    const registryArgs = argv.includes('--registry') ? ['--registry', 'https://registry.npmjs.org'] : [];
+    const expected = [['view', '@enderchen/magpie', 'version', ...registryArgs]];
+    if (!argv.includes('--check')) expected.push(['install', '-g', '@enderchen/magpie@latest', ...registryArgs]);
+    assert.deepStrictEqual(calls, expected);
+    assert.match(s.out(), /1\.6\.8/);
   });
 }
+
+test('CLI update: current registry version does not trigger an installation', async () => {
+  const s = makeSinks();
+  const calls = [];
+  await run(['update'], ctx(s, {
+    env: {}, cwd: os.tmpdir(), npmExec: (args) => { calls.push(args); return require('../../package.json').version; },
+  }));
+  assert.strictEqual(s.code(), 0);
+  assert.deepStrictEqual(calls, [['view', '@enderchen/magpie', 'version']]);
+  assert.match(s.out(), /已是最新版/);
+});
+
+test('CLI update: unavailable registry package fails without installing anything', async () => {
+  const s = makeSinks();
+  const calls = [];
+  await run(['update'], ctx(s, {
+    env: {}, cwd: os.tmpdir(), npmExec: (args) => { calls.push(args); throw new Error('E404 package not published'); },
+  }));
+  assert.strictEqual(s.code(), 1);
+  assert.deepStrictEqual(calls, [['view', '@enderchen/magpie', 'version']]);
+  assert.match(s.err(), /查询最新版本失败/);
+});
 
 test('CLI update: missing registry still reports usage error', async () => {
   const s = makeSinks();

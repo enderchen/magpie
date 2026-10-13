@@ -31,7 +31,7 @@ async function run(_client, args, ctx) {
     e.name = 'UsageError';
     throw e;
   }
-  // Keep npm updates disabled until this package is published.
+  // Private source-only distributions do not query or install from npm.
   if (require('../../package.json').private) {
     out('Magpie 从自己的 Git 仓库更新，当前尚未发布 npm 包。\n');
     out('请审阅并合并 https://github.com/enderchen/magpie 中的更新。\n');

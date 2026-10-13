@@ -1,5 +1,5 @@
 {
-  "name": "magpie",
+  "name": "@enderchen/magpie",
   "version": "1.6.7",
   "description": "纸鹊 Magpie — 一纸，寄万千。HTML / Markdown 预览与分享",
   "main": "server.js",
@@ -58,8 +58,9 @@
     "@tootallnate/once": "^2.0.1",
     "katex": "^0.19.0"
   },
-  "private": true,
-  "bundleDependencies": ["mermaid"],
+  "bundleDependencies": [
+    "mermaid"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -73,12 +74,37 @@
     "routes/",
     "mcp/",
     "migrations/",
-    "public/",
+    "public/*.html",
+    "public/*.css",
+    "public/*.png",
+    "public/*.txt",
+    "public/css/",
+    "public/js/",
+    "public/dist/",
+    "public/vendor/",
+    "public/home-share/*.html",
+    "public/home-share/*.css",
+    "public/home-share/*.js",
+    "public/home-share/assets/",
+    "public/home-share/examples/",
+    "public/logo-exploration/magpie-upload-motion/gsap.min.js",
+    "public/logo-exploration/magpie-house-scene/animation-v4.js",
+    "public/logo-exploration/magpie-house-scene/house-clean-v3.png",
+    "public/logo-exploration/magpie-house-scene/customer-cartoon-ender-v2.png",
+    "public/logo-exploration/magpie-house-scene/residents-work-v1.png",
+    "public/logo-exploration/magpie-storyboard/01-upload-v3.png",
+    "public/logo-exploration/magpie-storyboard/02-webpage-v4.png",
+    "public/logo-exploration/magpie-storyboard/03-share-v3.png",
     "templates/",
     "skills/",
     ".env.example",
     "LICENSE",
     "README.md",
-    "README_EN.md"
-  ]
+    "README_EN.md",
+    "docs/RELEASING.md"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
 }

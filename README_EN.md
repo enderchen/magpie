@@ -128,9 +128,21 @@ node test/mcp-harness.js 8858    # MCP endpoint
 node test/perf-bench.js 8858     # Render/list/cache latency benchmarks
 ```
 
-### CLI Tool (Install from source)
+### CLI Tool (npm and source installation)
 
 magpie ships with a `magpie` CLI for uploading, listing, and managing files via the REST API. For large files and ZIPs it uses multipart binary streaming, which is faster and cheaper than MCP's base64-in-token flow:
+
+After `@enderchen/magpie@1.6.7` is published, install it with Node.js ≥ 22.13.0 (Node 22 / 24 supported):
+
+```bash
+npm install -g @enderchen/magpie@1.6.7
+export MAGPIE_BASE=https://magpiesend.site
+# Create a personal API Token in workbench settings and set MAGPIE_TOKEN
+magpie --version
+magpie --help
+```
+
+Before publication, install the reviewed `enderchen-magpie-1.6.7.tgz` tarball locally, or use the source checkout:
 
 ```bash
 npm install
@@ -144,11 +156,11 @@ magpie --help
 
 `magpie` and MCP are symmetric client entry points over the same REST API. See `magpie --help` for details.
 
-Until the npm release is enabled, `magpie update` only prints source update instructions and does not call npm.
+`magpie update --check` queries `@enderchen/magpie`; `magpie update` updates that same package. Before the first registry release, a missing package causes a lookup error; use the local tarball for acceptance.
 
 ### Release Process
 
-Maintainer release guide (GitHub Actions automated release, token rotation, troubleshooting) see [`docs/RELEASING.md`](docs/RELEASING.md).
+Maintainer packaging and manual publication guide see [`docs/RELEASING.md`](docs/RELEASING.md).
 
 ---
 

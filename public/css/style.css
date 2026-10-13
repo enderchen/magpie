@@ -2533,6 +2533,11 @@ html:not(.light) {
   padding: 24px;
 }
 
+/* Confirmations and prompts can be opened from another modal. */
+#dialog-modal {
+  z-index: 1100;
+}
+
 .modal-panel {
   background: var(--card);
   border-radius: var(--radius);

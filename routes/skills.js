@@ -51,9 +51,9 @@ function buildCliGuide(baseUrl) {
 
 \`magpie\` 是纸鹊 Magpie 的命令行工具，与 MCP 并列、基于同一套 REST API。适合 Bash/脚本/CI/Agent 场景，multipart 上传大文件更省流。
 
-## npm 安装（正式发布后）
+## npm 安装
 
-当前为发布候选；registry 上架前使用维护者审核的本地 tarball 或下方源码安装方式。
+${pkg.name}@${pkg.version} 已公开发布。使用 Node.js ≥ 22.13.0（支持 Node 22 / 24）安装。
 
 \`\`\`bash
 npm install -g ${pkg.name}@${pkg.version}
@@ -75,13 +75,13 @@ export MAGPIE_BASE=${baseUrl}
 在「API 令牌」页创建 token 后，任选一种方式注入：
 
 \`\`\`bash
-export MAGPIE_TOKEN=<YOUR_TOKEN>   # 推荐
-magpie <命令> --token <YOUR_TOKEN> # 单条命令
+export MAGPIE_TOKEN='<YOUR_TOKEN>'   # 推荐，替换为个人 API Token
+magpie whoami --token '<YOUR_TOKEN>' # 单条命令
 \`\`\`
 
 token 优先级：\`--token\` > \`MAGPIE_TOKEN\` > \`MCP_TOKEN\`。
-服务地址优先级：\`--base\` > \`MAGPIE_BASE\` > 默认 \`http://localhost:8858\`。
-MAGPIE_BASE 应指向你自己的服务。以下示例使用 \`${baseUrl}\`。
+服务地址优先级：\`--base\` > \`MAGPIE_BASE\` 环境变量 > 最近 \`.env\` 的 \`MAGPIE_BASE\` > 默认 \`http://localhost:8858\`。
+MAGPIE_BASE 是客户端配置，服务器 APP_URL 不会自动设置它。以下示例使用当前部署的服务根地址 \`${baseUrl}\`，不加 /mcp；生产接入使用 https://magpiesend.site，本地开发保留本机地址，自托管使用自己的服务地址。
 
 ## 命令速查
 
@@ -97,7 +97,7 @@ MAGPIE_BASE 应指向你自己的服务。以下示例使用 \`${baseUrl}\`。
 | \`tags <id> [add\\|set\\|clear] [名,名,...]\` | 标签管理 |
 | \`skills ls\\|get <名>\\|download <名>\` | Skill 包 |
 | \`whoami\` | 校验 token |
-| \`update [--check] [--registry <url>]\` | 查询 / 更新 ${pkg.name}（**不需 token**；首次发布前查询可能返回 E404） |
+| \`update [--check] [--registry <url>]\` | 查询 / 更新 ${pkg.name}（**不需 token**；--check 仅查询，不安装） |
 
 ## 常用示例
 

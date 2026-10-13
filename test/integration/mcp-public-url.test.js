@@ -33,8 +33,20 @@ test('HTTP内部服务的MCP及指南统一返回APP_URL的HTTPS地址', async (
     await call('delete_file', { id: file.id });
     const config = (await agent.get('/api/mcp/config')).body;
     assert.equal(config.url, 'https://magpiesend.site/mcp');
+    for (const item of config.configs) {
+      const entry = item.config.mcpServers.magpie;
+      if (entry.command) {
+        assert.equal(entry.env.MAGPIE_BASE, 'https://magpiesend.site');
+        assert.equal(entry.env.MAGPIE_TOKEN, '<YOUR_TOKEN>');
+      } else {
+        assert.equal(entry.url, config.url);
+      }
+    }
     const guide = (await agent.get('/api/cli/guide')).body;
     assert.equal(guide.baseUrl, 'https://magpiesend.site');
+    assert.ok(guide.guideText.includes('export MAGPIE_BASE=https://magpiesend.site'));
+    assert.ok(!guide.guideText.includes(token));
+    assert.ok(!guide.guideText.includes('https://magpiesend.site:80'));
   } finally {
     await client.close();
     await new Promise(resolve => server.close(resolve));

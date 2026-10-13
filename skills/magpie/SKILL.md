@@ -24,16 +24,16 @@ metadata:
 
 # 安装 CLI
 
-本 Skill 推荐配合 **magpie CLI** 使用。准备好 Node.js ≥ 22.13.0（支持 Node 22 / 24）。`@enderchen/magpie@1.6.7` 正式发布后可安装：
+本 Skill 推荐配合 **magpie CLI** 使用。`@enderchen/magpie@1.6.7` 已公开发布，使用 Node.js ≥ 22.13.0 安装（支持 Node 22 / 24）：
 
 ```bash
 npm install -g @enderchen/magpie@1.6.7
 ```
 
-当前发布候选尚未上架。发布前可安装维护者审核的 `enderchen-magpie-1.6.7.tgz`，或取得 Magpie 源码后，在源码目录安装：
+本地开发也可取得 Magpie 源码后，在源码目录安装：
 
 ```bash
-npm install && npm link  # 在 Magpie 源码目录执行，npm 包尚未发布
+npm install && npm link  # 在 Magpie 源码目录执行
 ```
 
 安装后验证：
@@ -42,10 +42,10 @@ npm install && npm link  # 在 Magpie 源码目录执行，npm 包尚未发布
 magpie --version
 ```
 
-先配置服务根地址。远程部署填写实际可访问的 HTTP(S) 地址；本机部署可用 `http://localhost:8858`。不得用 `/mcp` 地址作为 CLI 根地址。
+生产服务根地址为 `https://magpiesend.site`。本机开发可用 `http://localhost:8858`，自托管改为自己的 HTTP(S) 根地址；CLI 根地址不加 `/mcp`。服务器的 `APP_URL` 不会自动配置客户端的 `MAGPIE_BASE`。
 
 ```bash
-export MAGPIE_BASE="https://your-magpie.example" # 替换为自己的服务根地址
+export MAGPIE_BASE="https://magpiesend.site"
 ```
 
 地址优先级：`--base` > `MAGPIE_BASE` 环境变量 > 最近 `.env` 的 `MAGPIE_BASE` > 本地默认地址。
@@ -57,13 +57,28 @@ export MAGPIE_BASE="https://your-magpie.example" # 替换为自己的服务根�
 export MAGPIE_TOKEN="mg_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
 # 2. 当前目录 .env
-# echo 'MAGPIE_TOKEN=mg_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' > .env
+# 在已有 .env 中添加 MAGPIE_BASE 和 MAGPIE_TOKEN，保留其他配置
 
 # 3. 临时命令参数
 magpie whoami --token mg_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 > 没有 npm / 无法安装 CLI / 没有 Bash 能力的纯 MCP 客户端，直接调用下方的 MCP 工具即可，无需安装。
+
+## MCP 接入
+
+支持 HTTP 的客户端使用 `https://magpiesend.site/mcp`，以 `Authorization: Bearer <YOUR_TOKEN>` 传入工作台创建的个人 API Token。
+
+stdio 桌面客户端先安装 CLI，再配置 `command: "magpie"`、`args: ["mcp"]`，以及以下环境变量：
+
+```json
+{
+  "MAGPIE_BASE": "https://magpiesend.site",
+  "MAGPIE_TOKEN": "<YOUR_TOKEN>"
+}
+```
+
+桌面程序找不到命令时，填写已安装的 magpie 绝对路径。HTTP URL 与 stdio 启动配置不可混用；远程服务器已运行时无需在本机再启动网站服务。本地开发保留本机服务地址。
 
 ## 安装 Skill 到客户端
 
@@ -405,8 +420,6 @@ magpie template use <share_key> --name "我的报告.html" --public
 
 **CLI 不可用时，再调用 MCP 工具**：
 
-Claude Desktop 等 stdio 客户端可以先安装 magpie CLI，再配置 `command: "magpie"`、`args: ["mcp"]`，并通过 `env.MAGPIE_BASE`、`env.MAGPIE_TOKEN` 指定服务和用户令牌。CLI 的 `mcp` 入口只在 stdout 输出 MCP 协议消息；需要后台服务已启动。桌面程序找不到命令时，用 magpie 的绝对路径。不要把 HTTP 配置直接粘贴进 stdio 配置。
-
 ```python
 instantiate_content_template(
   shareKey="<share_key>",
@@ -465,7 +478,7 @@ AI 拿到样例后应学习的维度（按优先级）：
   "size": 12345,
   "is_public": 1,
   "share_key": "abc12345",
-  "url": "http://magpie.example.com/s/abc12345"
+  "url": "https://magpiesend.site/s/abc12345"
 }
 ```
 
@@ -526,7 +539,7 @@ restore_file_version(fileId=42, version=3)
 
 ```
 调 get_file_url(id=42)
-→ 返回 { id: 42, url: "http://magpie.example.com/s/abc12345" }
+→ 返回 { id: 42, url: "https://magpiesend.site/s/abc12345" }
 ```
 
 短链接格式 `/s/:key` 是最佳分享方式，公开文件无需登录即可访问。

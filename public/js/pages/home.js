@@ -40,126 +40,163 @@ function uploaderBadge(name) {
   return name ? `<span class="file-badge file-badge-uploader" title="上传者">👤 ${escapeHtml(name)}</span>` : '';
 }
 
-// 卡片缩略图按需加载管线。
-// 历史实现是 IntersectionObserver 检测到可视卡片就立即挂载 iframe，每个卡片渲染完整 HTML 文档，
-// 导致登录后卡片视图首屏同时发起大量 /api/files/:id/render，页面卡住数秒。
-// 现改为「首屏不阻塞 + 空闲时自动补全 + 悬停/聚焦加速」：
-//   1. IntersectionObserver 只维护当前可视卡片集合，不再立即挂 iframe；
-//   2. 用 requestIdleCallback 在浏览器空闲时逐个加载可视卡片预览；
-//   3. 鼠标悬停或键盘聚焦时立即加载该卡片。
-// 这样首屏 DOM 可秒开，预览仍会自动出现，且不会一次性压垮浏览器/服务端。
-let cardThumbObserver = null;
-const visibleCardThumbs = new Set();
-let idleThumbScheduled = false;
-let cardThumbActive = 0;
+// Desktop documents are rendered in one 16:9 viewport and scaled uniformly to the card.
+const CARD_PREVIEW_WIDTH = 1920;
+const CARD_PREVIEW_HEIGHT = 1080;
 const CARD_THUMB_MAX = 2;
+let cardThumbObserver = null;
+let cardThumbResizeObserver = null;
+let cardThumbTimer = null;
+let cardThumbGeneration = 0;
+let cardThumbActive = 0;
+const visibleCardThumbs = new Set();
 const cardThumbQueue = [];
+const cancelCardThumbLoads = new Set();
+
+function canLoadCardThumb(card) {
+  const thumb = card.isConnected && card.querySelector('.file-card-thumb');
+  return thumb && !thumb.dataset.previewState;
+}
 
 function ensureCardThumbObserver() {
   if (cardThumbObserver) return cardThumbObserver;
+  cardThumbResizeObserver = new window.ResizeObserver(entries => {
+    for (const entry of entries) entry.target.style.setProperty('--file-thumb-scale', entry.contentRect.width / CARD_PREVIEW_WIDTH);
+  });
   cardThumbObserver = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      const card = entry.target;
-      if (entry.isIntersecting) visibleCardThumbs.add(card);
-      else visibleCardThumbs.delete(card);
-    });
+    for (const entry of entries) {
+      if (entry.isIntersecting) visibleCardThumbs.add(entry.target);
+      else visibleCardThumbs.delete(entry.target);
+    }
     scheduleIdleThumbLoad();
   }, { rootMargin: '100px' });
   return cardThumbObserver;
 }
 
-function hasUnloadedVisibleCard() {
-  for (const card of visibleCardThumbs) {
-    const thumb = card.querySelector('.file-card-thumb');
-    if (thumb && !thumb.querySelector('.file-card-thumb-iframe')) return true;
-  }
-  return false;
-}
-
 function scheduleIdleThumbLoad() {
-  if (idleThumbScheduled || !hasUnloadedVisibleCard()) return;
-  idleThumbScheduled = true;
-  const run = () => {
-    idleThumbScheduled = false;
-    let loadedOne = false;
-    for (const card of visibleCardThumbs) {
-      const thumb = card.querySelector('.file-card-thumb');
-      if (thumb && !thumb.querySelector('.file-card-thumb-iframe')) {
-        enqueueCardThumb(card);
-        loadedOne = true;
-        break;
-      }
-    }
-    if (loadedOne) scheduleIdleThumbLoad();
-  };
-  // 用 setTimeout 串行调度，比 requestIdleCallback 更可预测，且不会被 DevTools/后台标签挂起。
-  setTimeout(run, 300);
+  if (cardThumbTimer || ![...visibleCardThumbs].some(canLoadCardThumb)) return;
+  const generation = cardThumbGeneration;
+  cardThumbTimer = setTimeout(() => {
+    cardThumbTimer = null;
+    if (generation !== cardThumbGeneration) return;
+    const card = [...visibleCardThumbs].find(canLoadCardThumb);
+    if (card) enqueueCardThumb(card);
+    scheduleIdleThumbLoad();
+  }, 300);
 }
 
 function enqueueCardThumb(card) {
-  if (cardThumbActive < CARD_THUMB_MAX) {
+  if (!canLoadCardThumb(card)) return;
+  // Mark at enqueue time: hover and idle callbacks must not queue the same card twice.
+  card.querySelector('.file-card-thumb').dataset.previewState = 'queued';
+  cardThumbQueue.push(card);
+  drainCardThumbQueue();
+}
+
+function drainCardThumbQueue() {
+  while (cardThumbActive < CARD_THUMB_MAX && cardThumbQueue.length) {
+    const card = cardThumbQueue.shift();
+    if (!card.isConnected) continue;
+    const generation = cardThumbGeneration;
     cardThumbActive++;
     loadCardThumb(card).finally(() => {
+      // A reset cancels the old generation; its callbacks cannot decrement the new counter.
+      if (generation !== cardThumbGeneration) return;
       cardThumbActive--;
-      if (cardThumbQueue.length) enqueueCardThumb(cardThumbQueue.shift());
+      drainCardThumbQueue();
     });
-  } else {
-    cardThumbQueue.push(card);
   }
 }
-// iframe.src 直接指向已有的 /api/files/:id/render —— HTML / Markdown / ZIP bundle 入口页均可渲染；
-// 同源 iframe 默认携带 session cookie，用户自己的私有文件也能正常加载（loadFileWithPrivacy 放行 uploaded_by === userId）。
+
 function loadCardThumb(card) {
   const thumb = card.querySelector('.file-card-thumb');
-  // 已有 iframe（正在加载或已加载）则跳过，防止同一卡片重复挂载
-  if (!thumb || thumb.querySelector('.file-card-thumb-iframe')) return Promise.resolve();
-
+  if (!thumb) return Promise.resolve();
+  thumb.dataset.previewState = 'loading';
+  thumb.setAttribute('aria-hidden', 'true');
+  thumb.style.setProperty('--file-thumb-scale', thumb.clientWidth / CARD_PREVIEW_WIDTH);
+  cardThumbResizeObserver?.observe(thumb);
   const wrap = document.createElement('div');
   wrap.className = 'file-card-thumb-wrap';
-  wrap.innerHTML = '<iframe class="file-card-thumb-iframe" width="1024" height="640" loading="lazy" title="预览"></iframe>';
+  const iframe = document.createElement('iframe');
+  iframe.className = 'file-card-thumb-iframe';
+  iframe.width = CARD_PREVIEW_WIDTH;
+  iframe.height = CARD_PREVIEW_HEIGHT;
+  iframe.title = '预览';
+  iframe.tabIndex = -1;
   thumb.appendChild(wrap);
-  const iframe = wrap.querySelector('iframe');
   const loadingEl = thumb.querySelector('.file-card-thumb-loading');
-
-  let timer = null;
+  if (loadingEl) {
+    loadingEl.classList.remove('is-error');
+    loadingEl.textContent = '加载预览…';
+    loadingEl.setAttribute('role', 'status');
+  }
+  const controller = new AbortController();
   return new Promise(resolve => {
-    const finish = () => {
+    let settled = false;
+    const cancel = () => finish('cancelled');
+    const finish = outcome => {
+      if (settled) return;
+      settled = true;
       clearTimeout(timer);
-      wrap.classList.add('loaded');
-      if (loadingEl) loadingEl.remove();
+      controller.abort();
+      cancelCardThumbLoads.delete(cancel);
+      thumb.dataset.previewState = outcome;
+      if (outcome === 'loaded') {
+        wrap.classList.add('loaded');
+        loadingEl?.remove();
+      } else {
+        wrap.remove();
+        if (outcome !== 'cancelled' && loadingEl && thumb.isConnected) {
+          thumb.removeAttribute('aria-hidden');
+          loadingEl.classList.add('is-error');
+          loadingEl.innerHTML = `<span>${outcome === 'timeout' ? '预览加载超时' : '预览加载失败'}</span><button type="button" class="btn btn-small">重试预览</button>`;
+          loadingEl.querySelector('button').onclick = e => {
+            e.stopPropagation();
+            delete thumb.dataset.previewState;
+            enqueueCardThumb(card);
+          };
+        }
+      }
       resolve();
     };
-    // 兜底超时：即使 load 事件因任何原因未触发（如缓存/被中断），8s 后也揭开占位，避免永久卡灰
-    timer = setTimeout(finish, 8000);
-    iframe.addEventListener('load', finish, { once: true });
-    iframe.addEventListener('error', finish, { once: true });
-    iframe.src = API_BASE + '/api/files/' + card.dataset.fileId + '/render';
+    cancelCardThumbLoads.add(cancel);
+    const timer = setTimeout(() => finish('timeout'), 8000);
+    iframe.addEventListener('load', () => finish('loaded'), { once: true });
+    iframe.addEventListener('error', () => finish('error'), { once: true });
+    const url = API_BASE + '/api/files/' + card.dataset.fileId + '/render';
+    // A blocked/error iframe can fire load too. Check the same protected endpoint first.
+    fetch(url, { method: 'HEAD', credentials: 'same-origin', signal: controller.signal }).then(res => {
+      if (settled) return;
+      if (!res.ok || !res.headers.get('Content-Type')?.includes('text/html')) return finish('error');
+      iframe.src = url;
+      wrap.appendChild(iframe);
+    }).catch(() => { if (!settled) finish('error'); });
   });
 }
-// 鼠标悬停或键盘聚焦时立即加载该卡片预览。
+
 function scheduleCardThumbOnHover(card) {
-  const trigger = () => {
-    const thumb = card.querySelector('.file-card-thumb');
-    if (!thumb || thumb.querySelector('.file-card-thumb-iframe')) return;
-    enqueueCardThumb(card);
-  };
+  const trigger = () => enqueueCardThumb(card);
   card.addEventListener('mouseenter', trigger);
   card.addEventListener('focus', trigger);
 }
 
 function resetCardThumbState() {
-  if (cardThumbObserver) {
-    cardThumbObserver.disconnect();
-    cardThumbObserver = null;
-  }
+  cardThumbGeneration++;
+  if (cardThumbTimer !== null) clearTimeout(cardThumbTimer);
+  cardThumbTimer = null;
+  cardThumbObserver?.disconnect();
+  cardThumbResizeObserver?.disconnect();
+  cardThumbObserver = null;
+  cardThumbResizeObserver = null;
+  for (const cancel of cancelCardThumbLoads) cancel();
   visibleCardThumbs.clear();
-  idleThumbScheduled = false;
   cardThumbQueue.length = 0;
   cardThumbActive = 0;
 }
 
 // ---------- Home Page ----------
 function renderHome(container) {
+  resetCardThumbState();
   if (homeAbortController) homeAbortController.abort();
   homeAbortController = new AbortController();
   const signal = homeAbortController.signal;
@@ -666,6 +703,7 @@ function applyFilters(container) {
     ? `${filtered.length} / ${pagination.total} 个文件`
     : `共 ${pagination.total} 个文件`;
 
+  resetCardThumbState();
   list.innerHTML = '';
 
   if (!filtered.length) {
@@ -1080,7 +1118,7 @@ function renderCardList(container, list, files) {
       if (e.target.closest('.file-card-icon-btn, .file-card-more-dropdown, .file-checkbox-wrap')) return;
       openPublic();
     });
-    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPublic(); } });
+    el.addEventListener('keydown', e => { if (e.target === el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openPublic(); } });
     el.querySelector('.file-card-star').addEventListener('click', async e => {
       e.stopPropagation();
       await toggleStar(f.id, f.starred);
@@ -1554,6 +1592,56 @@ async function doDelete(container, id, fileName) {
   }
 }
 
+// Only the four short settings requests use cancellation and a bounded wait.
+const settingsLoads = new Map();
+function cancelSettingsLoad(modal) {
+  const load = settingsLoads.get(modal);
+  if (!load) return;
+  clearTimeout(load.slowTimer);
+  load.controller.abort();
+  settingsLoads.delete(modal);
+}
+
+function loadSettings(modal, path, target, render, retry) {
+  for (const id of ['skill-modal', 'skills-list-modal', 'mcp-config-modal', 'cli-config-modal']) {
+    const other = document.getElementById(id);
+    if (other && other !== modal && !other.hidden) closeModal(other);
+  }
+  cancelSettingsLoad(modal);
+  target.innerHTML = '<p role="status" data-settings-wait>加载中…</p>';
+  target.setAttribute('aria-busy', 'true');
+  // The menu item has just become hidden; return focus to the visible settings button.
+  if (modal.hidden) document.getElementById('btn-settings')?.focus();
+  openModal(modal, () => cancelSettingsLoad(modal));
+  const load = { controller: new AbortController(), slowTimer: null };
+  settingsLoads.set(modal, load);
+  const current = () => settingsLoads.get(modal) === load && !modal.hidden;
+  load.slowTimer = setTimeout(() => {
+    if (current()) {
+      const waiting = target.querySelector('[data-settings-wait]');
+      if (waiting) waiting.textContent = '仍在加载，请稍候；你可以关闭窗口。';
+    }
+  }, 3000);
+  return api(path, { timeoutMs: 15000, signal: load.controller.signal }).then(data => {
+    if (current()) render(data);
+  }).catch(e => {
+    if (!current() || e.name === 'AbortError') return;
+    target.classList.remove('is-loading');
+    const message = /Failed to fetch|NetworkError|Load failed/.test(e.message) ? '网络连接不可用，请检查网络后重试' : e.message;
+    target.innerHTML = `<div role="alert"><p>${e.status === 401 ? '登录已失效，请重新登录。' : '加载失败：' + escapeHtml(message)}</p><button type="button" class="btn btn-small">${e.status === 401 ? '重新登录' : '重试'}</button></div>`;
+    target.querySelector('button').onclick = () => {
+      if (e.status === 401) {
+        closeModal(modal);
+        state.currentUser = null;
+        navigate('/login');
+      } else retry();
+    };
+  }).finally(() => {
+    clearTimeout(load.slowTimer);
+    if (current()) target.setAttribute('aria-busy', 'false');
+  });
+}
+
 // ---------- Skills ----------
 function setupSkillModal() {
   const modal = document.getElementById('skill-modal');
@@ -1568,7 +1656,18 @@ function setupSkillModal() {
 }
 
 function openSkillModal(name) {
-  api('/api/skills/' + encodeURIComponent(name)).then(skill => {
+  const modal = document.getElementById('skill-modal');
+  if (!modal) return;
+  skillModalCurrent = null;
+  const download = document.getElementById('skill-modal-download');
+  download.disabled = true;
+  document.getElementById('skill-modal-title').textContent = 'Skill 详情';
+  document.getElementById('skill-modal-files').innerHTML = '';
+  document.getElementById('skill-modal-source').textContent = '';
+  document.getElementById('skill-install-heading').style.display = 'none';
+  document.getElementById('skill-install-rendered').innerHTML = '';
+  loadSettings(modal, '/api/skills/' + encodeURIComponent(name), document.getElementById('skill-modal-meta'), skill => {
+    download.disabled = false;
     skillModalCurrent = skill.name;
     document.getElementById('skill-modal-title').textContent = skill.title || skill.name;
     const meta = document.getElementById('skill-modal-meta');
@@ -1592,10 +1691,7 @@ function openSkillModal(name) {
       installHeading.style.display = 'none';
       installBox.innerHTML = '';
     }
-    const modal = document.getElementById('skill-modal');
-    modal.hidden = false;
-    modal.setAttribute('aria-hidden', 'false');
-  }).catch(e => toast(e.message, 'error'));
+  }, () => openSkillModal(name));
 }
 
 function renderMarkdown(md) {
@@ -1664,8 +1760,7 @@ function inlineMd(text) {
 function closeSkillModal() {
   const modal = document.getElementById('skill-modal');
   if (!modal) return;
-  modal.hidden = true;
-  modal.setAttribute('aria-hidden', 'true');
+  closeModal(modal);
   skillModalCurrent = null;
 }
 
@@ -1699,7 +1794,7 @@ function openMcpConfigModal() {
   statusEl.innerHTML = '<p style="color:var(--text-secondary)">加载中…</p>';
   detailEl.innerHTML = '';
 
-  api('/api/mcp/config').then(data => {
+  loadSettings(modal, '/api/mcp/config', statusEl, data => {
     if (data.enabled) {
       statusEl.innerHTML = `
         <div class="mcp-status-badge mcp-status-on">
@@ -1781,20 +1876,13 @@ function openMcpConfigModal() {
         </div>
       `;
     }
-    modal.hidden = false;
-    modal.setAttribute('aria-hidden', 'false');
-  }).catch(e => {
-    statusEl.innerHTML = `<p style="color:var(--danger)">加载失败: ${escapeHtml(e.message)}</p>`;
-    modal.hidden = false;
-    modal.setAttribute('aria-hidden', 'false');
-  });
+  }, openMcpConfigModal);
 }
 
 function closeMcpConfigModal() {
   const modal = document.getElementById('mcp-config-modal');
   if (!modal) return;
-  modal.hidden = true;
-  modal.setAttribute('aria-hidden', 'true');
+  closeModal(modal);
 }
 
 // ---------- CLI Config Modal ----------
@@ -1813,11 +1901,15 @@ function openCliConfigModal() {
   const detailEl = document.getElementById('cli-detail');
   detailEl.textContent = '加载中…';
 
-  api('/api/cli/guide').then(data => {
+  const copyBtn = document.getElementById('cli-copy-guide');
+  copyBtn.disabled = true;
+  copyBtn.onclick = null;
+  loadSettings(modal, '/api/cli/guide', detailEl, data => {
     // 渲染富文本用法文档；缓存纯文本供「复制文档」按钮使用
     detailEl.innerHTML = data.guideHtml || '<p>（无文档）</p>';
     const copyBtn = document.getElementById('cli-copy-guide');
     if (copyBtn) {
+      copyBtn.disabled = false;
       copyBtn.onclick = async () => {
         const ok = await copyToClipboard(data.guideText || '');
         if (ok) {
@@ -1829,20 +1921,13 @@ function openCliConfigModal() {
         }
       };
     }
-    modal.hidden = false;
-    modal.setAttribute('aria-hidden', 'false');
-  }).catch(e => {
-    detailEl.innerHTML = `<p style="color:var(--danger)">加载失败: ${escapeHtml(e.message)}</p>`;
-    modal.hidden = false;
-    modal.setAttribute('aria-hidden', 'false');
-  });
+  }, openCliConfigModal);
 }
 
 function closeCliConfigModal() {
   const modal = document.getElementById('cli-config-modal');
   if (!modal) return;
-  modal.hidden = true;
-  modal.setAttribute('aria-hidden', 'true');
+  closeModal(modal);
 }
 
 // ---------- Skills List Modal ----------
@@ -1860,15 +1945,12 @@ function openSkillsListModal() {
 
   // 加载 skills
   loadSkillsForModal();
-  modal.hidden = false;
-  modal.setAttribute('aria-hidden', 'false');
 }
 
 function closeSkillsListModal() {
   const modal = document.getElementById('skills-list-modal');
   if (!modal) return;
-  modal.hidden = true;
-  modal.setAttribute('aria-hidden', 'true');
+  closeModal(modal);
 }
 
 function loadSkillsForModal() {
@@ -1879,7 +1961,7 @@ function loadSkillsForModal() {
   list.classList.add('is-loading');
   list.innerHTML = buildSkeletonCards(5);
   empty.style.display = 'none';
-  api('/api/skills').then(data => {
+  loadSettings(document.getElementById('skills-list-modal'), '/api/skills', list, data => {
     list.classList.remove('is-loading');
     list.setAttribute('aria-busy', 'false');
     list.innerHTML = '';
@@ -1913,17 +1995,7 @@ function loadSkillsForModal() {
       el.querySelector('.skill-download').addEventListener('click', () => downloadSkill(s.name));
       list.appendChild(el);
     });
-  }).catch(e => {
-    list.classList.remove('is-loading');
-    list.setAttribute('aria-busy', 'false');
-    list.innerHTML = '';
-    if (e.status === 401) {
-      state.currentUser = null;
-      navigate('/');
-      return;
-    }
-    toast(e.message, 'error');
-  });
+  }, loadSkillsForModal);
 }
 
 // 用户管理、API 令牌管理已抽至 components/users-modal.js 和 components/tokens-modal.js

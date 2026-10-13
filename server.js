@@ -260,6 +260,14 @@ ${errorBlock}
 </div></body></html>`;
 }
 
+function sendSharePasswordPage(res, key, error) {
+  // This is our own form, not uploaded content. Native form POST under no-referrer
+  // sends Origin:null, which must remain rejected by the cross-site guard.
+  // same-origin preserves the form's Origin without leaking share URLs to other sites.
+  res.setHeader('Referrer-Policy', 'same-origin');
+  res.type('html').status(200).send(renderSharePasswordPage(key, error));
+}
+
 app.get('/s/:key', loadSession, async (req, res) => {
   try {
     const file = await dbGet('SELECT * FROM files WHERE share_key = ?', [req.params.key]);
@@ -278,8 +286,7 @@ app.get('/s/:key', loadSession, async (req, res) => {
     if (!file.is_public && !checkFileOwnership(req, file)) return res.status(403).json({ error: '无权访问此文件' });
     // 访问密码门
     if (!isShareUnlocked(req, file)) {
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      return res.status(200).send(renderSharePasswordPage(req.params.key, null));
+      return sendSharePasswordPage(res, req.params.key, null);
     }
     recordVisit(file, req).catch(() => {});
     await renderFile(res, file);
@@ -298,8 +305,7 @@ app.post('/s/:key', shareKeyLimiter, loadSession, async (req, res) => {
     // 出于安全：无论文件是否存在，密码错误时都回"密码错误"，避免泄露文件存在性。
     const password = (req.body && req.body.password) ? String(req.body.password) : '';
     if (!file) {
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      return res.status(200).send(renderSharePasswordPage(req.params.key, '密码错误'));
+      return sendSharePasswordPage(res, req.params.key, '密码错误');
     }
     if (file.share_expires_at && file.share_expires_at <= now()) {
       if (file.upload_source === 'try_paste') {
@@ -315,8 +321,7 @@ app.post('/s/:key', shareKeyLimiter, loadSession, async (req, res) => {
       ? await bcrypt.compare(password, file.share_password_hash).catch(() => false)
       : true; // 无密码：放行（与 GET 一致）
     if (!ok) {
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      return res.status(200).send(renderSharePasswordPage(req.params.key, '密码错误'));
+      return sendSharePasswordPage(res, req.params.key, '密码错误');
     }
     if (!req.session.unlockedShares) req.session.unlockedShares = {};
     req.session.unlockedShares[file.share_key] = file.share_password_hash;

@@ -236,6 +236,32 @@ test('访问密码：设置后匿名访问返回密码表单（200 + 含"需要�
   // 表单页应含密码输入框，而非直接渲染受保护内容
   assert.match(res.text, /type="password"/);
   assert.doesNotMatch(res.text, /受保护内容/);
+  // Native form POST under no-referrer sends an opaque Origin and is rejected by CSRF.
+  assert.strictEqual(res.headers['referrer-policy'], 'same-origin');
+});
+
+test('访问密码：同源表单特殊字符可解锁，错误重显保留策略，跨站/opaque Origin不能绕过', async () => {
+  const up = await agent.post('/api/files/upload-json').send({ name: 'form-policy.html', content: '<h1>表单解锁验收</h1>', isPublic: true });
+  const key = up.body.share_key;
+  const password = ' test +& 空格 ! ';
+  await agent.put(`/api/files/${up.body.id}/share`).send({ password }).expect(200);
+  const visitor = request.agent(env.app);
+  const origin = 'http://share-test.invalid';
+  const wrong = await visitor.post(`/s/${key}`).set('Host', 'share-test.invalid').set('Origin', origin).type('form').send({ password: 'wrong' }).expect(200);
+  assert.match(wrong.text, /密码错误/);
+  assert.equal(wrong.headers['referrer-policy'], 'same-origin');
+  for (const outside of ['null', 'https://outside.invalid']) {
+    await visitor.post(`/s/${key}`).set('Host', 'share-test.invalid').set('Origin', outside).type('form').send({ password }).expect(403);
+  }
+  await visitor.post(`/s/${key}`).set('Host', 'share-test.invalid').set('Origin', origin).type('form').send({ password }).expect(302);
+  const rendered = await visitor.get(`/s/${key}`).expect(200);
+  assert.match(rendered.text, /表单解锁验收/);
+  assert.equal(rendered.headers['referrer-policy'], 'no-referrer');
+  await agent.put(`/api/files/${up.body.id}/share`).send({ password: 'changed-password' }).expect(200);
+  assert.match((await visitor.get(`/s/${key}`)).text, /需要访问密码/);
+  for (const endpoint of ['', '/render', '/download']) {
+    await request(env.app).get(`/api/files/${up.body.id}${endpoint}`).expect(403);
+  }
 });
 
 test('访问密码：正确密码 POST 后解锁，可渲染', async () => {

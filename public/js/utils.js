@@ -76,10 +76,10 @@ function buildSkeletonCards(n, viewMode) {
 }
 
 const modalFocusState = new WeakMap();
-function openModal(el) {
+function openModal(el, onClose) {
   el.hidden = false;
   el.setAttribute('aria-hidden', 'false');
-  if (!['profile-modal', 'share-settings-modal'].includes(el.id)) return;
+  if (!['profile-modal', 'share-settings-modal', 'skill-modal', 'skills-list-modal', 'mcp-config-modal', 'cli-config-modal'].includes(el.id)) return;
   if (modalFocusState.has(el)) return;
   const previous = document.activeElement;
   const focusables = () => [...el.querySelectorAll('button, input, select, textarea, a[href], [tabindex="0"]')]
@@ -96,7 +96,7 @@ function openModal(el) {
   const app = document.getElementById('app');
   if (app) app.inert = true;
   el.addEventListener('keydown', onKey);
-  modalFocusState.set(el, { previous, onKey, app });
+  modalFocusState.set(el, { previous, onKey, app, onClose });
   const initial = el.querySelector('input:not([readonly])') || focusables()[0];
   initial?.focus();
 }
@@ -110,6 +110,7 @@ function closeModal(el) {
   if (saved.app) saved.app.inert = false;
   if (saved.previous?.isConnected) saved.previous.focus();
   modalFocusState.delete(el);
+  saved.onClose?.();
 }
 
 // 复制到剪贴板：优先用现代 Clipboard API，回退到 execCommand

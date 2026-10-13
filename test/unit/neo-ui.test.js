@@ -104,7 +104,8 @@ test('upgraded dialog traps Tab, closes with Escape, and restores background foc
   const context = { document: { activeElement: previous, getElementById() { return app; } } };
   vm.createContext(context);
   vm.runInContext(source('utils.js'), context);
-  context.openModal(modal);
+  let closed = 0;
+  context.openModal(modal, () => { closed++; });
   assert.equal(app.inert, true);
   assert.equal(context.document.activeElement, field);
   last.focus();
@@ -116,4 +117,6 @@ test('upgraded dialog traps Tab, closes with Escape, and restores background foc
   assert.equal(modal.hidden, true);
   assert.equal(app.inert, false);
   assert.equal(context.document.activeElement, previous);
+  context.closeModal(modal);
+  assert.equal(closed, 1, 'Escape and a second close must cancel the request only once');
 });

@@ -4,7 +4,7 @@
 
 纸鹊 Magpie 用于 HTML、Markdown 与 ZIP 的上传、预览和分享，使用 MIT 许可证。
 
-当前 npm 包处于本地打包验证阶段，尚未公开发布；请按下文从源码安装 CLI。默认服务地址为 `http://localhost:8858`，可通过 `MAGPIE_BASE` 或 `--base` 修改。插件源码保留用于开发，网页暂不提供插件入口。
+`@enderchen/magpie@1.6.7` 已公开发布，可通过 npm 安装 CLI。生产服务地址为 `https://magpiesend.site`，通过 `MAGPIE_BASE` 或 `--base` 配置；本地开发默认地址仍为 `http://localhost:8858`。插件源码保留用于开发，网页暂不提供插件入口。
 
 [![CI](https://github.com/enderchen/magpie/actions/workflows/ci.yml/badge.svg)](https://github.com/enderchen/magpie/actions/workflows/ci.yml)
 
@@ -107,15 +107,27 @@ node test/mcp-harness.js 8858    # MCP 端点
 node test/perf-bench.js 8858     # 渲染/列表/缓存延迟基准
 ```
 
-### Magpie CLI（从源码安装）
+### Magpie CLI（npm 安装与源码安装）
 
 纸鹊 Magpie随包提供 `magpie` 命令行工具，可通过 REST API 上传 / 列出 / 管理文件，对大文件和 ZIP 走 multipart 二进制流式上传（比 MCP 的 base64 进 token 流更快更省）：
+
+使用 Node.js ≥ 22.13.0 安装已发布的 `@enderchen/magpie@1.6.7`（支持 Node 22 / 24）：
+
+```bash
+npm install -g @enderchen/magpie@1.6.7
+export MAGPIE_BASE=https://magpiesend.site
+# 在工作台设置中创建个人 API Token 后，配置 MAGPIE_TOKEN
+magpie --version
+magpie --help
+```
+
+本地开发可使用源码安装；以下示例连接本机服务：
 
 ```bash
 npm install
 npm link  # 在本项目源码目录执行，注册 magpie 命令
-export MAGPIE_BASE=http://localhost:8858  # 改为你自己的 Magpie 服务地址
-magpie upload ./report.html --public --token <你的 token>
+export MAGPIE_BASE=http://localhost:8858  # 本地开发；生产接入用 https://magpiesend.site
+magpie upload ./report.html --public --token '<你的 token>'
 magpie ls --kw 季度
 magpie cat 8
 magpie --help
@@ -123,7 +135,7 @@ magpie --help
 
 `magpie` 与 MCP 是对称的两个客户端入口，都架在同一套 REST API 之上。详见 `magpie --help`。
 
-当前 `magpie update` 仅显示源码更新说明，不访问 npm 或安装其他包。正式发布前的打包、安装与发布步骤见下方指南。
+`magpie update --check` 查询 `@enderchen/magpie` 的版本；`magpie update` 更新同一包名。`--check` 仅查询，不安装。服务器的 `APP_URL` 不会自动配置客户端的 `MAGPIE_BASE`；CLI 根地址不加 `/mcp`。维护者打包与后续版本发布步骤见下方指南。
 
 ### 发版
 
@@ -387,27 +399,27 @@ MCP_TOKEN=your-secret-token
 
 ### 客户端配置
 
-**Claude Code** — 把以下配置放到项目根 `.mcp.json` 或合并到 `~/.claude.json`：
+**HTTP 客户端** — 支持 `mcpServers` JSON 的客户端使用以下生产配置。`<YOUR_TOKEN>` 替换为工作台创建的个人 API Token；本地开发改用 `http://localhost:8858/mcp`：
 
 ```json
 {
   "mcpServers": {
     "magpie": {
       "type": "http",
-      "url": "http://localhost:8858/mcp",
+      "url": "https://magpiesend.site/mcp",
       "headers": {
-        "Authorization": "Bearer ${env.MCP_TOKEN}"
+        "Authorization": "Bearer <YOUR_TOKEN>"
       }
     }
   }
 }
 ```
 
-**Claude Desktop** — 把 `mcpServers` 块合并到 `~/Library/Application Support/Claude/claude_desktop_config.json`。
+**stdio 桌面客户端** — 先安装 CLI，再使用 `command: "magpie"`、`args: ["mcp"]`，设置 `env.MAGPIE_BASE=https://magpiesend.site`、`env.MAGPIE_TOKEN=<YOUR_TOKEN>`。GUI 找不到命令时填写已安装的 magpie 绝对路径；不要把 HTTP 配置粘贴到 stdio 配置中。
 
 ### 能力
 
-**Tools**（17 个）：
+**Tools**（18 个）：
 
 | 工具 | 用途 |
 |---|---|
@@ -428,6 +440,7 @@ MCP_TOKEN=your-secret-token
 | `set_file_category` | 设置文件分类 |
 | `list_content_templates` | 列出内容模板市场作品 |
 | `get_content_template` | 获取内容模板详情 |
+| `instantiate_content_template` | 按模板在当前账户创建文件 |
 
 **Resources**（2 个）：
 
@@ -438,10 +451,11 @@ MCP_TOKEN=your-secret-token
 
 ### 配套 Skill
 
-仓库内 `skills/magpie/SKILL.md` 是 Claude Code / Desktop 的开箱即用技能。安装后，AI 生成 HTML、Markdown、报告、可视化、幻灯片、使用模板市场风格等内容时会自动上传到纸鹊 Magpie并返回预览链接。
+仓库内 `skills/magpie/SKILL.md` 可安装到 Codex 等支持 Skill 的客户端。配置服务地址和个人 API Token 后，按 Skill 工作流使用 CLI 优先、MCP 兜底生成和上传内容，返回预览链接。
 
 ```bash
-ln -s "$(pwd)/skills/magpie" ~/.claude/skills/magpie
+magpie skill install --dir ~/.agents/skills/magpie
+magpie skill update --dir ~/.agents/skills/magpie
 ```
 
 ### Web 管理

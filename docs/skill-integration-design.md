@@ -306,7 +306,7 @@ magpie skill install --dir ~/.claude/skills/magpie
 - 目标目录按 `~/.claude/skills` → `~/.claude-code/skills` → `~/.agents/skills` 顺序自动检测，也可通过 `--dir` 显式指定。
 - 每次安装先清空旧目录再复制，避免残留文件导致版本混乱。
 
-这样 Skill 版本与 npm 包版本保持一致：升级 `npm install && npm link  # 在 Magpie 源码目录执行，npm 包尚未发布` 后执行 `magpie skill update` 即可。
+这样 Skill 版本与 npm 包版本保持一致：用 `magpie update` 升级 CLI 后执行 `magpie skill update`；本地开发仍可在源码目录执行 `npm install && npm link`。
 
 ---
 

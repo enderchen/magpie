@@ -58,7 +58,7 @@ const HELP = `magpie —— 纸鹊 Magpie 命令行
   tags <id> [add|set|clear] [名,名,...]        查看 / 追加 / 替换 / 清空标签
   skills ls | get <名> | download <名> [--out 文件]
                                               列出 / 查看 / 下载 Skill（服务器端 skills）
-  skill install [--dir <路径>]                安装本包内置的 magpie Skill 到 Claude
+  skill install [--dir <路径>]                安装本包内置的 magpie Skill 到客户端技能目录
   skill update                                更新本地 magpie Skill（install 别名）
   skill uninstall [--dir <路径>]              卸载本地 magpie Skill
   version bump [--type patch|minor|major] [--target x.y.z] [--yes] [--dry-run]
@@ -70,7 +70,7 @@ const HELP = `magpie —— 纸鹊 Magpie 命令行
                                               使用模板创建文件
   whoami                                      校验 token 是否有效
   mcp                                         通过 stdin/stdout 提供 MCP（需运行中的服务）
-  update [--registry <url>] [--check]         显示 Magpie 源码更新说明（不需 token）
+  update [--registry <url>] [--check]         查询 / 更新 @enderchen/magpie 最新版（不需 token）
 
 通用选项：
   --token <TOKEN>        鉴权 token（mg_ 用户 token 或 MCP_TOKEN）
@@ -83,6 +83,9 @@ base  优先级：--base  > MAGPIE_BASE 环境变量 > 最近 .env 的 MAGPIE_BA
 支持的环境变量：MAGPIE_TOKEN、MAGPIE_BASE、MCP_TOKEN（MAGPIE_BASE 可替代 --base）
 
 示例：
+  export MAGPIE_BASE=https://magpiesend.site
+  # 在工作台创建个人 API Token，配置 MAGPIE_TOKEN 后运行：
+  magpie whoami
   magpie upload ./report.html --public
   magpie upload ./site.zip --public
   magpie upload ./x.html --overwrite 12

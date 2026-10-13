@@ -6,7 +6,8 @@
 
 | 项 | 值 |
 |---|---|
-| Base URL | `http://localhost:8858` |
+| 生产 Base URL | `https://magpiesend.site` |
+| 本地开发 Base URL | `http://localhost:8858` |
 | 内容类型 | 除 `POST /api/files/upload`（multipart）外均为 `application/json` |
 | 鉴权 | 三选一：session cookie `magpie.sid`（登录后获得）**或** 用户级 API Token（`Authorization: Bearer mg_xxx`）**或** 全局 `MCP_TOKEN`（向后兼容） |
 | 字符集 | UTF-8 |
@@ -16,6 +17,8 @@
 | 登录限流 | 10 req / 15 min / IP（`POST /api/auth/login`） |
 
 > **权限模型**：admin 可访问全部文件与用户；普通用户只能操作自己的文件与公开文件。下方各端点标注「需登录」表示三种鉴权方式任一即可，额外标注「仅 admin」的还需 admin 角色。
+
+下方 localhost 请求示例用于本地开发；生产接入替换根地址为 `https://magpiesend.site`。CLI 的 `MAGPIE_BASE` 使用根地址，HTTP MCP 使用 `https://magpiesend.site/mcp`。
 
 ---
 
@@ -486,7 +489,7 @@ curl -X POST http://localhost:8858/api/feedback \
 | 路径 | `POST`/`GET`/`DELETE` `/mcp` |
 | 鉴权 | `Authorization: Bearer <MCP_TOKEN>`（全局，向后兼容）**或** 用户级 API Token（`mg_xxx`） |
 | 协议 | MCP Streamable HTTP（最新规范） |
-| 工具（15 个） | `list_files` / `upload_file` / `get_file_content` / `delete_file` / `rename_file` / `get_file_url` / `list_file_versions` / `restore_file_version` / `list_tags` / `add_tags_to_file` / `star_file` / `unstar_file` / `list_categories` / `create_category` / `set_file_category` |
+| 工具（18 个） | `list_files` / `upload_file` / `get_file_content` / `delete_file` / `rename_file` / `get_file_url` / `list_file_versions` / `restore_file_version` / `list_tags` / `add_tags_to_file` / `star_file` / `unstar_file` / `list_categories` / `create_category` / `set_file_category` / `list_content_templates` / `get_content_template` / `instantiate_content_template` |
 | 资源 | `magpie://files` / `magpie://file/{id}`（≤ 256KB） |
 
 工具和资源**不走 `fetch('http://127.0.0.1:port/...')` 自调用**，而是通过 `lib/dispatch.js` 的进程内分发器直接调用 `app.handle()`，复用同一 Bearer token。绕过 TCP 序列化与二次鉴权 DB 查询（单次调用约快 80%），同时权限、限流、审计与 HTTP 完全一致。

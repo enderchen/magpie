@@ -51,8 +51,8 @@ jobs:
         run: |
           MAGPIE_PACKAGE_DIR=$(mktemp -d)
           npm pack --pack-destination "$MAGPIE_PACKAGE_DIR"
-          MAGPIE_PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          npm install --prefix "$MAGPIE_PACKAGE_DIR/client" "$MAGPIE_PACKAGE_DIR/magpie-$MAGPIE_PACKAGE_VERSION.tgz" --no-audit --no-fund
+          MAGPIE_PACKAGE_FILENAME=$(node -p "const p = require('./package.json'); p.name.replace(/^@/, '').replace(/\//g, '-') + '-' + p.version + '.tgz'")
+          npm install --prefix "$MAGPIE_PACKAGE_DIR/client" "$MAGPIE_PACKAGE_DIR/$MAGPIE_PACKAGE_FILENAME" --no-audit --no-fund
           npm audit --prefix "$MAGPIE_PACKAGE_DIR/client" --omit=dev
           npm ls --prefix "$MAGPIE_PACKAGE_DIR/client" --all
           "$MAGPIE_PACKAGE_DIR/client/node_modules/.bin/magpie" --version

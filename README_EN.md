@@ -4,7 +4,7 @@
 
 Magpie provides HTML, Markdown and ZIP preview and sharing under the MIT license.
 
-The npm package is prepared locally and has not been published. Install the CLI from source using the instructions below. It defaults to localhost:8858; set MAGPIE_BASE or --base for another server. Plugin source remains available for development, without a website entrypoint.
+`@enderchen/magpie@1.6.7` is publicly available on npm. Set `MAGPIE_BASE=https://magpiesend.site` or use `--base` for production access. The local development default remains `http://localhost:8858`. Plugin source remains available for development, without a website entrypoint.
 
 [![CI](https://github.com/enderchen/magpie/actions/workflows/ci.yml/badge.svg)](https://github.com/enderchen/magpie/actions/workflows/ci.yml)
 
@@ -128,15 +128,27 @@ node test/mcp-harness.js 8858    # MCP endpoint
 node test/perf-bench.js 8858     # Render/list/cache latency benchmarks
 ```
 
-### CLI Tool (Install from source)
+### CLI Tool (npm and source installation)
 
 magpie ships with a `magpie` CLI for uploading, listing, and managing files via the REST API. For large files and ZIPs it uses multipart binary streaming, which is faster and cheaper than MCP's base64-in-token flow:
+
+Install the published `@enderchen/magpie@1.6.7` with Node.js ≥ 22.13.0 (Node 22 / 24 supported):
+
+```bash
+npm install -g @enderchen/magpie@1.6.7
+export MAGPIE_BASE=https://magpiesend.site
+# Create a personal API Token in workbench settings and set MAGPIE_TOKEN
+magpie --version
+magpie --help
+```
+
+For local development, install from the source checkout and connect to the local service:
 
 ```bash
 npm install
 npm link  # Run in this source checkout
-export MAGPIE_BASE=http://localhost:8858  # Your own Magpie server
-magpie upload ./report.html --public --token <your-token>
+export MAGPIE_BASE=http://localhost:8858  # Local development; production uses https://magpiesend.site
+magpie upload ./report.html --public --token '<your-token>'
 magpie ls --kw quarterly
 magpie cat 8
 magpie --help
@@ -144,11 +156,11 @@ magpie --help
 
 `magpie` and MCP are symmetric client entry points over the same REST API. See `magpie --help` for details.
 
-Until the npm release is enabled, `magpie update` only prints source update instructions and does not call npm.
+`magpie update --check` queries `@enderchen/magpie`; `magpie update` updates that same package. `--check` only queries and does not install anything. The server's `APP_URL` does not configure the client's `MAGPIE_BASE`; use the service root without `/mcp` for CLI access.
 
 ### Release Process
 
-Maintainer release guide (GitHub Actions automated release, token rotation, troubleshooting) see [`docs/RELEASING.md`](docs/RELEASING.md).
+Maintainer packaging and manual publication guide see [`docs/RELEASING.md`](docs/RELEASING.md).
 
 ---
 
@@ -417,27 +429,27 @@ MCP_TOKEN=your-secret-token
 
 ### Client Configuration
 
-**Claude Code** — Add to your project's `.mcp.json` or merge into `~/.claude.json`:
+**HTTP clients** — Clients supporting `mcpServers` JSON can use this production configuration. Replace `<YOUR_TOKEN>` with your personal API Token from the workbench. For local development, use `http://localhost:8858/mcp`:
 
 ```json
 {
   "mcpServers": {
     "magpie": {
       "type": "http",
-      "url": "http://localhost:8858/mcp",
+      "url": "https://magpiesend.site/mcp",
       "headers": {
-        "Authorization": "Bearer ${env.MCP_TOKEN}"
+        "Authorization": "Bearer <YOUR_TOKEN>"
       }
     }
   }
 }
 ```
 
-**Claude Desktop** — Merge the `mcpServers` block into `~/Library/Application Support/Claude/claude_desktop_config.json`.
+**stdio desktop clients** — Install the CLI first. Set `command: "magpie"`, `args: ["mcp"]`, `env.MAGPIE_BASE=https://magpiesend.site`, and `env.MAGPIE_TOKEN=<YOUR_TOKEN>`. Use the installed magpie's absolute path if the GUI cannot find the command. HTTP URL configuration and stdio launch configuration are different.
 
 ### Capabilities
 
-**Tools** (17):
+**Tools** (18):
 
 | Tool | Purpose |
 |---|---|
@@ -458,6 +470,7 @@ MCP_TOKEN=your-secret-token
 | `set_file_category` | Set file category. |
 | `list_content_templates` | List content template marketplace. |
 | `get_content_template` | Get content template details for style reference. |
+| `instantiate_content_template` | Create a file from a template in the current account. |
 
 **Resources** (2):
 
@@ -468,16 +481,16 @@ MCP_TOKEN=your-secret-token
 
 ### Companion Skill
 
-The repo includes `skills/magpie/SKILL.md`, a ready-to-use skill for Claude Code / Desktop. Once installed, AI-generated HTML, Markdown, reports, visualizations, presentations, and template-market-styled content are automatically uploaded to magpie with a preview link.
+The repo includes `skills/magpie/SKILL.md` for Codex and other Skill-capable clients. Configure the service address and personal API Token, then follow the Skill's CLI-first, MCP-fallback workflow to generate and upload content and return a preview link.
 
 ```bash
-ln -s "$(pwd)/skills/magpie" ~/.claude/skills/magpie
+magpie skill install --dir ~/.agents/skills/magpie
 ```
 
-Or install via CLI:
+After upgrading the CLI, update the Skill:
 
 ```bash
-magpie skill install
+magpie skill update --dir ~/.agents/skills/magpie
 ```
 
 ### Web Management

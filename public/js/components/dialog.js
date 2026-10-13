@@ -4,6 +4,7 @@ const dialogModal = {
   el: null, input: null, error: null, msg: null, field: null,
   confirmBtn: null, cancelBtn: null, closeBtn: null,
   _resolve: null, _mode: null, _validate: null, _escHandler: null,
+  _previousFocus: null, _app: null, _appWasInert: false,
 
   init() {
     this.el = document.getElementById('dialog-modal');
@@ -30,6 +31,13 @@ const dialogModal = {
   },
 
   _open(mode, opts) {
+    // Replacing an alert with a confirmation still belongs to the same dialog.
+    if (this.el.hidden) {
+      this._previousFocus = document.activeElement;
+      this._app = document.getElementById('app');
+      this._appWasInert = this._app?.inert || false;
+    }
+    if (this._app) this._app.inert = true;
     this._mode = mode;
     this._resolve = null;
     this._validate = opts.validate || null;
@@ -68,8 +76,26 @@ const dialogModal = {
       this.confirmBtn.focus();
     }
 
-    this._escHandler = e => { if (e.key === 'Escape') this._dismiss(); };
-    document.addEventListener('keydown', this._escHandler);
+    if (this._escHandler) document.removeEventListener('keydown', this._escHandler, true);
+    this._escHandler = e => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        this._dismiss();
+      } else if (e.key === 'Tab') {
+        const nodes = [...this.el.querySelectorAll('button, input, select, textarea, a[href], [tabindex="0"]')]
+          .filter(node => !node.disabled && !node.hidden && node.getClientRects().length);
+        const first = nodes[0], last = nodes[nodes.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
+      }
+    };
+    document.addEventListener('keydown', this._escHandler, true);
 
     return new Promise(resolve => { this._resolve = resolve; });
   },
@@ -95,11 +121,15 @@ const dialogModal = {
     this.el.hidden = true;
     this.el.setAttribute('aria-hidden', 'true');
     if (this._escHandler) {
-      document.removeEventListener('keydown', this._escHandler);
+      document.removeEventListener('keydown', this._escHandler, true);
       this._escHandler = null;
     }
     const resolve = this._resolve;
     this._resolve = null;
+    if (this._app) this._app.inert = this._appWasInert;
+    if (this._previousFocus?.isConnected) this._previousFocus.focus();
+    this._previousFocus = null;
+    this._app = null;
     if (resolve) resolve(result);
   },
 

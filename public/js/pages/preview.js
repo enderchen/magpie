@@ -31,7 +31,7 @@ function syncPreviewHeaderState(layout, expandFloatingBtn, toggleHeaderBtn) {
 // ---------- Version History ----------
 const _versionPanelState = { fileId: null, versions: null, currentVer: 0 };
 
-function loadVersions(container, fileId) {
+function loadVersions(container, fileId, onContentChanged) {
   const body = container.querySelector('#version-panel-body');
   if (!body) return;
   body.innerHTML = '<div class="version-empty">加载中…</div>';
@@ -43,7 +43,7 @@ function loadVersions(container, fileId) {
     _versionPanelState.currentVer = versions.length
       ? Math.max(...versions.map(version => version.version)) + 1
       : 1;
-    renderVersionList(container, data);
+    renderVersionList(container, data, fileId, onContentChanged);
 
     const menu = container.querySelector('#menu-version-history');
     if (menu) menu.textContent = `历史 v${_versionPanelState.currentVer}`;
@@ -52,7 +52,7 @@ function loadVersions(container, fileId) {
   });
 }
 
-function renderVersionList(container, data) {
+function renderVersionList(container, data, fileId, onContentChanged) {
   const body = container.querySelector('#version-panel-body');
   if (!body) return;
 
@@ -111,7 +111,7 @@ function renderVersionList(container, data) {
       e.stopPropagation();
       const ver = btn.dataset.version;
       const iframe = container.querySelector('#preview-iframe');
-      if (iframe) iframe.src = API_BASE + `/api/files/${_versionPanelState.fileId}/versions/${ver}/render`;
+      if (iframe) iframe.src = API_BASE + `/api/files/${fileId}/versions/${ver}/render`;
       const source = container.querySelector('#preview-source');
       if (source) source.classList.remove('active');
       const iframeEl = container.querySelector('#preview-iframe');
@@ -133,11 +133,10 @@ function renderVersionList(container, data) {
       });
       if (!ok) return;
       try {
-        await api(`/api/files/${_versionPanelState.fileId}/versions/${ver}/restore`, { method: 'POST' });
+        await api(`/api/files/${fileId}/versions/${ver}/restore`, { method: 'POST' });
+        await onContentChanged();
         toast(`已恢复到 v${ver}`);
-        loadVersions(container, _versionPanelState.fileId);
-        const iframe = container.querySelector('#preview-iframe');
-        if (iframe) iframe.src = API_BASE + `/api/files/${_versionPanelState.fileId}/render`;
+        loadVersions(container, fileId, onContentChanged);
       } catch (e) {
         toast(e.message, 'error');
       }
@@ -156,9 +155,9 @@ function renderVersionList(container, data) {
       });
       if (!ok) return;
       try {
-        await api(`/api/files/${_versionPanelState.fileId}/versions/${ver}`, { method: 'DELETE' });
+        await api(`/api/files/${fileId}/versions/${ver}`, { method: 'DELETE' });
         toast(`已删除 v${ver}`);
-        loadVersions(container, _versionPanelState.fileId);
+        loadVersions(container, fileId, onContentChanged);
       } catch (e) {
         toast(e.message, 'error');
       }
@@ -182,7 +181,7 @@ function closeVersionPanel(container) {
   panel.hidden = true;
 }
 
-function setupVersionUpload(container, fileId) {
+function setupVersionUpload(container, fileId, onContentChanged) {
   const input = container.querySelector('#version-file-input');
   if (!input) return;
 
@@ -224,19 +223,17 @@ function setupVersionUpload(container, fileId) {
       }
     };
 
-    xhr.onload = () => {
+    xhr.onload = async () => {
       const data = JSON.parse(xhr.responseText || '{}');
       if (xhr.status >= 200 && xhr.status < 300) {
         const ver = data.version || '?';
         toast(`已更新为第 ${ver} 版`);
-        const iframe = container.querySelector('#preview-iframe');
-        if (iframe) iframe.src = API_BASE + `/api/files/${fileId}/render`;
-        // refresh source view
-        api(`/api/files/${fileId}/content`).then(cdata => {
-          const code = container.querySelector('#source-code');
-          if (code) code.textContent = cdata.content;
-        }).catch(() => {});
-        loadVersions(container, fileId);
+        try {
+          await onContentChanged();
+          loadVersions(container, fileId, onContentChanged);
+        } catch (e) {
+          toast(e.message || '读取新版本失败，请刷新页面', 'error');
+        }
       } else {
         toast(data.error || `HTTP ${xhr.status}`, 'error');
       }
@@ -389,6 +386,7 @@ function renderPreview(container, hash) {
   const moreBtn = container.querySelector('#btn-preview-more');
   let fileContent = '';
   let editorOriginalContent = '';
+  let currentContentReady = false;
   let isBundleTree = false; // bundle 文件树是否已就绪
 
   iframe.addEventListener('load', () => {
@@ -510,6 +508,7 @@ function renderPreview(container, hash) {
   });
 
   async function doEditorSave() {
+    if (!currentContentReady || editorSaveBtn.disabled) return;
     const content = editorTextarea.value;
     editorSaveBtn.disabled = true;
     editorSaveBtn.textContent = '保存中…';
@@ -523,7 +522,7 @@ function renderPreview(container, hash) {
       code.textContent = content;
       if (spinner) spinner.style.display = 'flex';
       iframe.src = API_BASE + `/api/files/${id}/render`;
-      loadVersions(container, id);
+      loadVersions(container, id, refreshCurrentFile);
       setViewMode('render');
     } catch (e) {
       toast(e.message || '保存失败', 'error');
@@ -549,13 +548,13 @@ function renderPreview(container, hash) {
   const closeVersionBtn = container.querySelector('#btn-close-version-panel');
   const versionPanel = container.querySelector('#version-panel');
 
-  setupVersionUpload(container, id);
+  setupVersionUpload(container, id, refreshCurrentFile);
 
   function toggleVersionPanel() {
     if (versionPanel && !versionPanel.hidden && versionPanel.classList.contains('open')) {
       closeVersionPanel(container);
     } else {
-      loadVersions(container, id);
+      loadVersions(container, id, refreshCurrentFile);
       openVersionPanel(container);
     }
   }
@@ -705,15 +704,26 @@ function renderPreview(container, hash) {
     }
   }
 
-  api(`/api/files/${id}/content`).then(data => {
+  // Initial load, restoration and version uploads must update the same state.
+  // Keep source/edit controls disabled if reading the current version fails.
+  async function refreshCurrentFile() {
+    currentContentReady = false;
+    toggles.forEach(button => { button.disabled = true; });
+    const data = await api(`/api/files/${id}/content`, { signal });
+    if (signal.aborted) return;
     fileName = data.original_name;
     fileContent = data.content;
+    editorOriginalContent = data.content;
+    editorTextarea.value = data.content;
+    updateEditorLines();
     const lockPrefix = data.is_public ? '' : '<span class="file-lock" title="私有文件" aria-label="私有文件">🔒 </span>';
     container.querySelector('#preview-title').innerHTML = lockPrefix + escapeHtml(data.original_name);
     container.querySelector('#preview-heading').innerHTML = lockPrefix + escapeHtml(data.original_name);
     expandFloatingBtn.title = `展开顶栏 · ${data.original_name}`;
     expandFloatingBtn.setAttribute('aria-label', `展开顶栏 · ${data.original_name}`);
     code.textContent = data.content;
+    isBundleTree = false;
+    if (bundleTreeBody) bundleTreeBody.innerHTML = '';
     // Bundle：初始化文件树，源码视图展示入口文件，可点击切换查看其它文件
     if (data.is_bundle && Array.isArray(data.entries) && data.entries.length > 0) {
       setupBundleTree(data.entries, data.entry_path, data.entries_truncated);
@@ -726,6 +736,14 @@ function renderPreview(container, hash) {
     }
     if (spinner) spinner.style.display = 'flex';
     iframe.src = API_BASE + `/api/files/${id}/render`;
+    setViewMode('render');
+    currentContentReady = true;
+    toggles.forEach(button => { button.disabled = false; });
+    return data;
+  }
+
+  refreshCurrentFile().then(data => {
+    if (!data) return;
     // 模板菜单项：仅 Markdown 文件且为所有者/admin 可见
     const menuTemplate = container.querySelector('#menu-template');
     if (menuTemplate && data.file_type === 'markdown' && state.currentUser && (state.currentUser.id == data.uploaded_by || state.currentUser.role === 'admin')) {

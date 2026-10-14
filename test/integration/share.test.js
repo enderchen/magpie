@@ -236,6 +236,18 @@ test('访问密码：设置后匿名访问返回密码表单（200 + 含"需要�
   // 表单页应含密码输入框，而非直接渲染受保护内容
   assert.match(res.text, /type="password"/);
   assert.doesNotMatch(res.text, /受保护内容/);
+  assert.doesNotMatch(res.text, /pwd\.md/);
+  assert.match(res.text, new RegExp(`method="POST" action="/s/${up.body.share_key}"`));
+  // The standalone entry must load its own resources for an anonymous visitor.
+  for (const [url, type] of [
+    ['/css/share-password.css', /text\/css/],
+    ['/js/share-password.js', /javascript/],
+    ['/css/share-password/icons/eye-fill.svg', /image\/svg\+xml/],
+    ['/home-share/assets/magpie-courier-flight-v1.png', /image\/png/],
+  ]) {
+    const asset = await request(env.app).get(url).expect(200);
+    assert.match(asset.headers['content-type'], type);
+  }
   // Native form POST under no-referrer sends an opaque Origin and is rejected by CSRF.
   assert.strictEqual(res.headers['referrer-policy'], 'same-origin');
 });
@@ -249,6 +261,9 @@ test('访问密码：同源表单特殊字符可解锁，错误重显保留策�
   const origin = 'http://share-test.invalid';
   const wrong = await visitor.post(`/s/${key}`).set('Host', 'share-test.invalid').set('Origin', origin).type('form').send({ password: 'wrong' }).expect(200);
   assert.match(wrong.text, /密码错误/);
+  assert.match(wrong.text, /aria-invalid="true"/);
+  assert.match(wrong.text, /role="alert"/);
+  assert.doesNotMatch(wrong.text, /value="wrong"/);
   assert.equal(wrong.headers['referrer-policy'], 'same-origin');
   for (const outside of ['null', 'https://outside.invalid']) {
     await visitor.post(`/s/${key}`).set('Host', 'share-test.invalid').set('Origin', outside).type('form').send({ password }).expect(403);

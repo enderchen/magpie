@@ -241,23 +241,45 @@ const shareKeyLimiter = rateLimit({
 // 过期页 HTML：告知链接已过期，引导联系分享者。
 const EXPIRED_HTML = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:sans-serif;text-align:center;padding:4em"><h1>链接已过期</h1><p>该分享链接已失效。</p><a href="/">返回首页</a></body></html>';
 
-// 密码表单页：内联样式 + 单一表单，POST 回 /s/:key。
+// 分享密码页只展示访问入口，不泄露受保护材料的元数据或内容。
 // 转义防 XSS（key 来自 DB 但仍防御性处理）。error 非空时显示错误提示。
 function renderSharePasswordPage(key, error) {
   const safeKey = String(key).replace(/[<>&"']/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]));
   const errorBlock = error
-    ? `<div style="color:#cf222e;margin-bottom:1em">${String(error).replace(/[<>&"']/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]))}</div>`
+    ? `<p class="share-error" id="share-password-error" role="alert">${String(error).replace(/[<>&"']/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]))}，请检查后重试。</p>`
     : '';
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>需要密码</title></head><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#f6f8fa">
-<div style="background:#fff;padding:2.5em;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.12);width:100%;max-width:360px;box-sizing:border-box">
-<h1 style="font-size:1.3em;margin:0 0 .5em;color:#1f2328">需要访问密码</h1>
-<p style="color:#57606a;margin:0 0 1.5em;font-size:.9em">该分享链接受密码保护，请输入密码后查看。</p>
-<form method="POST" action="/s/${safeKey}">
+  return `<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>需要访问密码 · 纸鹊 Magpie</title>
+<link rel="icon" href="/magpie-logo.png">
+<link rel="stylesheet" href="/css/share-password.css?v=1">
+<script src="/js/share-password.js?v=1" defer></script>
+</head><body class="share-page">
+<header class="share-header">
+  <div class="share-brand-group"><a class="share-brand" href="/" aria-label="返回纸鹊首页"><img src="/home-share/assets/magpie-logo-transparent-v1.png" alt="纸鹊 Magpie" width="168" height="76"></a><span class="share-motto" lang="en">Ideas Worth Spreading</span></div>
+  <a class="share-home" href="/">返回首页<img src="/css/share-password/icons/arrow-up-right.svg" alt="" width="18" height="18"></a>
+</header>
+<main class="share-main">
+<section class="share-letter" aria-labelledby="share-heading">
+  <aside class="share-spine" aria-hidden="true"><span lang="en">IDEAS<br>WORTH<br>SPREADING</span></aside>
+  <div class="share-letter-body">
+    <div class="share-intro"><img class="share-courier" src="/home-share/assets/magpie-courier-flight-v1.png" alt="" width="300" height="200"><div><h1 id="share-heading">分享已送达</h1><p class="share-subtitle">输入访问密码，开启这份内容。</p></div></div>
+    <form class="share-form" id="share-password-form" method="POST" action="/s/${safeKey}">
+      <label class="share-label" for="share-password">访问密码</label>
+      <div class="share-controls"><div class="share-input-wrap">
+        <img class="share-lock" src="/css/share-password/icons/lock-fill.svg" alt="" width="22" height="22">
+        <input id="share-password" type="password" name="password" placeholder="输入分享密码" required autofocus autocomplete="off" aria-describedby="share-password-hint${error ? ' share-password-error' : ''}"${error ? ' aria-invalid="true"' : ''}>
+        <button class="share-password-toggle" type="button" aria-label="显示密码" aria-pressed="false" aria-controls="share-password" hidden><img src="/css/share-password/icons/eye-fill.svg" alt="" width="22" height="22"></button>
+      </div><button class="share-submit" type="submit"><span>查看内容</span><img src="/css/share-password/icons/arrow-up-right.svg" alt="" width="24" height="24"></button></div>
 ${errorBlock}
-<input type="password" name="password" placeholder="输入密码" autofocus required style="width:100%;padding:.6em .75em;border:1px solid #d0d7de;border-radius:6px;font-size:1em;box-sizing:border-box;margin-bottom:1em">
-<button type="submit" style="width:100%;padding:.65em;background:#1f6feb;color:#fff;border:none;border-radius:6px;font-size:1em;cursor:pointer">查看</button>
-</form>
-</div></body></html>`;
+      <div class="share-notes" id="share-password-hint"><p>该内容由分享者设置了访问密码。</p><p>没有密码？请联系分享者获取。</p></div>
+    </form>
+  </div>
+</section>
+</main>
+<footer class="share-footer"><span>纸鹊 Magpie</span><span>Designed by Ender</span></footer>
+</body></html>`;
 }
 
 function sendSharePasswordPage(res, key, error) {

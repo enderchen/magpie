@@ -278,7 +278,7 @@ ${errorBlock}
   </div>
 </section>
 </main>
-<footer class="share-footer"><span>纸鹊 Magpie</span><span>Designed by Ender</span></footer>
+<footer class="share-footer"><span>纸鹊 Magpie</span><span>Designed by Ender</span><!-- {{ICP_BEIAN_PLACEHOLDER}} --></footer>
 </body></html>`;
 }
 
@@ -287,13 +287,13 @@ function sendSharePasswordPage(res, key, error) {
   // sends Origin:null, which must remain rejected by the cross-site guard.
   // same-origin preserves the form's Origin without leaking share URLs to other sites.
   res.setHeader('Referrer-Policy', 'same-origin');
-  res.type('html').status(200).send(renderSharePasswordPage(key, error));
+  res.type('html').status(200).send(injectIcpFooter(renderSharePasswordPage(key, error)));
 }
 
 app.get('/s/:key', loadSession, async (req, res) => {
   try {
     const file = await dbGet('SELECT * FROM files WHERE share_key = ?', [req.params.key]);
-    if (!file) return res.status(404).send('<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:sans-serif;text-align:center;padding:4em"><h1>404</h1><p>页面不存在</p><a href="/">返回首页</a></body></html>');
+    if (!file) return res.status(404).send(injectIcpFooter('<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:sans-serif;text-align:center;padding:4em"><h1>404</h1><p>页面不存在</p><a href="/">返回首页</a></body></html>'));
     // 过期判定（UTC 字符串比较）
     if (file.share_expires_at && file.share_expires_at <= now()) {
       // 粘贴试用的临时文件过期后直接清理，避免匿名文件堆积
@@ -302,7 +302,7 @@ app.get('/s/:key', loadSession, async (req, res) => {
         await deleteFileIndex(file.id);
         await dbRun('DELETE FROM files WHERE id = ?', [file.id]);
       }
-      return res.status(410).send(EXPIRED_HTML);
+      return res.status(410).send(injectIcpFooter(EXPIRED_HTML));
     }
     if (!file.is_public && !req.userId) return res.redirect('/app/#/login');
     if (!file.is_public && !checkFileOwnership(req, file)) return res.status(403).json({ error: '无权访问此文件' });
@@ -335,7 +335,7 @@ app.post('/s/:key', shareKeyLimiter, loadSession, async (req, res) => {
         await deleteFileIndex(file.id);
         await dbRun('DELETE FROM files WHERE id = ?', [file.id]);
       }
-      return res.status(410).send(EXPIRED_HTML);
+      return res.status(410).send(injectIcpFooter(EXPIRED_HTML));
     }
     if (!file.is_public && !req.userId) return res.redirect('/app/#/login');
     if (!file.is_public && !checkFileOwnership(req, file)) return res.status(403).json({ error: '无权访问此文件' });
@@ -368,7 +368,7 @@ app.get('/t/:key', async (req, res) => {
       [req.params.key]
     );
     if (!t) {
-      return res.status(404).send('<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:sans-serif;text-align:center;padding:4em"><h1>404</h1><p>模板不存在或已下架</p><a href="/">返回首页</a></body></html>');
+      return res.status(404).send(injectIcpFooter('<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:sans-serif;text-align:center;padding:4em"><h1>404</h1><p>模板不存在或已下架</p><a href="/">返回首页</a></body></html>'));
     }
     return await renderTemplateContent(res, t);
   } catch (e) {
@@ -418,9 +418,17 @@ app.get(['/home-share', '/home-share/', '/home-share/index.html'], (req, res) =>
 app.get([/^\/app$/, '/index.html'], (req, res) => {
   res.redirect(302, '/app/' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''));
 });
+// Route both aliases and .html entries through the same site-footer injection.
+app.get(['/privacy', '/privacy.html', '/terms', '/terms.html'], (req, res) => {
+  const name = req.path.startsWith('/privacy') ? 'privacy.html' : 'terms.html';
+  res.setHeader('Cache-Control', 'no-cache');
+  res.type('html').send(injectIcpFooter(fs.readFileSync(path.join(__dirname, 'public', name), 'utf8')));
+});
+app.get(['/home-share/examples/report.html', '/home-share/examples/prototype.html', '/home-share/examples/portfolio/index.html'], (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache');
+  res.type('html').send(injectIcpFooter(fs.readFileSync(path.join(__dirname, 'public', req.path), 'utf8')));
+});
 app.use(express.static(path.join(__dirname, 'public'), { ...STATIC_OPTS, index: false }));
-app.get('/privacy', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'privacy.html')));
-app.get('/terms', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'terms.html')));
 
 // --- 官网与应用壳：共享配置注入，应用壳优先使用构建后的哈希资源 ---
 const INDEX_HTML_PATH = path.join(__dirname, 'public', 'index.html');
@@ -431,12 +439,28 @@ function escapeHtml(text) {
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-function injectSiteConfig(html, nonce) {
+function injectIcpFooter(html) {
   const icpHtml = ICP_BEIAN
-    ? `<p class="landing-icp"><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">${escapeHtml(ICP_BEIAN)}</a></p>`
+    ? `<span class="magpie-icp"><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">${escapeHtml(ICP_BEIAN)}</a></span>`
     : '';
+  if (html.includes('<!-- {{ICP_BEIAN_PLACEHOLDER}} -->')) {
+    html = html.replaceAll('<!-- {{ICP_BEIAN_PLACEHOLDER}} -->', icpHtml);
+  } else if (ICP_BEIAN) {
+    const footer = `<footer class="magpie-site-footer">${icpHtml}</footer>`;
+    html = html.includes('</body>') ? html.replace('</body>', footer + '</body>')
+      : html.replace('</html>', footer + '</html>');
+  }
+  if (!ICP_BEIAN) return html;
+  html = html.replace(/<html\b/, '<html data-site-icp="true"');
+  const stylesheet = '<link rel="stylesheet" href="/css/site-footer.css?v=20261028-2">';
+  // Official examples use HTML's optional head tags.
+  return html.includes('</head>') ? html.replace('</head>', stylesheet + '</head>')
+    : html.replace(/<html[^>]*>/, '$&' + stylesheet);
+}
+
+function injectSiteConfig(html, nonce) {
   const config = JSON.stringify(ICP_BEIAN).replace(/</g, '\\u003c');
-  return html.replace('<!-- {{ICP_BEIAN_PLACEHOLDER}} -->', icpHtml)
+  return injectIcpFooter(html)
     .replace('</head>', `<script nonce="${nonce}">window.__MAGPIE_ICP_BEIAN__ = ${config};</script></head>`);
 }
 

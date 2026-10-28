@@ -1,0 +1,23 @@
+/* Registration is site chrome; uploaded HTML/Markdown remains untouched. */
+.magpie-icp { display: inline-flex; align-items: center; max-width: 100%; font-size: 12px; line-height: 1.5; color: #535d57; }
+.magpie-icp a { display: inline-flex; align-items: center; min-height: 44px; color: inherit; text-decoration: none; white-space: nowrap; }
+.magpie-icp a:hover { color: #17201c; text-decoration: underline; text-underline-offset: 3px; }
+.magpie-icp a:focus-visible { outline: 2px solid #176491; outline-offset: 3px; border-radius: 2px; }
+.magpie-site-footer { display: flex; justify-content: center; align-items: center; min-height: 48px; padding: 0 20px; box-sizing: border-box; background: inherit; border-top: 1px solid #bec4b7; }
+.magpie-site-footer:empty { display: none; }
+.magpie-site-footer .magpie-icp { color: var(--text-secondary, #535d57); }
+html[data-site-icp] #app { min-height: calc(100vh - 48px); }
+html[data-site-icp] #app > .layout { min-height: calc(100vh - 48px); }
+html[data-site-icp] #app .preview-layout { height: calc(100vh - 48px); }
+.footer-bottom { flex-wrap: wrap; }
+.footer-bottom .magpie-icp { margin-inline: auto; }
+.share-footer { align-items: center; flex-wrap: wrap; }
+.share-footer .magpie-icp { order: 1; margin-left: auto; margin-right: auto; }
+.share-footer > span:nth-child(2) { order: 2; }
+.legal-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px 24px; }
+@media (max-width: 767px) {
+  .share-footer .magpie-icp { order: 3; justify-content: center; flex-basis: 100%; }
+  .share-footer > span:nth-child(2) { margin-left: auto; }
+  .legal-footer { justify-content: center; }
+  .footer-bottom .magpie-icp { margin: 0; }
+}
